@@ -1,2 +1,2 @@
 # rukky
-A simple programming language 
+A simple Programming Language 
