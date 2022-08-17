@@ -1,0 +1,1 @@
+# Logs any syntax (parser) and semantic (interpreter) errors 
