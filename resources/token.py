@@ -11,31 +11,34 @@ class TokenType(Enum):
     OR            = '||'
     AND           = '&&'
     NOT           = '~'
-    LT            = '<'
     GT            = '>'
-    LE            = '<='
     GE            = '>='
+    LT            = '<'
+    LE            = '<='
     EQ            = '<>'
-    NE            = '</>'
+    NE            = '<!'
     APPEND        = '<<'
 
     LBRACE        = '{'
     RBRACE        = '}'
     LPAREN        = '('
     RPAREN        = ')'
+    LSQUARE       = '['
+    RSQUARE       = ']'
     COLON         = ':'
     RES_COLON     = '::'
     COMMA         = ','
-    COMMENT       = '$'
-
     ASSIGN        = ':='
-    EOL           = '\r\n'
+    
+    EOL           = '\n'
     EOF           = None
 
     VOID          = 'void'
     REAL          = 'real'
     BOOL          = 'bool'
     STRING        = 'string'
+    TRUE          = 'true'
+    FALSE         = 'false'
     FOR           = 'for'
     WHILE         = 'while'
     IF            = 'if'
@@ -46,16 +49,19 @@ class TokenType(Enum):
 
     ID            = -1 # [a-zA-Z_][a-zA-Z_0-9]*
     REAL_LIT      = -2 # [0-9]+ | ([0-9]*.[0-9]+)
-    BOOL_LIT      = -3 # true or false
-    STRING_LIT    = -4 # ".*"
+    STRING_LIT    = -3 # ".*"
+    BOOL_LIT      = TRUE,FALSE # true or false
 
 def _build_reserved_keywords():
-    tt_list = list(TokenType)
-    start_index = tt_list.index(TokenType.VOID)
-    end_index = tt_list.index(TokenType.BREAK)
-    reserved_keywords = tt_list[start_index:end_index + 1]
+    tokenList = list(TokenType)
+    start = tokenList.index(TokenType.VOID)
+    end = tokenList.index(TokenType.BREAK)
+    reserved = {
+        tkType.value: tkType
+        for tkType in tokenList[start:end + 1]
+    }
 
-    return reserved_keywords
+    return reserved
 
 RESERVED_KEYWORDS = _build_reserved_keywords()
 
@@ -64,11 +70,11 @@ class Token:
         self.type = type
         self.lexVal = lexVal
         self.lineNo = lineNo
-        self.columnNo = columnNo
+        self.columnNo = columnNo - len(lexVal) - 1
 
     def __str__(self):
         # Token(TokenType.ID, 7, lineNo=5, columnNo=10)
-        return f"Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo}"
+        return f'Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo}'
 
     def __repr__(self):
         return self.__str__()

@@ -1,8 +1,8 @@
 program -> decl_list EOF
-decl_list -> decl_list decl_list
+decl_list -> decl_list decl
             | decl
 decl -> stmt 
-        | fun_decl
+        | func_decl
 
 var_type -> "real"
             | "bool"
@@ -55,7 +55,7 @@ expr -> ID ":=" expr
 disjunc -> disjunc "||" conjunc
         | conjunc
 equiv -> equiv "<>" ineq
-        | equiv "</>" ineq
+        | equiv "<!" ineq
         | ineq
 ineq -> ineq "<=" term
         | ineq "<" term
