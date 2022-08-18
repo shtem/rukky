@@ -1,5 +1,7 @@
-from token import TokenType, Token, RESERVED_KEYWORDS
-from errors import LexerError, ErrorCode
+from common.lex_enums import TokenType, RESERVED_KEYWORDS
+from common.errors import LexerError
+from data.token import Token
+import sys
 
 class Lexer:
     def __init__(self, text):
@@ -10,19 +12,20 @@ class Lexer:
         self.columnNo = 1
 
     def error(self):
-        raise LexerError(
-            errorCode=ErrorCode.ILLEGAL_CHAR,
-            message=f'{ErrorCode.ILLEGAL_CHAR.value} on "{self.currChar}" line: {self.lineNo} column: {self.columnNo}'
-        )
+        print(LexerError(
+            message=f'Illegal Character "{self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
+        ))
+        sys.exit(0)
     
     def advance(self):
         if self.currChar == '\n':
             self.lineNo += 1
-            self.columnNo = 0
+            self.columnNo = 1
 
         self.idx += 1
         if self.idx > len(self.text) - 1:
             self.currChar = None 
+            self.columnNo += 1
         else:
             self.currChar = self.text[self.idx]
             self.columnNo += 1
@@ -131,6 +134,7 @@ class Lexer:
         self.advance() # for last opening quote '$'
 
     def get_next_token(self):
+        
         while self.currChar != None:
             if self.currChar in [' ', '\t']:
                 self.advance()

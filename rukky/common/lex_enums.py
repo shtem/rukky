@@ -44,6 +44,7 @@ class TokenType(Enum):
     IF            = 'if'
     ELIF          = 'elif'
     ELSE          = 'else'
+    DISPLAY       = 'display'
     RETURN        = 'return'
     BREAK         = 'break'
 
@@ -64,20 +65,3 @@ def _build_reserved_keywords():
     return reserved
 
 RESERVED_KEYWORDS = _build_reserved_keywords()
-
-class Token:
-    def __init__(self, type, lexVal, lineNo=None, columnNo=None):
-        self.type = type
-        self.lexVal = lexVal
-        self.lineNo = lineNo
-        self.columnNo = columnNo - len(lexVal) - 1
-
-    def __str__(self):
-        # Token(TokenType.ID, 7, lineNo=5, columnNo=10)
-        return f'Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo}'
-
-    def __repr__(self):
-        return self.__str__()
-
-
-

@@ -1,1 +1,0 @@
-# Shell calls runner and passes it program inputted by user in terminal
