@@ -5,6 +5,7 @@ while True:
     try:
         text = input('rukky > ')
         if text.strip() == "": continue
+
         print(text)
         lex = Lexer(text)
 

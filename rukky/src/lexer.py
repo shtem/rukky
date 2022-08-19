@@ -30,7 +30,7 @@ class Lexer:
             self.currChar = self.text[self.idx]
             self.columnNo += 1
 
-    def peek(self):
+    def peek_next_token(self):
         peekIdx = self.idx + 1
         if peekIdx > len(self.text) - 1:
             return None
@@ -54,8 +54,13 @@ class Lexer:
     
     def _make_real(self):
         realValue = ''
+        dotCount = 0
 
         while self.currChar != None and (self.currChar.isdigit() or self.currChar == '.'):
+            if self.currChar == '.':
+                if dotCount == 1: break
+                dotCount += 1
+
             realValue += self.currChar
             self.advance() 
         
@@ -134,7 +139,6 @@ class Lexer:
         self.advance() # for last opening quote '$'
 
     def get_next_token(self):
-        
         while self.currChar != None:
             if self.currChar in [' ', '\t']:
                 self.advance()
@@ -169,11 +173,11 @@ class Lexer:
             elif self.currChar == '~':
                 self.advance()
                 return Token(type=TokenType.NOT, lexVal=TokenType.NOT.value, lineNo=self.lineNo, columnNo=self.columnNo)
-            elif self.currChar == '|' and self.peek() == '|':
+            elif self.currChar == '|' and self.peek_next_token() == '|':
                 self.advance()
                 self.advance()
                 return Token(type=TokenType.OR, lexVal=TokenType.OR.value, lineNo=self.lineNo, columnNo=self.columnNo)
-            elif self.currChar == '&' and self.peek() == '&':
+            elif self.currChar == '&' and self.peek_next_token() == '&':
                 self.advance()
                 self.advance()
                 return Token(type=TokenType.AND, lexVal=TokenType.AND.value, lineNo=self.lineNo, columnNo=self.columnNo)
