@@ -15,7 +15,7 @@ class Lexer:
     def error(self):
         print(
             LexerError(
-                message=f'Illegal Character "{self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
+                message=f'Illegal or Missing Character "{str() if not self.currChar else self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
             )
         )
         sys.exit(0)
@@ -43,14 +43,14 @@ class Lexer:
     def _make_identifier(self):
         idValue = ""
 
-        while self.currChar != None and (
+        while self.currChar and (
             self.currChar.isalnum() or self.currChar == "_"
         ):
             idValue += self.currChar
             self.advance()
 
         matchType = RESERVED_KEYWORDS.get(idValue)
-        tokType = matchType if matchType != None else TokenType.ID
+        tokType = matchType if matchType else TokenType.ID
 
         if tokType in [TokenType.TRUE, TokenType.FALSE]:
             tokType = TokenType.BOOL_LIT
@@ -63,7 +63,7 @@ class Lexer:
         realValue = ""
         dotCount = 0
 
-        while self.currChar != None and (
+        while self.currChar and (
             self.currChar.isdigit() or self.currChar == "."
         ):
             if self.currChar == ".":
@@ -85,17 +85,20 @@ class Lexer:
         strValue = ""
         self.advance()  # for first opening quote '"'
 
-        while self.currChar != None and self.currChar != '"':
+        while self.currChar and self.currChar != '"':
             strValue += self.currChar
             self.advance()
 
-        self.advance()  # for last opening quote '"'
+        if self.currChar == '"':
+            self.advance()  # for last opening quote '"'
+        else:
+            self.error()
 
         return Token(
             type=TokenType.STRING_LIT,
             lexVal=strValue,
             lineNo=self.lineNo,
-            columnNo=self.columnNo,
+            columnNo=self.columnNo-2, # want to take into account opening and closing quote in columnNo
         )
 
     def _make_div(self):
@@ -171,15 +174,18 @@ class Lexer:
         )
 
     def skip_comment(self):
-        self.advance()  # for first opening quote '$'
+        self.advance()  # for first '$'
 
-        while self.currChar != "$":
+        while self.currChar and self.currChar != "$":
             self.advance()
 
-        self.advance()  # for last opening quote '$'
+        if self.currChar == "$":
+            self.advance()  # for last'$'
+        else:
+            self.error()
 
     def get_next_token(self):
-        while self.currChar != None:
+        while self.currChar:
             if self.currChar in [" ", "\t"]:
                 self.advance()
             elif self.currChar == "$":

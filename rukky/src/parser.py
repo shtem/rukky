@@ -1,7 +1,3 @@
-# Parser builds AST from tokens, if its a valid program builds AST, If invalid can't build tree report error
-# Recursive Descent Parser
-# error handler in class - syntax error
-
 from common.lex_enums import TokenType
 from common.errors import ParserError
 from data.ast import *
@@ -118,18 +114,122 @@ class Parser:
 
     def expo(self):
         pass
-
+    
+    """
+    elem -> "-" elem
+        | "~" elem
+        | "(" expr ")"
+        | ID
+        | ID ":" args
+        | ID "[" expr "]"
+        | REAL_LIT
+        | BOOL_LIT
+        | STRING_LIT
+    """
     def elem(self):
-        pass
+        if self.currTok.type == TokenType.IDENT:
+            tok = self.currTok
+            ident = self.currTok.lexVal
+            identAST = IdentifierASTNode(token=tok, type=None, ident=ident, listFlag=False)
+            self.eat() # eat id
+            if self.currTok == TokenType.COLON:
+                self.eat() # eat :
+                args = self.args()
+                if self.currTok == TokenType.EOL:
+                    self.eat() # eat \n
+                    if args:
+                        return CallExprASTNode(token=tok, callee=identAST, args=args) # id: args
+                    else:
+                        return identAST
+                else:
+                    self.error('newline')
+            elif self.currTok == TokenType.LSQUARE:
+                self.eat() # eat [
+                index = self.expr()
+                if self.currTok == TokenType.RSQUARE:
+                    self.eat() # eat ]
+                    if index:
+                        identAST.set_index(index)
+                        identAST.set_listFlag(True)
+                        return identAST # id[expr]
+                else:
+                    self.error('"]"')
+            else:
+                return identAST # id
+        elif self.currTok.type == TokenType.MINUS or self.currTok.type == TokenType.NOT:
+            op = self.currTok
+            self.eat() # eat - ~
+            rhs = self.elem()
+            if rhs:
+                return UnaryExprASTNode(op=op, rhs=rhs)
+        elif self.currTok.type == TokenType.LPAREN:
+            self.eat() # eat (
+            expr = self.expr()
+            if self.currTok == TokenType.RPAREN:
+                self.eat() # eat )
+                if expr:
+                    return expr
+            else:
+                self.error('")"')
+        elif self.currTok.type == TokenType.REAL_LIT:
+            realNum = RealASTNode(token=self.currTok, value=self.currTok.lexVal)
+            self.eat() # eat real number
+            return realNum
+        elif self.currTok.type == TokenType.BOOL_LIT:
+            boolVal = BoolASTNode(token=self.currTok, value=self.currTok.lexVal)
+            self.eat() # eat boolean value
+            return boolVal
+        elif self.currTok.type == TokenType.STRING_LIT:
+            strVal = StringASTNode(token=self.currTok, value=self.currTok.lexVal)
+            self.eat() # eat string value
+            return strVal
 
-    def id_body(self):
-        pass
-
+    """
+    args -> arg_list
+        | epsilon
+    """ 
     def args(self):
-        pass
+        possibleStartToks = [TokenType.ID.value, TokenType.MINUS.value, TokenType.NOT.value, TokenType.LPAREN.value, 
+                            TokenType.REAL_LIT.value, TokenType.BOOL_LIT.value, TokenType.STRING_LIT.value]
+        
+        if self.currTok in possibleStartToks: # id: args
+            argList = self.arg_list()
+            if argList:
+                return argList
+        elif self.currTok == TokenType.EOL: # id:
+            return self.epsilon()
+        else:
+            self.error('list of expressins as arguments or a new line')
 
+        return self.epsilon()
+
+    
+    """
+    arg_list -> arg_list "," expr
+        | expr
+    """ 
     def args_list(self):
-        pass
+        argList = []
 
+        expr = self.expr()
+        if expr:
+            argList.append(expr)
+        
+        while True:
+            if self.currTok == TokenType.COMMA:
+                self.eat() # eat ,
+                expr = self.expr()
+                if expr:
+                    argList.append(expr)
+            elif self.currTok == TokenType.EOL:
+                break
+            else:
+                self.error('"," or a new line')
+        
+        return argList
+    
+    """
+    epsilon -> 
+    """ 
     def epsilon(self):
         return None

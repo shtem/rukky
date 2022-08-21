@@ -65,14 +65,15 @@ class StringASTNode(ExprASTNode):
 
 
 class IdentifierASTNode(ExprASTNode):
-    def __init__(self, token, type: str, ident: str, listFlag: bool):
+    def __init__(self, token, type: str, ident: str, index: ExprASTNode, listFlag: bool):
         self.token = token
         self.type = type
         self.ident = ident
+        self.index = index
         self.listFlag = listFlag
 
     def __str__(self):
-        return f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type}{list() if self.listFlag else None}"
+        return f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type}{list() if self.listFlag else None} {self.index}"
 
     def __repr__(self):
         return self.__str__()
@@ -82,6 +83,12 @@ class IdentifierASTNode(ExprASTNode):
 
     def get_type(self):
         return self.type
+    
+    def set_index(self, i):
+        self.index = i
+    
+    def set_listFlag(self, flag):
+        self.listFlag = flag
 
     def is_list(self):
         return self.listFlag
@@ -162,19 +169,14 @@ class ListASTNode(ExprASTNode):
 
 class AssignASTNode(ExprASTNode):
     def __init__(
-        self, token, var: IdentifierASTNode, value: ExprASTNode, index: ExprASTNode
+        self, token, var: IdentifierASTNode, value: ExprASTNode
     ):
         self.token = token
         self.var = var
         self.value = value
-        self.index = index
 
     def __str__(self):
-        out = f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.var)}\n\t-{repr(self.value)} "
-        if self.index != None and self.var.is_list():
-            out += f"\n\t-Index-{repr(self.index)}"
-
-        return out
+        return f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.var)}\n\t-{repr(self.value)}"
 
     def __repr__(self):
         return self.__str__()

@@ -80,13 +80,12 @@ expo -> expo "^" elem
 elem -> "-" elem
         | "~" elem
         | "(" expr ")"
-        | ID id_body
+        | ID
+        | ID ":" args
+        | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
-id_body -> ":" args
-        | "[" expr "]"
-        | epsilon
 args -> arg_list
         | epsilon
 arg_list -> arg_list "," expr

@@ -3,14 +3,14 @@ from src.lexer import Lexer
 
 while True:
     try:
-        text = input("rukky > ")
+        text = input("rukky > ")+"\n "
         if text.strip() == "":
             continue
 
         print(text)
         lex = Lexer(text)
 
-        while lex.currChar != None:
+        while lex.currChar:
             print(repr(lex.get_next_token()))
     except KeyboardInterrupt:
         sys.exit(0)

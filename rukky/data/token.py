@@ -3,7 +3,7 @@ class Token:
         self.type = type
         self.lexVal = lexVal
         self.lineNo = lineNo
-        if lexVal == None:
+        if not lexVal:
             self.columnNo = columnNo - 1
         else:
             self.columnNo = columnNo - len(lexVal)
