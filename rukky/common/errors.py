@@ -1,16 +1,18 @@
 from enum import Enum
 
+
 class ErrorCode(Enum):
-    ILLEGAL_CHAR     = 'Lexer Error'
-    SYNTAX_ERROR     = 'Syntax Error'
-    RUNTIME_ERROR    = 'Runtime Error'
+    LEXER_ERROR = "Lexer Error"
+    SYNTAX_ERROR = "Syntax Error"
+    RUNTIME_ERROR = "Runtime Error"
+
 
 class Error:
     def __init__(self, errorCode=None, token=None, message=None):
         self.errorCode = errorCode
         self.token = token
-        self.message = f'{self.errorCode.value}: {message}'
-    
+        self.message = f"{self.errorCode.value}: {message}"
+
     def __str__(self):
         return self.message
 
@@ -20,7 +22,7 @@ class Error:
 
 class LexerError(Error):
     def __init__(self, message=None):
-        super().__init__(ErrorCode.ILLEGAL_CHAR, None, message)
+        super().__init__(ErrorCode.LEXER_ERROR, None, message)
 
 
 class ParserError(Error):

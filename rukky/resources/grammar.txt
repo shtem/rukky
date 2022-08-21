@@ -57,6 +57,8 @@ expr -> ID ":=" expr
         | disjunc
 disjunc -> disjunc "||" conjunc
         | conjunc
+conjunc -> conjunc "&&" equiv
+        | equiv
 equiv -> equiv "<>" ineq
         | equiv "<!" ineq
         | ineq
@@ -78,12 +80,13 @@ expo -> expo "^" elem
 elem -> "-" elem
         | "~" elem
         | "(" expr ")"
-        | ID
-        | ID ":" args
-        | ID "[" expr "]"
+        | ID id_body
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
+id_body -> ":" args
+        | "[" expr "]"
+        | epsilon
 args -> arg_list
         | epsilon
 arg_list -> arg_list "," expr

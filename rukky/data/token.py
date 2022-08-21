@@ -10,10 +10,7 @@ class Token:
 
     def __str__(self):
         # Token(TokenType.ID, 7, lineNo=5, columnNo=10)
-        return f'Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo})'
+        return f"Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo})"
 
     def __repr__(self):
         return self.__str__()
-
-
-
