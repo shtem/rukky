@@ -33,7 +33,7 @@ class Lexer:
             self.currChar = self.text[self.idx]
             self.columnNo += 1
 
-    def peek_next_token(self):
+    def next_char(self):
         peekIdx = self.idx + 1
         if peekIdx > len(self.text) - 1:
             return None
@@ -254,7 +254,7 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
-            elif self.currChar == "|" and self.peek_next_token() == "|":
+            elif self.currChar == "|" and self.next_char() == "|":
                 self.advance()
                 self.advance()
                 return Token(
@@ -263,7 +263,7 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
-            elif self.currChar == "&" and self.peek_next_token() == "&":
+            elif self.currChar == "&" and self.next_char() == "&":
                 self.advance()
                 self.advance()
                 return Token(
@@ -343,3 +343,18 @@ class Lexer:
             lineNo=self.lineNo,
             columnNo=self.columnNo,
         )
+
+    def peek_next_token(self):
+        idxCopy = self.idx
+        currCharCopy = self.currChar
+        lineNoCopy = self.lineNo
+        columnNoCopy = self.columnNo 
+        
+        token = self.get_next_token()
+
+        self.idx = idxCopy
+        self.currChar = currCharCopy
+        self.lineNo = lineNoCopy
+        self.columnNo = columnNoCopy
+
+        return token
