@@ -30,6 +30,7 @@ class TokenType(Enum):
     RES_COLON = "::"
     COMMA = ","
     ASSIGN = ":="
+    LIST_ASSIGN = "@"
 
     EOL = "\n"
     EOF = None

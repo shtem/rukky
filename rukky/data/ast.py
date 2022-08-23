@@ -65,7 +65,9 @@ class StringASTNode(ExprASTNode):
 
 
 class IdentifierASTNode(ExprASTNode):
-    def __init__(self, token, type: str, ident: str, index: ExprASTNode, listFlag: bool):
+    def __init__(
+        self, token, type: str, ident: str, index: ExprASTNode, listFlag: bool
+    ):
         self.token = token
         self.type = type
         self.ident = ident
@@ -83,10 +85,10 @@ class IdentifierASTNode(ExprASTNode):
 
     def get_type(self):
         return self.type
-    
+
     def set_index(self, i):
         self.index = i
-    
+
     def set_listFlag(self, flag):
         self.listFlag = flag
 
@@ -168,9 +170,7 @@ class ListASTNode(ExprASTNode):
 
 
 class AssignASTNode(ExprASTNode):
-    def __init__(
-        self, token, var: IdentifierASTNode, value: ExprASTNode
-    ):
+    def __init__(self, token, var: IdentifierASTNode, value: ExprASTNode):
         self.token = token
         self.var = var
         self.value = value

@@ -52,7 +52,7 @@ break_stmt -> "break" ":" EOL
 
 expr -> ID ":=" expr
         | ID ":=" "[" args "]"
-        | ID "[" expr "]" ":=" expr
+        | ID "@" expr ":=" expr
         | ID "<<" expr
         | disjunc
 disjunc -> disjunc "||" conjunc

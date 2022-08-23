@@ -9,7 +9,7 @@ class Token:
             self.columnNo = columnNo - len(lexVal)
 
     def __str__(self):
-        # Token(TokenType.ID, 7, lineNo=5, columnNo=10)
+        # Token(TokenType.ID, 'y', lineNo=5, columnNo=10)
         return f"Token({self.type}, {repr(self.lexVal)}, lineNo={self.lineNo}, columnNo={self.columnNo})"
 
     def __repr__(self):

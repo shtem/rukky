@@ -3,7 +3,7 @@ from src.lexer import Lexer
 
 while True:
     try:
-        text = input("rukky > ")+"\n "
+        text = input("rukky > ") + "\n "
         if text.strip() == "":
             continue
 
@@ -12,6 +12,5 @@ while True:
 
         while lex.currChar:
             print(repr(lex.get_next_token()))
-            # print("peeked: " + repr(lex.peek_next_token()))
     except KeyboardInterrupt:
         sys.exit(0)

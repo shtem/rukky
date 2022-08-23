@@ -43,9 +43,7 @@ class Lexer:
     def _make_identifier(self):
         idValue = ""
 
-        while self.currChar and (
-            self.currChar.isalnum() or self.currChar == "_"
-        ):
+        while self.currChar and (self.currChar.isalnum() or self.currChar == "_"):
             idValue += self.currChar
             self.advance()
 
@@ -63,9 +61,7 @@ class Lexer:
         realValue = ""
         dotCount = 0
 
-        while self.currChar and (
-            self.currChar.isdigit() or self.currChar == "."
-        ):
+        while self.currChar and (self.currChar.isdigit() or self.currChar == "."):
             if self.currChar == ".":
                 if dotCount == 1:
                     break
@@ -98,7 +94,8 @@ class Lexer:
             type=TokenType.STRING_LIT,
             lexVal=strValue,
             lineNo=self.lineNo,
-            columnNo=self.columnNo-2, # want to take into account opening and closing quote in columnNo
+            columnNo=self.columnNo
+            - 2,  # want to take into account opening and closing quote in columnNo
         )
 
     def _make_div(self):
@@ -173,7 +170,7 @@ class Lexer:
             columnNo=self.columnNo,
         )
 
-    def skip_comment(self):
+    def _skip_comment(self):
         self.advance()  # for first '$'
 
         while self.currChar and self.currChar != "$":
@@ -189,7 +186,7 @@ class Lexer:
             if self.currChar in [" ", "\t"]:
                 self.advance()
             elif self.currChar == "$":
-                self.skip_comment()
+                self._skip_comment()
             elif self.currChar == "\n":
                 self.advance()
                 return Token(
@@ -332,6 +329,14 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
+            elif self.currChar == "@":
+                self.advance()
+                return Token(
+                    type=TokenType.LIST_ASSIGN,
+                    lexVal=TokenType.LIST_ASSIGN.value,
+                    lineNo=self.lineNo,
+                    columnNo=self.columnNo,
+                )
             elif self.currChar == ":":
                 return self._make_colon_or_assign()
             else:
@@ -348,8 +353,8 @@ class Lexer:
         idxCopy = self.idx
         currCharCopy = self.currChar
         lineNoCopy = self.lineNo
-        columnNoCopy = self.columnNo 
-        
+        columnNoCopy = self.columnNo
+
         token = self.get_next_token()
 
         self.idx = idxCopy
