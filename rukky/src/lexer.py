@@ -5,7 +5,7 @@ import sys
 
 
 class Lexer:
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
         self.idx = 0
         self.currChar = self.text[self.idx]

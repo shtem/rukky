@@ -94,8 +94,25 @@ class Parser:
     def return_stmt(self):
         pass
 
+    """
+    break_stmt -> "break" ":" EOL
+    """
+
     def break_stmt(self):
-        pass
+        if self.currTok.type == TokenType.BREAK:
+            tok = self.currTok
+            self.eat()  # eat 'break'
+            if self.currTok.type == TokenType.COLON:
+                self.eat()  # eat :
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    return BreakStmtASTNode(token=tok)
+                else:
+                    self.error("newline")
+            else:
+                self.error('":"')
+        else:
+            return self.epsilon()
 
     """
     expr -> ID ":=" expr
@@ -175,7 +192,13 @@ class Parser:
     """
 
     def disjunc(self):
-        possibleEndToks = [TokenType.EOL, TokenType.RPAREN, TokenType.RSQUARE, TokenType.ASSIGN, TokenType.COMMA]
+        possibleEndToks = [
+            TokenType.EOL,
+            TokenType.RPAREN,
+            TokenType.RSQUARE,
+            TokenType.ASSIGN,
+            TokenType.COMMA,
+        ]
 
         lhs = self.conjunc()
 
@@ -445,7 +468,7 @@ class Parser:
         | "~" elem
         | "(" expr ")"
         | ID
-        | ID ":" args
+        | ID ":" args EOL
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
@@ -453,7 +476,7 @@ class Parser:
     """
 
     def elem(self):
-        if self.currTok.type == TokenType.IDENT:
+        if self.currTok.type == TokenType.ID:
             tok = self.currTok
             ident = self.currTok.lexVal
             identAST = IdentifierASTNode(
@@ -542,7 +565,9 @@ class Parser:
             argList = self.arg_list()
             if argList:
                 return argList
-        elif self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.RSQUARE:  # id: or id []
+        elif (
+            self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.RSQUARE
+        ):  # id: or id []
             return self.epsilon()
         else:
             self.error("list of expressins as arguments or newline")
@@ -567,7 +592,10 @@ class Parser:
                 expr = self.expr()
                 if expr:
                     argList.append(expr)
-            elif self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.RSQUARE:
+            elif (
+                self.currTok.type == TokenType.EOL
+                or self.currTok.type == TokenType.RSQUARE
+            ):
                 return argList
             else:
                 self.error('"," or newline')

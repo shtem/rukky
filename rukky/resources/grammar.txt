@@ -81,7 +81,7 @@ elem -> "-" elem
         | "~" elem
         | "(" expr ")"
         | ID
-        | ID ":" args
+        | ID ":" args EOL
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
