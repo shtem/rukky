@@ -91,8 +91,32 @@ class Parser:
     def else_stmt(self):
         pass
 
+    """
+    return_stmt -> "return" ":" EOL
+                | "return" ":" expr EOL
+    """
+
     def return_stmt(self):
-        pass
+        if self.currTok.type == TokenType.RETURN:
+            tok = self.currTok
+            self.eat()  # eat 'return'
+            if self.currTok.type == TokenType.COLON:
+                self.eat()  # eat :
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    return ReturnStmtASTNode(token=tok, returnBody=None)
+                else:
+                    body = self.expr()
+                    if self.currTok.type == TokenType.EOL:
+                        self.eat()  # eat \n
+                        if body:
+                            return ReturnStmtASTNode(token=tok, returnBody=body)
+                    else:
+                         self.error("newline")
+            else:
+                self.error('":"')
+        else:
+            return self.epsilon()
 
     """
     break_stmt -> "break" ":" EOL
