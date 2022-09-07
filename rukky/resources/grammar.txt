@@ -10,16 +10,16 @@ var_type -> "real"
 func_type -> "void"
             | var_type
             | var_type "[]"
-func_decl -> func_type ID ":=" "(" params ")" block
+func_decl -> func_type ID ":=" "(" params ")" block 
 params -> param_list
         | epsilon
 param_list -> param_list "," param
             | param
 param -> var_type ID
 
-block -> "{" EOL stmt_list "}"
-        | "{" EOL "}"
-        | "{}"
+block -> "{" EOL stmt_list "}" EOL
+        | "{" EOL "}" EOL
+        | "{}" EOL
 stmt_list -> stmt_list stmt
             | stmt
 stmt -> decl_stmt

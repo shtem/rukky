@@ -79,17 +79,119 @@ class Parser:
     def while_stmt(self):
         pass
 
+    """
+    if_stmt -> "if" "::" expr block elif_stmt_list else_stmt
+    """
+
     def if_stmt(self):
-        pass
+        if self.currTok.type == TokenType.IF:
+            tok = self.currTok
+            self.eat()  # eat 'if'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat() # eat ::
+                cond = self.expr()
+                if cond:
+                    body = self.block()
+                    if body:
+                        elifStmtList = self.elif_stmt_list()
+                        elseBody = self.else_stmt()
+                        return IfStmtASTNode(token=tok, cond=cond, ifBody=body, elifStmts=elifStmtList, elseBody=elseBody)
+
+                else:
+                    self.error('expression as if condition')
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
+    elif_stmt_list -> elif_stmt_list elif_stmt
+                | elif_stmt
+    """
 
     def elif_stmt_list(self):
-        pass
+        possibleEndToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.EOL,
+            TokenType.IF,
+            TokenType.ELSE,
+            TokenType.FOR,
+            TokenType.WHILE,
+            TokenType.RETURN,
+            TokenType.BREAK,
+            TokenType.VOID,
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+            TokenType.DISPLAY,
+            TokenType.LENGTH,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.RBRACE,
+        ]
+
+        elifStmtList = []
+
+        elifStmt = self.elif_stmt()
+        if elifStmt:
+            elifStmtList.append(elifStmt)
+
+        while True:
+            if self.currTok.type == TokenType.ELIF:
+                elifStmt = self.elif_stmt()
+                if elifStmt:
+                    elifStmtList.append(elifStmt)
+            elif self.currTok.type == TokenType.EOL in possibleEndToks:
+                return elifStmtList
+            else:
+                self.error('newline or "else"')
+
+    """
+    elif_stmt -> "elif" "::" expr block
+                | epsilon
+    """
 
     def elif_stmt(self):
-        pass
+        if self.currTok.type == TokenType.ELIF:
+            tok = self.currTok
+            self.eat()  # eat 'elif'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat() # eat ::
+                cond = self.expr()
+                if cond:
+                    body = self.block()
+                    if body:
+                        return ElifStmtASTNode(token=tok, cond=cond, elifBody=body)
+                else:
+                    self.error('expression as elif condition')
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
+    else_stmt -> "else" "::" block
+                | epsilon
+    """
 
     def else_stmt(self):
-        pass
+        if self.currTok.type == TokenType.ELSE:
+            self.eat()  # eat 'else'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat() # eat ::
+                body = self.block()
+                if body:
+                    return body
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
 
     """
     return_stmt -> "return" ":" EOL
@@ -583,6 +685,8 @@ class Parser:
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
+            TokenType.PI,
+            TokenType.EULER,
         ]
 
         if self.currTok.type in possibleStartToks:  # id: args or id := [args]
