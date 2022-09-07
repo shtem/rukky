@@ -54,9 +54,9 @@ class TokenType(Enum):
     RETURN = "return"
     BREAK = "break"
 
-    ID = -1, DISPLAY, LENGTH, PI, EULER   # [a-zA-Z_][a-zA-Z_0-9]*
+    ID = -1  # [a-zA-Z_][a-zA-Z_0-9]*
     REAL_LIT = -2  # [0-9]+ | ([0-9]*.[0-9]+)
-    STRING_LIT = -3, NULL  # ".*"
+    STRING_LIT = -3  # ".*"
     BOOL_LIT = TRUE, FALSE  # true or false
 
 

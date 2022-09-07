@@ -1,6 +1,7 @@
 from common.lex_enums import TokenType
 from common.errors import ParserError
 from data.ast import *
+import math
 import sys
 
 
@@ -88,17 +89,23 @@ class Parser:
             tok = self.currTok
             self.eat()  # eat 'if'
             if self.currTok.type == TokenType.RES_COLON:
-                self.eat() # eat ::
+                self.eat()  # eat ::
                 cond = self.expr()
                 if cond:
                     body = self.block()
                     if body:
                         elifStmtList = self.elif_stmt_list()
                         elseBody = self.else_stmt()
-                        return IfStmtASTNode(token=tok, cond=cond, ifBody=body, elifStmts=elifStmtList, elseBody=elseBody)
+                        return IfStmtASTNode(
+                            token=tok,
+                            cond=cond,
+                            ifBody=body,
+                            elifStmts=elifStmtList,
+                            elseBody=elseBody,
+                        )
 
                 else:
-                    self.error('expression as if condition')
+                    self.error("expression as if condition")
             else:
                 self.error('"::"')
         else:
@@ -119,6 +126,7 @@ class Parser:
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
             TokenType.EOL,
+            TokenType.RBRACE,
             TokenType.IF,
             TokenType.ELSE,
             TokenType.FOR,
@@ -131,9 +139,9 @@ class Parser:
             TokenType.STRING,
             TokenType.DISPLAY,
             TokenType.LENGTH,
+            TokenType.NULL,
             TokenType.PI,
             TokenType.EULER,
-            TokenType.RBRACE,
         ]
 
         elifStmtList = []
@@ -147,7 +155,7 @@ class Parser:
                 elifStmt = self.elif_stmt()
                 if elifStmt:
                     elifStmtList.append(elifStmt)
-            elif self.currTok.type == TokenType.EOL in possibleEndToks:
+            elif self.currTok.type in possibleEndToks:
                 return elifStmtList
             else:
                 self.error('newline or "else"')
@@ -162,14 +170,14 @@ class Parser:
             tok = self.currTok
             self.eat()  # eat 'elif'
             if self.currTok.type == TokenType.RES_COLON:
-                self.eat() # eat ::
+                self.eat()  # eat ::
                 cond = self.expr()
                 if cond:
                     body = self.block()
                     if body:
                         return ElifStmtASTNode(token=tok, cond=cond, elifBody=body)
                 else:
-                    self.error('expression as elif condition')
+                    self.error("expression as elif condition")
             else:
                 self.error('"::"')
         else:
@@ -184,7 +192,7 @@ class Parser:
         if self.currTok.type == TokenType.ELSE:
             self.eat()  # eat 'else'
             if self.currTok.type == TokenType.RES_COLON:
-                self.eat() # eat ::
+                self.eat()  # eat ::
                 body = self.block()
                 if body:
                     return body
@@ -214,7 +222,7 @@ class Parser:
                         if body:
                             return ReturnStmtASTNode(token=tok, returnBody=body)
                     else:
-                         self.error("newline")
+                        self.error("newline")
             else:
                 self.error('":"')
         else:
@@ -599,6 +607,8 @@ class Parser:
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
+
+        and reserved keywords
     """
 
     def elem(self):
@@ -639,6 +649,48 @@ class Parser:
                     self.error('"]"')
             else:
                 return identAST  # id
+        elif self.currTok.type == TokenType.DISPLAY:
+            tok = self.currTok
+            keyWordAST = ReservedKeyWordASTNode(
+                token=tok, value=print, ident=self.currTok.lexVal
+            )
+            self.eat()  # eat 'display'
+            if self.currTok.type == TokenType.COLON:
+                self.eat()  # eat :
+                args = self.args()
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    if args:
+                        return CallExprASTNode(
+                            token=tok, callee=keyWordAST, args=args
+                        )  # display: args
+                    else:
+                        return CallExprASTNode(
+                            token=tok, callee=identAST, args=[]
+                        )  # display:
+                else:
+                    self.error("newline")
+            else:
+                self.error('":"')
+        elif self.currTok.type == TokenType.LENGTH:
+            tok = self.currTok
+            keyWordAST = ReservedKeyWordASTNode(
+                token=tok, value=len, ident=self.currTok.lexVal
+            )
+            self.eat()  # eat 'len'
+            if self.currTok.type == TokenType.COLON:
+                self.eat()  # eat :
+                args = self.args()
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    if args:
+                        return CallExprASTNode(
+                            token=tok, callee=keyWordAST, args=args
+                        )  # len: args
+                else:
+                    self.error("newline")
+            else:
+                self.error('":"')
         elif self.currTok.type == TokenType.MINUS or self.currTok.type == TokenType.NOT:
             op = self.currTok
             self.eat()  # eat - ~
@@ -666,6 +718,24 @@ class Parser:
             strVal = StringASTNode(token=self.currTok, value=self.currTok.lexVal)
             self.eat()  # eat string value
             return strVal
+        elif self.currTok.type == TokenType.NULL:
+            nullVal = ReservedKeyWordASTNode(
+                token=self.currTok, value=None, ident=self.currTok.lexVal
+            )
+            self.eat()  # eat 'null'
+            return nullVal
+        elif self.currTok.type == TokenType.PI:
+            piVal = ReservedKeyWordASTNode(
+                token=self.currTok, value=math.pi, ident=self.currTok.lexVal
+            )
+            self.eat()  # eat 'pi'
+            return piVal
+        elif self.currTok.type == TokenType.EULER:
+            eulVal = ReservedKeyWordASTNode(
+                token=self.currTok, value=math.e, ident=self.currTok.lexVal
+            )
+            self.eat()  # eat 'eul'
+            return eulVal
         else:
             self.error(
                 'identifier or unary expression or "(" or real, bool or string literal'
@@ -685,6 +755,7 @@ class Parser:
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
+            TokenType.NULL,
             TokenType.PI,
             TokenType.EULER,
         ]

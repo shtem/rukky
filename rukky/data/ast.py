@@ -99,6 +99,27 @@ class IdentifierASTNode(ExprASTNode):
         pass
 
 
+class ReservedKeyWordASTNode(IdentifierASTNode):
+    def __init__(
+        self,
+        token,
+        value,
+        ident: str,
+    ):
+        self.token = token
+        self.value = value
+        self.ident = ident
+
+    def __str__(self):
+        return f"-> ReservedKeyWordASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.value}"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def codegen(self):
+        pass
+
+
 class UnaryExprASTNode(ExprASTNode):
     def __init__(self, op, rhs: ExprASTNode):
         self.op = op
