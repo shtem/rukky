@@ -71,14 +71,102 @@ class Parser:
     def decl_stmt(self):
         pass
 
+    """
+    expr_stmt -> expr EOL
+            | EOL
+    """
+
     def expr_stmt(self):
-        pass
+        if self.currTok.type == TokenType.EOL:
+            self.eat()  # eat \n
+            return self.epsilon()
+        else:
+            expr = self.expr()
+            if self.currTok.type == TokenType.EOL:
+                self.eat()  # eat \n
+                if expr:
+                    return expr
+            else:
+                self.error("newline")
+
+    """
+    expr_stmt -> expr EOL
+            | EOL
+    """
 
     def for_stmt(self):
-        pass
+        if self.currTok.type == TokenType.FOR:
+            tok = self.currTok
+            self.eat()  # eat 'for'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                if self.currTok.type == TokenType.ID:
+                    identAST = IdentifierASTNode(
+                        token=self.currTok,
+                        type="real",
+                        ident=self.currTok.lexVal,
+                        index=None,
+                        listFlag=False,
+                    )
+                    self.eat()  # eat id
+                    if self.currTok.type == TokenType.ASSIGN:
+                        self.eat()  # eat :=
+                        start = self.expr()
+                        if self.currTok.type == TokenType.COLON:
+                            self.eat()  # eat :
+                            end = self.expr()
+                            if self.currTok.type == TokenType.COLON:
+                                self.eat()  # eat :
+                                increment = self.expr()
+                                if start and end and increment:
+                                    body = self.block()
+                                    if body:
+                                        return ForStmtASTNode(
+                                            token=tok,
+                                            counter=identAST,
+                                            start=start,
+                                            end=end,
+                                            increment=increment,
+                                            forBody=body,
+                                        )
+                                else:
+                                    self.error(
+                                        "expression as start or end or increment value of for loop"
+                                    )
+                            else:
+                                self.error('":"')
+                        else:
+                            self.error('":"')
+                    else:
+                        self.error('":="')
+                else:
+                    self.error("identifier")
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
+    while_stmt -> "while" "::" expr block
+    """
 
     def while_stmt(self):
-        pass
+        if self.currTok.type == TokenType.WHILE:
+            tok = self.currTok
+            self.eat()  # eat 'while'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                cond = self.expr()
+                if cond:
+                    body = self.block()
+                    if body:
+                        return WhileStmtASTNode(token=tok, cond=cond, whileBody=body)
+                else:
+                    self.error("expression as while condition")
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
 
     """
     if_stmt -> "if" "::" expr block elif_stmt_list else_stmt
