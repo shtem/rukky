@@ -11,11 +11,10 @@ class Parser:
         self.lexer = lexer
         self.currTok: Token = None
 
-    def error(self, message: str):
+    def error(self, missing: str):
         print(
             ParserError(
-                token=self.currTok,
-                message=f'Unexpected Token "{repr(self.currTok)}". Expected {message}',
+                message=f'Unexpected Token "{repr(self.currTok)}". Expected {missing}',
             )
         )
         sys.exit(0)

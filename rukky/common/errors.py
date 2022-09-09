@@ -8,9 +8,8 @@ class ErrorCode(Enum):
 
 
 class Error:
-    def __init__(self, errorCode=None, token=None, message=None):
+    def __init__(self, errorCode: ErrorCode, message: str):
         self.errorCode = errorCode
-        self.token = token
         self.message = f"{self.errorCode.value}: {message}"
 
     def __str__(self):
@@ -21,15 +20,15 @@ class Error:
 
 
 class LexerError(Error):
-    def __init__(self, message=None):
-        super().__init__(ErrorCode.LEXER_ERROR, None, message)
+    def __init__(self, message: str):
+        super().__init__(ErrorCode.LEXER_ERROR, message)
 
 
 class ParserError(Error):
-    def __init__(self, token=None, message=None):
-        super().__init__(ErrorCode.SYNTAX_ERROR, token, message)
+    def __init__(self, message: str):
+        super().__init__(ErrorCode.SYNTAX_ERROR, message)
 
 
 class SemanticError(Error):
-    def __init__(self, token=None, message=None):
-        super().__init__(ErrorCode.RUNTIME_ERROR, token, message)
+    def __init__(self, message: str):
+        super().__init__(ErrorCode.RUNTIME_ERROR, message)
