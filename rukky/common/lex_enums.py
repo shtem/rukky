@@ -47,10 +47,19 @@ class TokenType(Enum):
     IF = "if"
     ELIF = "elif"
     ELSE = "else"
+
     DISPLAY = "display"
     LENGTH = "len"
+    FLOOR = "floor"
+    CEIL = "ceil"
+    SQRT = "sqrt"
+    LOG = "log"
+    SIN = "sin"
+    COS = "cos"
+    TAN = "tan"
     PI = "pi"
     EULER = "eul"
+
     RETURN = "return"
     BREAK = "break"
 

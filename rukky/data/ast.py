@@ -104,12 +104,12 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
     def __init__(
         self,
         token: Token,
-        value,
         ident: str,
+        value,
     ):
         self.token = token
-        self.value = value
         self.ident = ident
+        self.value = value
 
     def __str__(self):
         return f"-> ReservedKeyWordASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.value}"

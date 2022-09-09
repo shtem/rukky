@@ -227,6 +227,13 @@ class Parser:
             TokenType.STRING,
             TokenType.DISPLAY,
             TokenType.LENGTH,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
             TokenType.NULL,
             TokenType.PI,
             TokenType.EULER,
@@ -695,8 +702,6 @@ class Parser:
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
-
-        and reserved keywords
     """
 
     def elem(self):
@@ -737,48 +742,6 @@ class Parser:
                     self.error('"]"')
             else:
                 return identAST  # id
-        elif self.currTok.type == TokenType.DISPLAY:
-            tok = self.currTok
-            keyWordAST = ReservedKeyWordASTNode(
-                token=tok, value=print, ident=self.currTok.lexVal
-            )
-            self.eat()  # eat 'display'
-            if self.currTok.type == TokenType.COLON:
-                self.eat()  # eat :
-                args = self.args()
-                if self.currTok.type == TokenType.EOL:
-                    self.eat()  # eat \n
-                    if args:
-                        return CallExprASTNode(
-                            token=tok, callee=keyWordAST, args=args
-                        )  # display: args
-                    else:
-                        return CallExprASTNode(
-                            token=tok, callee=identAST, args=[]
-                        )  # display:
-                else:
-                    self.error("newline")
-            else:
-                self.error('":"')
-        elif self.currTok.type == TokenType.LENGTH:
-            tok = self.currTok
-            keyWordAST = ReservedKeyWordASTNode(
-                token=tok, value=len, ident=self.currTok.lexVal
-            )
-            self.eat()  # eat 'len'
-            if self.currTok.type == TokenType.COLON:
-                self.eat()  # eat :
-                args = self.args()
-                if self.currTok.type == TokenType.EOL:
-                    self.eat()  # eat \n
-                    if args:
-                        return CallExprASTNode(
-                            token=tok, callee=keyWordAST, args=args
-                        )  # len: args
-                else:
-                    self.error("newline")
-            else:
-                self.error('":"')
         elif self.currTok.type == TokenType.MINUS or self.currTok.type == TokenType.NOT:
             op = self.currTok
             self.eat()  # eat - ~
@@ -806,28 +769,8 @@ class Parser:
             strVal = StringASTNode(token=self.currTok, value=self.currTok.lexVal)
             self.eat()  # eat string value
             return strVal
-        elif self.currTok.type == TokenType.NULL:
-            nullVal = ReservedKeyWordASTNode(
-                token=self.currTok, value=None, ident=self.currTok.lexVal
-            )
-            self.eat()  # eat 'null'
-            return nullVal
-        elif self.currTok.type == TokenType.PI:
-            piVal = ReservedKeyWordASTNode(
-                token=self.currTok, value=math.pi, ident=self.currTok.lexVal
-            )
-            self.eat()  # eat 'pi'
-            return piVal
-        elif self.currTok.type == TokenType.EULER:
-            eulVal = ReservedKeyWordASTNode(
-                token=self.currTok, value=math.e, ident=self.currTok.lexVal
-            )
-            self.eat()  # eat 'eul'
-            return eulVal
         else:
-            self.error(
-                'identifier or unary expression or "(" or real, bool or string literal'
-            )
+            return self._reserved_keywords()
 
     """
     args -> arg_list
@@ -893,3 +836,64 @@ class Parser:
 
     def epsilon(self):
         return None
+
+    """
+    Handles reserved keywords and functions
+    """
+
+    def _reserved_keywords(self):
+        keyWordToFuncDict = {
+            TokenType.DISPLAY: print,
+            TokenType.LENGTH: len,
+            TokenType.FLOOR: math.floor,
+            TokenType.CEIL: math.ceil,
+            TokenType.SQRT: math.sqrt,
+            TokenType.LOG: math.log,
+            TokenType.SIN: math.sin,
+            TokenType.COS: math.cos,
+            TokenType.TAN: math.tan,
+        }
+
+        if self.currTok.type in list(keyWordToFuncDict.keys()):
+            tok = self.currTok
+            keyWordAST = ReservedKeyWordASTNode(
+                token=tok,
+                ident=self.currTok.lexVal,
+                value=keyWordToFuncDict.get(self.currTok.type),
+            )
+            self.eat()  # eat reserved function keyword
+            if self.currTok.type == TokenType.COLON:
+                self.eat()  # eat :
+                args = self.args()
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    if args:
+                        return CallExprASTNode(
+                            token=tok, callee=keyWordAST, args=args
+                        )  # keyword: args
+                else:
+                    self.error("newline")
+            else:
+                self.error('":"')
+        elif self.currTok.type == TokenType.NULL:
+            nullVal = ReservedKeyWordASTNode(
+                token=self.currTok, ident=self.currTok.lexVal, value=None
+            )
+            self.eat()  # eat 'null'
+            return nullVal
+        elif self.currTok.type == TokenType.PI:
+            piVal = ReservedKeyWordASTNode(
+                token=self.currTok, ident=self.currTok.lexVal, value=math.pi
+            )
+            self.eat()  # eat 'pi'
+            return piVal
+        elif self.currTok.type == TokenType.EULER:
+            eulVal = ReservedKeyWordASTNode(
+                token=self.currTok, ident=self.currTok.lexVal, value=math.e
+            )
+            self.eat()  # eat 'eul'
+            return eulVal
+        else:
+            self.error(
+                'identifier or unary expression or "(" or real, bool or string literal'
+            )
