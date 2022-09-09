@@ -1,20 +1,21 @@
 from common.lex_enums import TokenType
 from common.errors import ParserError
+from src.lexer import Lexer
 from data.ast import *
 import math
 import sys
 
 
 class Parser:
-    def __init__(self, lexer):
+    def __init__(self, lexer: Lexer):
         self.lexer = lexer
-        self.currTok = None
+        self.currTok: Token = None
 
-    def error(self, message):
+    def error(self, message: str):
         print(
             ParserError(
                 token=self.currTok,
-                message=f'Unexpected Token "{self.currTok}" on line: {self.currTok.lineNo} column: {self.currTok.columnNo}. Expected {message}',
+                message=f'Unexpected Token "{repr(self.currTok)}". Expected {message}',
             )
         )
         sys.exit(0)

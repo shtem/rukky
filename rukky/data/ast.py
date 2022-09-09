@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from data.token import Token
 
 
 class ASTNode(ABC):
@@ -20,7 +21,7 @@ class ExprASTNode(StmtASTNode):
 
 
 class RealASTNode(ExprASTNode):
-    def __init__(self, token, value: str):
+    def __init__(self, token: Token, value: str):
         self.token = token
         self.value = float(value)
 
@@ -35,7 +36,7 @@ class RealASTNode(ExprASTNode):
 
 
 class BoolASTNode(ExprASTNode):
-    def __init__(self, token, value: str):
+    def __init__(self, token: Token, value: str):
         self.token = token
         self.value = bool(value)
 
@@ -50,7 +51,7 @@ class BoolASTNode(ExprASTNode):
 
 
 class StringASTNode(ExprASTNode):
-    def __init__(self, token, value: str):
+    def __init__(self, token: Token, value: str):
         self.token = token
         self.value = str(value)
 
@@ -66,7 +67,7 @@ class StringASTNode(ExprASTNode):
 
 class IdentifierASTNode(ExprASTNode):
     def __init__(
-        self, token, type: str, ident: str, index: ExprASTNode, listFlag: bool
+        self, token: Token, type: str, ident: str, index: ExprASTNode, listFlag: bool
     ):
         self.token = token
         self.type = type
@@ -102,7 +103,7 @@ class IdentifierASTNode(ExprASTNode):
 class ReservedKeyWordASTNode(IdentifierASTNode):
     def __init__(
         self,
-        token,
+        token: Token,
         value,
         ident: str,
     ):
@@ -121,7 +122,7 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
 
 
 class UnaryExprASTNode(ExprASTNode):
-    def __init__(self, op, rhs: ExprASTNode):
+    def __init__(self, op: Token, rhs: ExprASTNode):
         self.op = op
         self.rhs = rhs
 
@@ -136,7 +137,7 @@ class UnaryExprASTNode(ExprASTNode):
 
 
 class BinaryExprASTNode(ExprASTNode):
-    def __init__(self, op, lhs: ExprASTNode, rhs: ExprASTNode):
+    def __init__(self, op: Token, lhs: ExprASTNode, rhs: ExprASTNode):
         self.op = op
         self.lhs = lhs
         self.rhs = rhs
@@ -152,7 +153,9 @@ class BinaryExprASTNode(ExprASTNode):
 
 
 class CallExprASTNode(ExprASTNode):
-    def __init__(self, token, callee: IdentifierASTNode, args: list[ExprASTNode]):
+    def __init__(
+        self, token: Token, callee: IdentifierASTNode, args: list[ExprASTNode]
+    ):
         self.token = token
         self.callee = callee
         self.args = args
@@ -172,7 +175,7 @@ class CallExprASTNode(ExprASTNode):
 
 
 class ListASTNode(ExprASTNode):
-    def __init__(self, token, elems: list[ExprASTNode]):
+    def __init__(self, token: Token, elems: list[ExprASTNode]):
         self.token = token
         self.elems = elems
 
@@ -191,7 +194,7 @@ class ListASTNode(ExprASTNode):
 
 
 class AssignASTNode(ExprASTNode):
-    def __init__(self, token, var: IdentifierASTNode, value: ExprASTNode):
+    def __init__(self, token: Token, var: IdentifierASTNode, value: ExprASTNode):
         self.token = token
         self.var = var
         self.value = value
@@ -210,7 +213,7 @@ class AssignASTNode(ExprASTNode):
 
 
 class StmtBlockASTNode(StmtASTNode):
-    def __init__(self, token, stmtList: list[StmtASTNode]):
+    def __init__(self, token: Token, stmtList: list[StmtASTNode]):
         self.token = token
         self.stmtList = stmtList
 
@@ -229,7 +232,7 @@ class StmtBlockASTNode(StmtASTNode):
 
 
 class ElifStmtASTNode(StmtASTNode):
-    def __init__(self, token, cond: ExprASTNode, elifBody: StmtBlockASTNode):
+    def __init__(self, token: Token, cond: ExprASTNode, elifBody: StmtBlockASTNode):
         self.token = token
         self.cond = cond
         self.elifBody = elifBody
@@ -247,7 +250,7 @@ class ElifStmtASTNode(StmtASTNode):
 class IfStmtASTNode(StmtASTNode):
     def __init__(
         self,
-        token,
+        token: Token,
         cond: ExprASTNode,
         ifBody: StmtBlockASTNode,
         elifStmts: list[ElifStmtASTNode],
@@ -276,7 +279,7 @@ class IfStmtASTNode(StmtASTNode):
 
 
 class WhileStmtASTNode(StmtASTNode):
-    def __init__(self, token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
+    def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
         self.token = token
         self.cond = cond
         self.whileBody = whileBody
@@ -298,7 +301,7 @@ class WhileStmtASTNode(StmtASTNode):
 class ForStmtASTNode(StmtASTNode):
     def __init__(
         self,
-        token,
+        token: Token,
         counter: IdentifierASTNode,
         start: ExprASTNode,
         end: ExprASTNode,
@@ -327,7 +330,7 @@ class ForStmtASTNode(StmtASTNode):
 
 
 class ReturnStmtASTNode(StmtASTNode):
-    def __init__(self, token, returnBody: ExprASTNode):
+    def __init__(self, token: Token, returnBody: ExprASTNode):
         self.token = token
         self.returnBody = returnBody
 
@@ -346,7 +349,7 @@ class ReturnStmtASTNode(StmtASTNode):
 
 
 class BreakStmtASTNode(StmtASTNode):
-    def __init__(self, token):
+    def __init__(self, token: Token):
         self.token = token
 
     def __str__(self):
@@ -362,7 +365,7 @@ class BreakStmtASTNode(StmtASTNode):
 class FunctionASTNode(ASTNode):
     def __init__(
         self,
-        token,
+        token: Token,
         funcName: IdentifierASTNode,
         params: list[IdentifierASTNode],
         funcBody: StmtBlockASTNode,

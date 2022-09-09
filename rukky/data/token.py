@@ -1,5 +1,8 @@
+from common.lex_enums import TokenType
+
+
 class Token:
-    def __init__(self, type, lexVal, lineNo=None, columnNo=None):
+    def __init__(self, type: TokenType, lexVal: str, lineNo: int, columnNo: int):
         self.type = type
         self.lexVal = lexVal
         self.lineNo = lineNo
