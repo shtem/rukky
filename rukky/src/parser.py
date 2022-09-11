@@ -65,11 +65,159 @@ class Parser:
     def stmt_list(self):
         pass
 
+    """
+    stmt -> decl_stmt
+        | expr_stmt
+        | for_stmt
+        | while_stmt
+        | if_stmt
+        | return_stmt
+        | break_stmt
+    """
+
     def stmt(self):
-        pass
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.DISPLAY,
+            TokenType.LENGTH,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.EOL,
+        ]
+
+        if self.currTok.type == TokenType.FOR:
+            return self.for_stmt()
+        elif self.currTok.type == TokenType.WHILE:
+            return self.while_stmt()
+        elif self.currTok.type == TokenType.IF:
+            return self.if_stmt()
+        elif self.currTok.type == TokenType.RETURN:
+            return self.return_stmt()
+        elif self.currTok.type == TokenType.BREAK:
+            return self.break_stmt()
+        elif self.currTok.type in [TokenType.REAL, TokenType.BOOL, TokenType.STRING]:
+            return self.decl_stmt()
+        elif self.currTok.type in possibleStartToks:
+            return self.expr_stmt()
+        else:
+            return self.epsilon()
+
+    """
+    decl_stmt -> var_type ID EOL
+            | var_type ID ":=" expr EOL
+            | var_type "[]" ID EOL
+            | var_type "[]" ID ":=" "[" args "]" EOL
+    """
 
     def decl_stmt(self):
-        pass
+        vType = self.var_type()
+
+        if vType:
+            if self.currTok.type == TokenType.ID:
+                tok = self.currTok
+                if self.peek().type == TokenType.EOL:
+                    ident = tok.lexVal
+                    self.eat()  # eat id
+                    identAST = IdentifierASTNode(
+                        token=tok, type=vType, ident=ident, index=None, listFlag=False
+                    )
+                    self.eat()  # eat \n
+                    return identAST
+                elif self.peek().type == TokenType.ASSIGN:
+                    ident = tok.lexVal
+                    self.eat()  # eat id
+                    identAST = IdentifierASTNode(
+                        token=tok, type=vType, ident=ident, index=None, listFlag=False
+                    )
+                    self.eat()  # eat :=
+                    val = self.expr()
+                    if self.currTok.type == TokenType.EOL:
+                        self.eat()  # eat \n
+                        if val:
+                            return AssignASTNode(token=tok, var=identAST, value=val)
+                    else:
+                        self.error("newline")
+                else:
+                    self.error('newline or ":="')
+            elif self.currTok == TokenType.LSQUARE:
+                self.eat()  # eat [
+                if self.currTok.type == TokenType.RSQUARE:
+                    self.eat()  # eat ]
+                    if self.currTok.type == TokenType.ID:
+                        tok = self.currTok
+                        if self.peek().type == TokenType.EOL:
+                            ident = tok.lexVal
+                            self.eat()  # eat id
+                            identAST = IdentifierASTNode(
+                                token=tok,
+                                type=vType,
+                                ident=ident,
+                                index=None,
+                                listFlag=True,
+                            )
+                            self.eat()  # eat \n
+                            return identAST
+                        if self.peek().type == TokenType.ASSIGN:
+                            ident = tok.lexVal
+                            self.eat()  # eat id
+                            identAST = IdentifierASTNode(
+                                token=tok,
+                                type=vType,
+                                ident=ident,
+                                index=None,
+                                listFlag=True,
+                            )
+                            self.eat()  # eat :=
+                            if self.currTok == TokenType.LSQUARE:
+                                listTok = self.currTok
+                                self.eat()  # eat [
+                                elems = self.args()
+                                if self.currTok.type == TokenType.RSQUARE:
+                                    self.eat()  # eat ]
+                                    if self.currTok.type == TokenType.EOL:
+                                        self.eat()  # eat \n
+                                        if elems:
+                                            listAST = ListASTNode(
+                                                token=listTok, elems=elems
+                                            )
+                                            return AssignASTNode(
+                                                token=tok, var=identAST, value=listAST
+                                            )
+                                        else:
+                                            listAST = ListASTNode(
+                                                token=listTok, elems=[]
+                                            )
+                                            return AssignASTNode(
+                                                token=tok, var=identAST, value=listAST
+                                            )
+                                else:
+                                    self.error('"]"')
+                            else:
+                                self.error('"["')
+                        else:
+                            self.error('newline or ":="')
+                    else:
+                        self.error("identifier")
+                else:
+                    self.error('"]"')
+            else:
+                self.error('identifier or "["')
+        else:
+            return self.epsilon()
 
     """
     expr_stmt -> expr EOL
@@ -213,7 +361,6 @@ class Parser:
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
-            TokenType.EOL,
             TokenType.RBRACE,
             TokenType.IF,
             TokenType.ELSE,
@@ -237,6 +384,7 @@ class Parser:
             TokenType.NULL,
             TokenType.PI,
             TokenType.EULER,
+            TokenType.EOL,
         ]
 
         elifStmtList = []
@@ -427,6 +575,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.conjunc()
@@ -459,6 +609,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.equiv()
@@ -493,6 +645,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.ineq()
@@ -531,6 +685,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.term()
@@ -576,6 +732,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.factor()
@@ -623,6 +781,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.expo()
@@ -673,6 +833,8 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.ASSIGN,
             TokenType.COMMA,
+            TokenType.COLON,
+            TokenType.LBRACE,
         ]
 
         lhs = self.elem()
@@ -697,7 +859,7 @@ class Parser:
         | "~" elem
         | "(" expr ")"
         | ID
-        | ID ":" args EOL
+        | ID ":" args ":"
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
@@ -715,18 +877,23 @@ class Parser:
             if self.currTok.type == TokenType.COLON:
                 self.eat()  # eat :
                 args = self.args()
-                if self.currTok.type == TokenType.EOL:
-                    self.eat()  # eat \n
+                if self.currTok.type == TokenType.COLON:
+                    self.eat()  # eat :
                     if args:
                         return CallExprASTNode(
                             token=tok, callee=identAST, args=args
-                        )  # id: args
+                        )  # id: args:
                     else:
                         return CallExprASTNode(
                             token=tok, callee=identAST, args=[]
-                        )  # id:
+                        )  # id: : 1st way to make a function call with no arguments
                 else:
-                    self.error("newline")
+                    self.error('":"')
+            elif self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                return CallExprASTNode(
+                    token=tok, callee=identAST, args=[]
+                )  # id:: 2nd way to make a function call with no arguments
             elif self.currTok.type == TokenType.LSQUARE:
                 self.eat()  # eat [
                 index = self.expr()
@@ -787,17 +954,26 @@ class Parser:
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
             TokenType.NULL,
+            TokenType.LENGTH,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
             TokenType.PI,
             TokenType.EULER,
         ]
 
-        if self.currTok.type in possibleStartToks:  # id: args or id := [args]
+        if self.currTok.type in possibleStartToks:  # id: args: or id := [args]
             argList = self.arg_list()
             if argList:
                 return argList
         elif (
-            self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.RSQUARE
-        ):  # id: or id []
+            self.currTok.type == TokenType.COLON
+            or self.currTok.type == TokenType.RSQUARE
+        ):  # id: : or id []
             return self.epsilon()
         else:
             self.error("list of expressins as arguments or newline")
@@ -823,12 +999,12 @@ class Parser:
                 if expr:
                     argList.append(expr)
             elif (
-                self.currTok.type == TokenType.EOL
+                self.currTok.type == TokenType.COLON
                 or self.currTok.type == TokenType.RSQUARE
             ):
                 return argList
             else:
-                self.error('"," or newline')
+                self.error('"," or "]" or ":"')
 
     """
     epsilon -> 
@@ -865,16 +1041,19 @@ class Parser:
             if self.currTok.type == TokenType.COLON:
                 self.eat()  # eat :
                 args = self.args()
-                if self.currTok.type == TokenType.EOL:
-                    self.eat()  # eat \n
+                if self.currTok.type == TokenType.COLON:
+                    self.eat()  # eat :
                     if args:
                         return CallExprASTNode(
                             token=tok, callee=keyWordAST, args=args
-                        )  # keyword: args
+                        )  # keyword: args:
                 else:
-                    self.error("newline")
-            else:
-                self.error('":"')
+                    self.error('":"')
+            elif self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                return (
+                    self.epsilon()
+                )  # don't want to call any of the reserved functions without any arguments
         elif self.currTok.type == TokenType.NULL:
             nullVal = ReservedKeyWordASTNode(
                 token=self.currTok, ident=self.currTok.lexVal, value=None
