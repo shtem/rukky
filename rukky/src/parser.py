@@ -1054,6 +1054,8 @@ class Parser:
                 return (
                     self.epsilon()
                 )  # don't want to call any of the reserved functions without any arguments
+            else:
+                self.error('":"')
         elif self.currTok.type == TokenType.NULL:
             nullVal = ReservedKeyWordASTNode(
                 token=self.currTok, ident=self.currTok.lexVal, value=None
