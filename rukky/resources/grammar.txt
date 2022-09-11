@@ -46,9 +46,9 @@ elif_stmt -> "elif" "::" expr block
 else_stmt -> "else" "::" block
             | epsilon
 
-return_stmt -> "return" ":" EOL
-            | "return" ":" expr EOL
-break_stmt -> "break" ":" EOL
+return_stmt -> "return" "::" EOL
+            | "return" "::" expr EOL
+break_stmt -> "break" "::" EOL
 
 expr -> ID ":=" expr
         | ID ":=" "[" args "]"

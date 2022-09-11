@@ -445,16 +445,16 @@ class Parser:
             return self.epsilon()
 
     """
-    return_stmt -> "return" ":" EOL
-                | "return" ":" expr EOL
+    return_stmt -> "return" "::" EOL
+                | "return" "::" expr EOL
     """
 
     def return_stmt(self):
         if self.currTok.type == TokenType.RETURN:
             tok = self.currTok
             self.eat()  # eat 'return'
-            if self.currTok.type == TokenType.COLON:
-                self.eat()  # eat :
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
                 if self.currTok.type == TokenType.EOL:
                     self.eat()  # eat \n
                     return ReturnStmtASTNode(token=tok, returnBody=None)
@@ -467,27 +467,27 @@ class Parser:
                     else:
                         self.error("newline")
             else:
-                self.error('":"')
+                self.error('"::"')
         else:
             return self.epsilon()
 
     """
-    break_stmt -> "break" ":" EOL
+    break_stmt -> "break" "::" EOL
     """
 
     def break_stmt(self):
         if self.currTok.type == TokenType.BREAK:
             tok = self.currTok
             self.eat()  # eat 'break'
-            if self.currTok.type == TokenType.COLON:
-                self.eat()  # eat :
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
                 if self.currTok.type == TokenType.EOL:
                     self.eat()  # eat \n
                     return BreakStmtASTNode(token=tok)
                 else:
                     self.error("newline")
             else:
-                self.error('":"')
+                self.error('"::"')
         else:
             return self.epsilon()
 
