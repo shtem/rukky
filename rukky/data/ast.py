@@ -264,8 +264,9 @@ class IfStmtASTNode(StmtASTNode):
 
     def __str__(self):
         out = f"-> IfStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.cond)}\n\t-{repr(self.ifBody)} "
-        for el in self.elifStmts:
-            out += f"\n\t-{repr(el)}"
+        if self.elifStmts:
+            for el in self.elifStmts:
+                out += f"\n\t-{repr(el)}"
         if self.elseBody:
             out += f"\n\t-{repr(self.elseBody)}"
 

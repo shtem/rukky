@@ -59,11 +59,107 @@ class Parser:
     def param(self):
         pass
 
-    def block(self):
-        pass
+    """
+    block -> "{" EOL stmt_list "}" EOL
+            | "{" EOL "}" EOL
+            | "{}" EOL
+    """
 
+    def block(self):
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.IF,
+            TokenType.FOR,
+            TokenType.WHILE,
+            TokenType.RETURN,
+            TokenType.BREAK,
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+            TokenType.DISPLAY,
+            TokenType.LENGTH,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.EOL,
+        ]
+        
+        if self.currTok.type == TokenType.LBRACE:
+            tok = self.currTok
+            self.eat() # eat {
+            if self.currTok.type == TokenType.EOL:
+                if self.peek().type in possibleStartToks:
+                    self.eat() # eat \n
+                    stmtList = self.stmt_list()
+                    if self.currTok.type == TokenType.RBRACE:
+                        self.eat() # eat }
+                        if self.currTok.type == TokenType.EOL:
+                            self.eat() # eat \n
+                            if stmtList:
+                                return StmtBlockASTNode(token=tok, stmtList=stmtList)
+                            else:
+                                return StmtBlockASTNode(token=tok, stmtList=[])
+                        else:
+                            self.error('newline')
+                    else:
+                        self.error('"}"')
+                elif self.peek().type == TokenType.RBRACE:
+                    self.eat() # eat \n
+                    self.eat() # eat }
+                    if self.currTok.type == TokenType.EOL:
+                        self.eat() # eat \n
+                        return self.epsilon() # {\n} empty block
+                    else:
+                        self.error('newline')
+                else:
+                    self.error('expression or if, while, for, return or break statement or newline or "}"')
+            elif self.currTok.type == TokenType.RBRACE:
+                self.eat() # eat }
+                if self.currTok.type == TokenType.EOL:
+                    self.eat() # eat \n
+                    return self.epsilon() # {} empty block
+                else:
+                    self.error('newline')
+            else:
+                self.error('newline or "}"')
+        else:
+            self.error('"{"')
+
+    """
+    stmt_list -> stmt_list stmt
+                | stmt
+    """
+    
     def stmt_list(self):
-        pass
+        stmtList = []
+
+        stmt = self.stmt()
+        if stmt:
+            stmtList.append(stmt)
+
+            while True:
+                stmt = self.stmt()
+                if stmt:
+                    stmtList.append(stmt)
+                elif self.currTok.type == TokenType.RBRACE:
+                    return stmtList
+                else: 
+                    self.error('expression or if, while, for, return or break statement or newline or "}"')
+        
+        return []
 
     """
     stmt -> decl_stmt
@@ -393,15 +489,17 @@ class Parser:
         if elifStmt:
             elifStmtList.append(elifStmt)
 
-        while True:
-            if self.currTok.type == TokenType.ELIF:
-                elifStmt = self.elif_stmt()
-                if elifStmt:
-                    elifStmtList.append(elifStmt)
-            elif self.currTok.type in possibleEndToks:
-                return elifStmtList
-            else:
-                self.error('newline or "else"')
+            while True:
+                if self.currTok.type == TokenType.ELIF:
+                    elifStmt = self.elif_stmt()
+                    if elifStmt:
+                        elifStmtList.append(elifStmt)
+                elif self.currTok.type in possibleEndToks:
+                    return elifStmtList
+                else:
+                    self.error('newline or "else"')
+        
+        return []
 
     """
     elif_stmt -> "elif" "::" expr block
@@ -974,11 +1072,11 @@ class Parser:
             self.currTok.type == TokenType.COLON
             or self.currTok.type == TokenType.RSQUARE
         ):  # id: : or id []
-            return self.epsilon()
+            return []
         else:
             self.error("list of expressins as arguments or newline")
 
-        return self.epsilon()
+        return []
 
     """
     arg_list -> arg_list "," expr
@@ -992,19 +1090,21 @@ class Parser:
         if expr:
             argList.append(expr)
 
-        while True:
-            if self.currTok.type == TokenType.COMMA:
-                self.eat()  # eat ,
-                expr = self.expr()
-                if expr:
-                    argList.append(expr)
-            elif (
-                self.currTok.type == TokenType.COLON
-                or self.currTok.type == TokenType.RSQUARE
-            ):
-                return argList
-            else:
-                self.error('"," or "]" or ":"')
+            while True:
+                if self.currTok.type == TokenType.COMMA:
+                    self.eat()  # eat ,
+                    expr = self.expr()
+                    if expr:
+                        argList.append(expr)
+                elif (
+                    self.currTok.type == TokenType.COLON
+                    or self.currTok.type == TokenType.RSQUARE
+                ):
+                    return argList
+                else:
+                    self.error('"," or "]" or ":"')
+        
+        return []
 
     """
     epsilon -> 
