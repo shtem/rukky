@@ -50,14 +50,90 @@ class Parser:
     def func_decl(self):
         pass
 
+    """
+    params -> param_list
+            | epsilon
+    """
+
     def params(self):
-        pass
+        if self.currTok.type in [
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+        ]:  # func := (params)
+            paramList = self.param_list()
+            if paramList:
+                return paramList
+        elif self.currTok.type == TokenType.RPAREN:  # func := ()
+            return []
+        else:
+            self.error('"real" or "bool" or "string" or ")"')
+
+        return []
+
+    """
+    param_list -> param_list "," param
+                | param
+    """
 
     def param_list(self):
-        pass
+        paramList = []
+
+        param = self.param()
+        if param:
+            paramList.append(param)
+
+            while True:
+                if self.currTok.type == TokenType.COMMA:
+                    self.eat()  # eat ,
+                    param = self.param()
+                    if param:
+                        paramList.append(param)
+                elif self.currTok.type == TokenType.RPAREN:
+                    return paramList
+                else:
+                    self.error('"," or ")"')
+
+        return []
+
+    """
+    param_type -> var_type
+                | var_type "[]"
+    """
+
+    def param_type(self):
+        vType = self.var_type()
+
+        if vType:
+            if self.currTok.type == TokenType.LSQUARE:
+                self.eat()  # eat [
+                if self.currTok.type == TokenType.RSQUARE:
+                    self.eat()  # eat ]
+                    return vType, True  # var_type[]
+            else:
+                return vType, False  # var_type
+        else:
+            return None, False
+
+    """
+    param -> param_type ID
+    """
 
     def param(self):
-        pass
+        pType, isList = self.param_type()
+
+        if pType:
+            if self.currTok.type == TokenType.ID:
+                tok = self.currTok
+                ident = self.currTok.lexVal
+                self.eat()  # eat id
+                return IdentifierASTNode(
+                    token=tok, type=pType, ident=ident, index=None, listFlag=isList
+                )
+            else:
+                self.error("identifier")
+        else:
+            return self.epsilon()
 
     """
     block -> "{" EOL stmt_list "}" EOL
@@ -96,43 +172,45 @@ class Parser:
             TokenType.EULER,
             TokenType.EOL,
         ]
-        
+
         if self.currTok.type == TokenType.LBRACE:
             tok = self.currTok
-            self.eat() # eat {
+            self.eat()  # eat {
             if self.currTok.type == TokenType.EOL:
                 if self.peek().type in possibleStartToks:
-                    self.eat() # eat \n
+                    self.eat()  # eat \n
                     stmtList = self.stmt_list()
                     if self.currTok.type == TokenType.RBRACE:
-                        self.eat() # eat }
+                        self.eat()  # eat }
                         if self.currTok.type == TokenType.EOL:
-                            self.eat() # eat \n
+                            self.eat()  # eat \n
                             if stmtList:
                                 return StmtBlockASTNode(token=tok, stmtList=stmtList)
                             else:
                                 return StmtBlockASTNode(token=tok, stmtList=[])
                         else:
-                            self.error('newline')
+                            self.error("newline")
                     else:
                         self.error('"}"')
                 elif self.peek().type == TokenType.RBRACE:
-                    self.eat() # eat \n
-                    self.eat() # eat }
+                    self.eat()  # eat \n
+                    self.eat()  # eat }
                     if self.currTok.type == TokenType.EOL:
-                        self.eat() # eat \n
-                        return self.epsilon() # {\n} empty block
+                        self.eat()  # eat \n
+                        return self.epsilon()  # {\n} empty block
                     else:
-                        self.error('newline')
+                        self.error("newline")
                 else:
-                    self.error('expression or if, while, for, return or break statement or newline or "}"')
+                    self.error(
+                        'expression or if, while, for, return or break statement or newline or "}"'
+                    )
             elif self.currTok.type == TokenType.RBRACE:
-                self.eat() # eat }
+                self.eat()  # eat }
                 if self.currTok.type == TokenType.EOL:
-                    self.eat() # eat \n
-                    return self.epsilon() # {} empty block
+                    self.eat()  # eat \n
+                    return self.epsilon()  # {} empty block
                 else:
-                    self.error('newline')
+                    self.error("newline")
             else:
                 self.error('newline or "}"')
         else:
@@ -142,7 +220,7 @@ class Parser:
     stmt_list -> stmt_list stmt
                 | stmt
     """
-    
+
     def stmt_list(self):
         stmtList = []
 
@@ -156,9 +234,11 @@ class Parser:
                     stmtList.append(stmt)
                 elif self.currTok.type == TokenType.RBRACE:
                     return stmtList
-                else: 
-                    self.error('expression or if, while, for, return or break statement or newline or "}"')
-        
+                else:
+                    self.error(
+                        'expression or if, while, for, return or break statement or newline or "}"'
+                    )
+
         return []
 
     """
@@ -249,7 +329,7 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error('newline or ":="')
-            elif self.currTok == TokenType.LSQUARE:
+            elif self.currTok.type == TokenType.LSQUARE:
                 self.eat()  # eat [
                 if self.currTok.type == TokenType.RSQUARE:
                     self.eat()  # eat ]
@@ -278,7 +358,7 @@ class Parser:
                                 listFlag=True,
                             )
                             self.eat()  # eat :=
-                            if self.currTok == TokenType.LSQUARE:
+                            if self.currTok.type == TokenType.LSQUARE:
                                 listTok = self.currTok
                                 self.eat()  # eat [
                                 elems = self.args()
@@ -498,7 +578,7 @@ class Parser:
                     return elifStmtList
                 else:
                     self.error('newline or "else"')
-        
+
         return []
 
     """
@@ -607,7 +687,7 @@ class Parser:
                     token=tok, type=None, ident=ident, index=None, listFlag=False
                 )
                 self.eat()  # eat :=
-                if self.currTok == TokenType.LSQUARE:
+                if self.currTok.type == TokenType.LSQUARE:
                     listTok = self.currTok
                     self.eat()  # eat [
                     elems = self.args()
@@ -1074,7 +1154,7 @@ class Parser:
         ):  # id: : or id []
             return []
         else:
-            self.error("list of expressins as arguments or newline")
+            self.error('list of expressions as arguments or ":" or ")"')
 
         return []
 
@@ -1103,7 +1183,7 @@ class Parser:
                     return argList
                 else:
                     self.error('"," or "]" or ":"')
-        
+
         return []
 
     """

@@ -8,14 +8,16 @@ var_type -> "real"
             | "bool"
             | "string"
 func_type -> "void"
-            | var_type
-            | var_type "[]"
+            | param_type
 func_decl -> func_type ID ":=" "(" params ")" block 
+
 params -> param_list
         | epsilon
 param_list -> param_list "," param
             | param
-param -> var_type ID
+param_type -> var_type
+            | var_type "[]"
+param -> param_type ID
 
 block -> "{" EOL stmt_list "}" EOL
         | "{" EOL "}" EOL
