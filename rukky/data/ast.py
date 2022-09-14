@@ -76,7 +76,7 @@ class IdentifierASTNode(ExprASTNode):
         self.listFlag = listFlag
 
     def __str__(self):
-        return f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type}{list() if self.listFlag else None} {self.index}"
+        return f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type}{list() if self.listFlag else ''} {self.index if self.index else ''}"
 
     def __repr__(self):
         return self.__str__()

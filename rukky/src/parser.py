@@ -29,7 +29,6 @@ class Parser:
 
     def parse(self):
         self.eat()  # set current token to first token in the input
-
         return self.program()
 
     """
@@ -59,7 +58,7 @@ class Parser:
             declList.append(decl)
 
             while True:
-                decl = self.stmt()
+                decl = self.decl()
                 if decl:
                     declList.append(decl)
                 elif self.currTok.type == TokenType.EOF:
@@ -79,6 +78,8 @@ class Parser:
     def decl(self):
         if self.currTok.type == TokenType.RES_COLON:
             return self.func_decl()
+        elif self.currTok.type == TokenType.EOF:
+            return self.epsilon()
         else:
             return self.stmt()
 
