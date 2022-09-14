@@ -32,33 +32,74 @@ class Parser:
 
         return self.program()
 
+    """
+    program -> decl_list EOF
+    """
+
     def program(self):
-        pass
+        declList = self.decl_list()
+
+        if self.currTok.type == TokenType.EOF:
+            self.eat()  # eat EOF
+            if declList:
+                return ProgramASTNode(declarList=declList)
+            else:
+                return self.epsilon()
+
+    """
+    decl_list -> decl_list decl
+            | decl
+    """
 
     def decl_list(self):
-        pass
+        declList = []
+
+        decl = self.decl()
+        if decl:
+            declList.append(decl)
+
+            while True:
+                decl = self.stmt()
+                if decl:
+                    declList.append(decl)
+                elif self.currTok.type == TokenType.EOF:
+                    return declList
+                else:
+                    self.error(
+                        'expression or "if", "while" or "for" statement or newline or "real", "bool" or "str" or "::"'
+                    )
+
+        return []
+
+    """
+    decl -> stmt 
+        | func_decl
+    """
 
     def decl(self):
-        pass
+        if self.currTok.type == TokenType.RES_COLON:
+            return self.func_decl()
+        else:
+            return self.stmt()
 
     """
     var_type -> "real"
             | "bool"
             | "str"
     """
-    
+
     def var_type(self):
         if self.currTok.type == TokenType.REAL:
-            self.eat() # eat 'real'
-            return 'real'
+            self.eat()  # eat 'real'
+            return "real"
         elif self.currTok.type == TokenType.BOOL:
-            self.eat() # eat 'bool'
-            return 'bool'
+            self.eat()  # eat 'bool'
+            return "bool"
         elif self.currTok.type == TokenType.STRING:
-            self.eat() # eat 'str'
-            return 'str'
+            self.eat()  # eat 'str'
+            return "str"
         else:
-             self.error('"real" or "bool" or "str"')
+            self.error('"real" or "bool" or "str"')
 
     """
     func_type -> "void"
@@ -67,8 +108,8 @@ class Parser:
 
     def func_type(self):
         if self.currTok.type == TokenType.VOID:
-            self.eat() # eat 'void'
-            return 'void', False # can't have void list so always false
+            self.eat()  # eat 'void'
+            return "void", False  # can't have void list so always false
         elif self.currTok.type in [
             TokenType.REAL,
             TokenType.BOOL,
@@ -76,7 +117,7 @@ class Parser:
         ]:
             return self.param_type()
         else:
-             self.error('"void" or "real" or "bool" or "str"')
+            self.error('"void" or "real" or "bool" or "str"')
 
     """
     func_decl -> "::" func_type ID ":=" "(" params ")" block 
@@ -90,20 +131,29 @@ class Parser:
                 if self.currTok.type == TokenType.ID:
                     tok = self.currTok
                     ident = self.currTok.lexVal
-                    self.eat() # eat id
+                    self.eat()  # eat id
                     funcName = IdentifierASTNode(
-                        token=tok, type=fType, ident=ident, index=None, listFlag=isReturnList
+                        token=tok,
+                        type=fType,
+                        ident=ident,
+                        index=None,
+                        listFlag=isReturnList,
                     )
                     if self.currTok.type == TokenType.ASSIGN:
-                        self.eat() # eat :=
+                        self.eat()  # eat :=
                         if self.currTok.type == TokenType.LPAREN:
-                            self.eat() # eat (
+                            self.eat()  # eat (
                             params = self.params()
                             if self.currTok.type == TokenType.RPAREN:
-                                self.eat() # eat )
+                                self.eat()  # eat )
                                 body = self.block()
                                 if body:
-                                    return FunctionASTNode(token=tok, funcName=funcName, params=params, funcBody=body)
+                                    return FunctionASTNode(
+                                        token=tok,
+                                        funcName=funcName,
+                                        params=params,
+                                        funcBody=body,
+                                    )
                             else:
                                 self.error('")"')
                         else:
@@ -111,7 +161,7 @@ class Parser:
                     else:
                         self.error('":="')
                 else:
-                    self.error('identifier')
+                    self.error("identifier")
             else:
                 self.error('"::"')
         else:
@@ -303,7 +353,7 @@ class Parser:
                     return stmtList
                 else:
                     self.error(
-                        'expression or if, while, for, return or break statement or newline or "}"'
+                        'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str" or "}"'
                     )
 
         return []
@@ -357,7 +407,9 @@ class Parser:
         elif self.currTok.type in possibleStartToks:
             return self.expr_stmt()
         else:
-            return self.epsilon()
+            return self.error(
+                'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str"'
+            )
 
     """
     decl_stmt -> var_type ID EOL
