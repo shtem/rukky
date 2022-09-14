@@ -41,14 +41,81 @@ class Parser:
     def decl(self):
         pass
 
+    """
+    var_type -> "real"
+            | "bool"
+            | "str"
+    """
+    
     def var_type(self):
-        pass
+        if self.currTok.type == TokenType.REAL:
+            self.eat() # eat 'real'
+            return 'real'
+        elif self.currTok.type == TokenType.BOOL:
+            self.eat() # eat 'bool'
+            return 'bool'
+        elif self.currTok.type == TokenType.STRING:
+            self.eat() # eat 'str'
+            return 'str'
+        else:
+             self.error('"real" or "bool" or "str"')
+
+    """
+    func_type -> "void"
+                | param_type
+    """
 
     def func_type(self):
-        pass
+        if self.currTok.type == TokenType.VOID:
+            self.eat() # eat 'void'
+            return 'void', False # can't have void list so always false
+        elif self.currTok.type in [
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+        ]:
+            return self.param_type()
+        else:
+             self.error('"void" or "real" or "bool" or "str"')
+
+    """
+    func_decl -> "::" func_type ID ":=" "(" params ")" block 
+    """
 
     def func_decl(self):
-        pass
+        fType, isReturnList = self.func_type()
+
+        if fType:
+            if self.currTok.type == TokenType.RES_COLON:
+                if self.currTok.type == TokenType.ID:
+                    tok = self.currTok
+                    ident = self.currTok.lexVal
+                    self.eat() # eat id
+                    funcName = IdentifierASTNode(
+                        token=tok, type=fType, ident=ident, index=None, listFlag=isReturnList
+                    )
+                    if self.currTok.type == TokenType.ASSIGN:
+                        self.eat() # eat :=
+                        if self.currTok.type == TokenType.LPAREN:
+                            self.eat() # eat (
+                            params = self.params()
+                            if self.currTok.type == TokenType.RPAREN:
+                                self.eat() # eat )
+                                body = self.block()
+                                if body:
+                                    return FunctionASTNode(token=tok, funcName=funcName, params=params, funcBody=body)
+                            else:
+                                self.error('")"')
+                        else:
+                            self.error('"("')
+                    else:
+                        self.error('":="')
+                else:
+                    self.error('identifier')
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
 
     """
     params -> param_list
@@ -67,7 +134,7 @@ class Parser:
         elif self.currTok.type == TokenType.RPAREN:  # func := ()
             return []
         else:
-            self.error('"real" or "bool" or "string" or ")"')
+            self.error('"real" or "bool" or "str" or ")"')
 
         return []
 
@@ -1201,6 +1268,8 @@ class Parser:
         keyWordToFuncDict = {
             TokenType.DISPLAY: print,
             TokenType.LENGTH: len,
+            TokenType.STRINGIFY: str,
+            TokenType.REALIFY: float,
             TokenType.FLOOR: math.floor,
             TokenType.CEIL: math.ceil,
             TokenType.SQRT: math.sqrt,

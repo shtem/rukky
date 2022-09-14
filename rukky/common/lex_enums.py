@@ -38,7 +38,7 @@ class TokenType(Enum):
     VOID = "void"
     REAL = "real"
     BOOL = "bool"
-    STRING = "string"
+    STRING = "str"
     TRUE = "true"
     FALSE = "false"
     NULL = "null"
@@ -50,6 +50,8 @@ class TokenType(Enum):
 
     DISPLAY = "display"
     LENGTH = "len"
+    STRINGIFY = "getStr"
+    REALIFY = "getReal"
     FLOOR = "floor"
     CEIL = "ceil"
     SQRT = "sqrt"

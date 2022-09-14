@@ -6,10 +6,10 @@ decl -> stmt
 
 var_type -> "real"
             | "bool"
-            | "string"
+            | "str"
 func_type -> "void"
             | param_type
-func_decl -> func_type ID ":=" "(" params ")" block 
+func_decl -> "::" func_type ID ":=" "(" params ")" block 
 
 params -> param_list
         | epsilon
