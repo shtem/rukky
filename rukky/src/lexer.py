@@ -12,12 +12,6 @@ class Lexer:
         self.lineNo = 1
         self.columnNo = 1
 
-    def reset(self):
-        self.idx = 0
-        self.currChar = self.text[self.idx]
-        self.lineNo = 1
-        self.columnNo = 1
-
     def error(self):
         print(
             LexerError(
@@ -25,6 +19,12 @@ class Lexer:
             )
         )
         sys.exit(0)
+
+    def reset(self):
+        self.idx = 0
+        self.currChar = self.text[self.idx]
+        self.lineNo = 1
+        self.columnNo = 1
 
     def advance(self):
         if self.currChar == "\n":

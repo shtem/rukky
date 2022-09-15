@@ -9,6 +9,7 @@ import sys
 class Parser:
     def __init__(self, lexer: Lexer):
         self.lexer = lexer
+        self.prevTok: Token = None
         self.currTok: Token = None
 
     def error(self, missing: str):
@@ -20,6 +21,7 @@ class Parser:
         sys.exit(0)
 
     def eat(self):
+        self.prevTok = self.currTok
         self.currTok = (
             self.lexer.get_next_token()
         )  # eat current token by assigning current token to next token in the input
@@ -279,6 +281,8 @@ class Parser:
             TokenType.STRING,
             TokenType.DISPLAY,
             TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -381,6 +385,8 @@ class Parser:
             TokenType.NULL,
             TokenType.DISPLAY,
             TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -657,6 +663,7 @@ class Parser:
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
+            TokenType.NULL,
             TokenType.RBRACE,
             TokenType.IF,
             TokenType.ELSE,
@@ -670,6 +677,8 @@ class Parser:
             TokenType.STRING,
             TokenType.DISPLAY,
             TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -677,7 +686,6 @@ class Parser:
             TokenType.SIN,
             TokenType.COS,
             TokenType.TAN,
-            TokenType.NULL,
             TokenType.PI,
             TokenType.EULER,
             TokenType.EOL,
@@ -799,6 +807,14 @@ class Parser:
 
     def expr(self):
         if self.currTok.type == TokenType.ID:
+
+            if self.prevTok:
+                if (
+                    self.prevTok.type == TokenType.LIST_ASSIGN
+                    and self.peek().type == TokenType.ASSIGN
+                ):
+                    return self.disjunc()  # catch case where id@id := expr
+
             tok = self.currTok
             if self.peek().type == TokenType.ASSIGN:
                 ident = tok.lexVal
@@ -1253,6 +1269,8 @@ class Parser:
             TokenType.STRING_LIT,
             TokenType.NULL,
             TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -1265,7 +1283,7 @@ class Parser:
         ]
 
         if self.currTok.type in possibleStartToks:  # id: args: or id := [args]
-            argList = self.arg_list()
+            argList = self.args_list()
             if argList:
                 return argList
         elif (

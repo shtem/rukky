@@ -3,12 +3,22 @@ from data.token import Token
 
 
 class ASTNode(ABC):
+    def __init__(self):
+        self.level = 0
+
+    def update_level(self):
+        self.level = self.level + 1
+
     @abstractmethod
     def __str__(self):
         pass
 
+    def __repr__(self):
+        self.update_level()
+        return self.__str__()
+
     @abstractmethod
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -22,46 +32,40 @@ class ExprASTNode(StmtASTNode):
 
 class RealASTNode(ExprASTNode):
     def __init__(self, token: Token, value: str):
+        super().__init__()
         self.token = token
         self.value = float(value)
 
     def __str__(self):
         return f"-> RealASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class BoolASTNode(ExprASTNode):
     def __init__(self, token: Token, value: str):
+        super().__init__()
         self.token = token
         self.value = bool(value)
 
     def __str__(self):
         return f"-> BoolASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class StringASTNode(ExprASTNode):
     def __init__(self, token: Token, value: str):
+        super().__init__()
         self.token = token
         self.value = str(value)
 
     def __str__(self):
         return f"-> StringASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -69,6 +73,7 @@ class IdentifierASTNode(ExprASTNode):
     def __init__(
         self, token: Token, type: str, ident: str, index: ExprASTNode, listFlag: bool
     ):
+        super().__init__()
         self.token = token
         self.type = type
         self.ident = ident
@@ -76,10 +81,13 @@ class IdentifierASTNode(ExprASTNode):
         self.listFlag = listFlag
 
     def __str__(self):
-        return f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type}{list() if self.listFlag else ''} {self.index if self.index else ''}"
+        out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.listFlag else ''} "
+        if self.index:
+            self.index.level = self.level + 4
+            out += f"\n{' ' * (self.level + 1)}@-¬"
+            out += f"\n{' ' * (self.level + 4)}-{repr(self.index)}"
 
-    def __repr__(self):
-        return self.__str__()
+        return out
 
     def get_ident(self):
         return self.ident
@@ -96,7 +104,7 @@ class IdentifierASTNode(ExprASTNode):
     def is_list(self):
         return self.listFlag
 
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -107,48 +115,45 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         ident: str,
         value,
     ):
-        self.token = token
-        self.ident = ident
+        super().__init__(
+            token=token, type=None, ident=ident, index=None, listFlag=False
+        )
         self.value = value
 
     def __str__(self):
         return f"-> ReservedKeyWordASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.value}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class UnaryExprASTNode(ExprASTNode):
     def __init__(self, op: Token, rhs: ExprASTNode):
+        super().__init__()
         self.op = op
         self.rhs = rhs
 
     def __str__(self):
-        return f"-> UnaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n\t-{repr(self.rhs)}"
+        self.rhs.level = self.level
+        return f"-> UnaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class BinaryExprASTNode(ExprASTNode):
     def __init__(self, op: Token, lhs: ExprASTNode, rhs: ExprASTNode):
+        super().__init__()
         self.op = op
         self.lhs = lhs
         self.rhs = rhs
 
     def __str__(self):
-        return f"-> BinaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n\t-{repr(self.lhs)}\n\t-{repr(self.rhs)}"
+        self.rhs.level = self.level
+        self.lhs.level = self.level
+        return f"-> BinaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.lhs)}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -156,94 +161,93 @@ class CallExprASTNode(ExprASTNode):
     def __init__(
         self, token: Token, callee: IdentifierASTNode, args: list[ExprASTNode]
     ):
+        super().__init__()
         self.token = token
         self.callee = callee
         self.args = args
 
     def __str__(self):
-        out = f"-> CallExprASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.callee)} "
+        self.callee.level = self.level
+        out = f"-> CallExprASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.callee)} "
         for arg in self.args:
-            out += f"\n\t-{repr(arg)}"
+            arg.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(arg)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class ListASTNode(ExprASTNode):
     def __init__(self, token: Token, elems: list[ExprASTNode]):
+        super().__init__()
         self.token = token
         self.elems = elems
 
     def __str__(self):
         out = f"-> ListASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
-        for elem in self.elems:
-            out += f"\n\t-{repr(elem)}"
+        if self.elems:
+            for elem in self.elems:
+                elem.level = self.level
+                out += f"\n{' ' * (self.level)}-{repr(elem)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class AssignASTNode(ExprASTNode):
     def __init__(self, token: Token, var: IdentifierASTNode, value: ExprASTNode):
+        super().__init__()
         self.token = token
         self.var = var
         self.value = value
 
     def __str__(self):
-        return f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.var)}\n\t-{repr(self.value)}"
-
-    def __repr__(self):
-        return self.__str__()
+        self.var.level = self.level
+        self.value.level = self.level
+        return f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.var)}\n{' ' * (self.level)}-{repr(self.value)}"
 
     def get_var(self):
         return self.var
 
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class StmtBlockASTNode(StmtASTNode):
     def __init__(self, token: Token, stmtList: list[StmtASTNode]):
+        super().__init__()
         self.token = token
         self.stmtList = stmtList
 
     def __str__(self):
         out = f"-> StmtBlockASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
         for stmt in self.stmtList:
-            out += f"\n\t-{repr(stmt)}"
+            stmt.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(stmt)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class ElifStmtASTNode(StmtASTNode):
     def __init__(self, token: Token, cond: ExprASTNode, elifBody: StmtBlockASTNode):
+        super().__init__()
         self.token = token
         self.cond = cond
         self.elifBody = elifBody
 
     def __str__(self):
-        return f"-> ElifStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.cond)}\n\t-{repr(self.elifBody)} "
+        self.cond.level = self.level
+        self.elifBody.level = self.level
+        return f"-> ElifStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)}\n{' ' * (self.level)}-{repr(self.elifBody)} "
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -256,6 +260,7 @@ class IfStmtASTNode(StmtASTNode):
         elifStmts: list[ElifStmtASTNode],
         elseBody: StmtBlockASTNode,
     ):
+        super().__init__()
         self.token = token
         self.cond = cond
         self.ifBody = ifBody
@@ -263,39 +268,40 @@ class IfStmtASTNode(StmtASTNode):
         self.elseBody = elseBody
 
     def __str__(self):
-        out = f"-> IfStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.cond)}\n\t-{repr(self.ifBody)} "
+        self.cond.level = self.level
+        self.ifBody.level = self.level
+        out = f"-> IfStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)}\n{' ' * (self.level)}-{repr(self.ifBody)} "
         if self.elifStmts:
             for el in self.elifStmts:
-                out += f"\n\t-{repr(el)}"
+                el.level = self.level
+                out += f"\n{' ' * (self.level)}-{repr(el)}"
         if self.elseBody:
-            out += f"\n\t-{repr(self.elseBody)}"
+            self.elseBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.elseBody)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class WhileStmtASTNode(StmtASTNode):
     def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
+        super().__init__()
         self.token = token
         self.cond = cond
         self.whileBody = whileBody
 
     def __str__(self):
-        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.cond)} "
+        self.cond.level = self.level
+        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)} "
         if self.whileBody:
-            out += f"\n\t-{repr(self.whileBody)}"
+            self.whileBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -309,6 +315,7 @@ class ForStmtASTNode(StmtASTNode):
         increment: ExprASTNode,
         forBody: StmtBlockASTNode,
     ):
+        super().__init__()
         self.token = token
         self.counter = counter
         self.start = start
@@ -317,49 +324,48 @@ class ForStmtASTNode(StmtASTNode):
         self.forBody = forBody
 
     def __str__(self):
-        out = f"-> ForStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.counter)}\n\t-{repr(self.start)}\n\t-{repr(self.end)}\n\t-{repr(self.increment)} "
+        self.counter.level = self.level
+        self.start.level = self.level
+        self.end.level = self.level
+        self.increment.level = self.level
+        out = f"-> ForStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.counter)}\n{' ' * (self.level)}-{repr(self.start)}\n{' ' * (self.level)}-{repr(self.end)}\n{' ' * (self.level)}-{repr(self.increment)} "
         if self.forBody:
-            out += f"\n\t-{repr(self.forBody)}"
+            self.forBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.forBody)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class ReturnStmtASTNode(StmtASTNode):
     def __init__(self, token: Token, returnBody: ExprASTNode):
+        super().__init__()
         self.token = token
         self.returnBody = returnBody
 
     def __str__(self):
         out = f"-> ReturnStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
         if self.returnBody:
-            out += f"\n\t-{repr(self.returnBody)}"
+            self.returnBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.returnBody)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class BreakStmtASTNode(StmtASTNode):
     def __init__(self, token: Token):
+        super().__init__()
         self.token = token
 
     def __str__(self):
         return f"-> BreakStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
@@ -371,38 +377,42 @@ class FunctionASTNode(ASTNode):
         params: list[IdentifierASTNode],
         funcBody: StmtBlockASTNode,
     ):
+        super().__init__()
         self.token = token
         self.funcName = funcName
         self.params = params
         self.funcBody = funcBody
 
     def __str__(self):
-        out = f"-> FunctionASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n\t-{repr(self.funcName)}\n\t-{repr(self.params)} "
+        self.funcName.level = self.level
+        out = f"-> FunctionASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.funcName)} "
+        if self.params:
+            for par in self.params:
+                par.level = self.level
+                out += f"\n{' ' * (self.level)}-{repr(par)}"
         if self.funcBody:
-            out += f"\n\t-{repr(self.funcBody)}"
+            self.funcBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.funcBody)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
 
 
 class ProgramASTNode(ASTNode):
     def __init__(self, declarList: list[ASTNode]):
+        super().__init__()
         self.declarList = declarList
 
     def __str__(self):
         out = f"-> ProgramASTNode "
-        for decl in self.declarList:
-            out += f"\n\t-{repr(decl)}"
+        if self.declarList:
+            for decl in self.declarList:
+                decl.level = self.level
+                out += f"\n{' ' * (self.level)}-{repr(decl)}"
 
         return out
 
-    def __repr__(self):
-        return self.__str__()
-
-    def codegen(self):
+    def code_gen(self):
         pass
