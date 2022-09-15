@@ -7,7 +7,7 @@ while True:
         text = input("rukky > ") + "\n "
         if text.strip() == "":
             continue
-        
+
         lex = Lexer(text=text)
         parser = Parser(lexer=lex)
 

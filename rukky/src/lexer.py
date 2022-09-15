@@ -29,7 +29,7 @@ class Lexer:
     def advance(self):
         if self.currChar == "\n":
             self.lineNo += 1
-            self.columnNo = 1
+            self.columnNo = 0
 
         self.idx += 1
         if self.idx > len(self.text) - 1:

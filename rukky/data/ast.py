@@ -170,8 +170,8 @@ class CallExprASTNode(ExprASTNode):
         self.callee.level = self.level
         out = f"-> CallExprASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.callee)} "
         for arg in self.args:
-            arg.level = self.level
-            out += f"\n{' ' * (self.level)}-{repr(arg)}"
+            arg.level = self.level + 1
+            out += f"\n{' ' * (self.level + 1)}-{repr(arg)}"
 
         return out
 

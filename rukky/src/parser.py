@@ -53,24 +53,58 @@ class Parser:
     """
 
     def decl_list(self):
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.IF,
+            TokenType.FOR,
+            TokenType.WHILE,
+            TokenType.RETURN,
+            TokenType.BREAK,
+            TokenType.VOID,
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+            TokenType.DISPLAY,
+            TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.RES_COLON,
+            TokenType.EOL,
+        ]
+
         declList = []
 
         decl = self.decl()
         if decl:
             declList.append(decl)
 
-            while True:
+        while True:
+            if self.currTok.type in possibleStartToks:
                 decl = self.decl()
                 if decl:
                     declList.append(decl)
-                elif self.currTok.type == TokenType.EOF:
-                    return declList
-                else:
-                    self.error(
-                        'expression or "if", "while" or "for" statement or newline or "real", "bool" or "str" or "::"'
-                    )
-
-        return []
+            elif self.currTok.type == TokenType.EOF:
+                return declList
+            else:
+                self.error(
+                    'expression or "if", "while" or "for" statement or newline or "real", "bool" or "str" or "::"'
+                )
 
     """
     decl -> stmt 
@@ -127,12 +161,13 @@ class Parser:
     """
 
     def func_decl(self):
-        fType, isReturnList = self.func_type()
+        if self.currTok.type == TokenType.RES_COLON:
+            tok = self.currTok
+            self.eat()  # eat ::
+            fType, isReturnList = self.func_type()
 
-        if fType:
-            if self.currTok.type == TokenType.RES_COLON:
+            if fType:
                 if self.currTok.type == TokenType.ID:
-                    tok = self.currTok
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     funcName = IdentifierASTNode(
@@ -166,9 +201,9 @@ class Parser:
                 else:
                     self.error("identifier")
             else:
-                self.error('"::"')
+                return self.epsilon()
         else:
-            return self.epsilon()
+            self.error('"::"')
 
     """
     params -> param_list
@@ -240,11 +275,11 @@ class Parser:
     """
 
     def param(self):
+        tok = self.currTok
         pType, isList = self.param_type()
 
         if pType:
             if self.currTok.type == TokenType.ID:
-                tok = self.currTok
                 ident = self.currTok.lexVal
                 self.eat()  # eat id
                 return IdentifierASTNode(
@@ -324,7 +359,7 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error(
-                        'expression or if, while, for, return or break statement or newline or "}"'
+                        'expression or "if", "while", "for", "return" or "break" statement or newline or "}"'
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
@@ -350,18 +385,16 @@ class Parser:
         if stmt:
             stmtList.append(stmt)
 
-            while True:
-                stmt = self.stmt()
-                if stmt:
-                    stmtList.append(stmt)
-                elif self.currTok.type == TokenType.RBRACE:
-                    return stmtList
-                else:
-                    self.error(
-                        'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str" or "}"'
-                    )
-
-        return []
+        while True:
+            stmt = self.stmt()
+            if stmt:
+                stmtList.append(stmt)
+            elif self.currTok.type == TokenType.RBRACE:
+                return stmtList
+            else:
+                self.error(
+                    'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str" or "}"'
+                )
 
     """
     stmt -> decl_stmt
@@ -413,6 +446,8 @@ class Parser:
             return self.decl_stmt()
         elif self.currTok.type in possibleStartToks:
             return self.expr_stmt()
+        elif self.currTok.type == TokenType.RBRACE:
+            return self.epsilon()
         else:
             return self.error(
                 'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str"'
@@ -426,13 +461,13 @@ class Parser:
     """
 
     def decl_stmt(self):
+        tok = self.currTok
         vType = self.var_type()
 
         if vType:
             if self.currTok.type == TokenType.ID:
-                tok = self.currTok
                 if self.peek().type == TokenType.EOL:
-                    ident = tok.lexVal
+                    ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
                         token=tok, type=vType, ident=ident, index=None, listFlag=False
@@ -440,7 +475,7 @@ class Parser:
                     self.eat()  # eat \n
                     return identAST
                 elif self.peek().type == TokenType.ASSIGN:
-                    ident = tok.lexVal
+                    ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
                         token=tok, type=vType, ident=ident, index=None, listFlag=False
@@ -460,9 +495,8 @@ class Parser:
                 if self.currTok.type == TokenType.RSQUARE:
                     self.eat()  # eat ]
                     if self.currTok.type == TokenType.ID:
-                        tok = self.currTok
                         if self.peek().type == TokenType.EOL:
-                            ident = tok.lexVal
+                            ident = self.currTok.lexVal
                             self.eat()  # eat id
                             identAST = IdentifierASTNode(
                                 token=tok,
@@ -474,7 +508,7 @@ class Parser:
                             self.eat()  # eat \n
                             return identAST
                         if self.peek().type == TokenType.ASSIGN:
-                            ident = tok.lexVal
+                            ident = self.currTok.lexVal
                             self.eat()  # eat id
                             identAST = IdentifierASTNode(
                                 token=tok,
@@ -890,6 +924,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -908,7 +943,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     conjunc -> conjunc "&&" equiv
@@ -924,6 +961,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -942,7 +980,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     equiv -> equiv "<>" ineq
@@ -960,6 +1000,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -978,7 +1019,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     ineq -> ineq "<=" term
@@ -1000,6 +1043,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -1023,7 +1067,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     term -> term "+" factor
@@ -1047,6 +1093,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -1068,7 +1115,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     factor -> factor "*" expo
@@ -1096,6 +1145,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -1119,7 +1169,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     expo -> expo "^" elem 
@@ -1148,6 +1200,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
 
@@ -1166,7 +1219,9 @@ class Parser:
             elif self.currTok.type in possibleEndToks:
                 return lhs
             else:
-                self.error('binary operator or ")" or "]" or ":=" or "," or newline')
+                self.error(
+                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                )
 
     """
     elem -> "-" elem
@@ -1191,23 +1246,18 @@ class Parser:
             if self.currTok.type == TokenType.COLON:
                 self.eat()  # eat :
                 args = self.args()
-                if self.currTok.type == TokenType.COLON:
-                    self.eat()  # eat :
+                if self.currTok.type == TokenType.RES_COLON:
+                    self.eat()  # eat ::
                     if args:
                         return CallExprASTNode(
                             token=tok, callee=identAST, args=args
-                        )  # id: args:
+                        )  # id: args::
                     else:
                         return CallExprASTNode(
                             token=tok, callee=identAST, args=[]
-                        )  # id: : 1st way to make a function call with no arguments
+                        )  # id: :: 1st way to make a function call with no arguments
                 else:
-                    self.error('":"')
-            elif self.currTok.type == TokenType.RES_COLON:
-                self.eat()  # eat ::
-                return CallExprASTNode(
-                    token=tok, callee=identAST, args=[]
-                )  # id:: 2nd way to make a function call with no arguments
+                    self.error('"::"')
             elif self.currTok.type == TokenType.LSQUARE:
                 self.eat()  # eat [
                 index = self.expr()
@@ -1287,12 +1337,12 @@ class Parser:
             if argList:
                 return argList
         elif (
-            self.currTok.type == TokenType.COLON
+            self.currTok.type == TokenType.RES_COLON
             or self.currTok.type == TokenType.RSQUARE
-        ):  # id: : or id []
+        ):  # id: :: or id []
             return []
         else:
-            self.error('list of expressions as arguments or ":" or ")"')
+            self.error('list of expressions as arguments or "::" or "]"')
 
         return []
 
@@ -1315,12 +1365,12 @@ class Parser:
                     if expr:
                         argList.append(expr)
                 elif (
-                    self.currTok.type == TokenType.COLON
+                    self.currTok.type == TokenType.RES_COLON
                     or self.currTok.type == TokenType.RSQUARE
                 ):
                     return argList
                 else:
-                    self.error('"," or "]" or ":"')
+                    self.error('"," or "]" or "::"')
 
         return []
 
@@ -1361,19 +1411,16 @@ class Parser:
             if self.currTok.type == TokenType.COLON:
                 self.eat()  # eat :
                 args = self.args()
-                if self.currTok.type == TokenType.COLON:
-                    self.eat()  # eat :
+                if self.currTok.type == TokenType.RES_COLON:
+                    self.eat()  # eat ::
                     if args:
                         return CallExprASTNode(
                             token=tok, callee=keyWordAST, args=args
-                        )  # keyword: args:
+                        )  # keyword: args::
+                    else:
+                        return self.epsilon()  # keyword: ::
                 else:
-                    self.error('":"')
-            elif self.currTok.type == TokenType.RES_COLON:
-                self.eat()  # eat ::
-                return (
-                    self.epsilon()
-                )  # don't want to call any of the reserved functions without any arguments
+                    self.error('"::"')
             else:
                 self.error('":"')
         elif self.currTok.type == TokenType.NULL:
