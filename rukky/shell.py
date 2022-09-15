@@ -7,16 +7,20 @@ while True:
         text = input("rukky > ") + "\n "
         if text.strip() == "":
             continue
-
-        print(text)
+        
         lex = Lexer(text=text)
         parser = Parser(lexer=lex)
 
+        print("\nInput\n------\n", text)
+
+        print("\nTokens\n-------\n")
         while lex.currChar:
             print(repr(lex.get_next_token()))
 
+        print("\nAST Tree\n---------\n")
         lex.reset()
         programAST = parser.parse()
         print(repr(programAST))
+
     except KeyboardInterrupt:
         sys.exit(0)
