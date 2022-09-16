@@ -37,7 +37,7 @@ decl_stmt -> var_type ID EOL
             | var_type "[]" ID ":=" "[" args "]" EOL
 expr_stmt -> expr EOL
             | EOL
-for_stmt -> "for" "::" ID ":=" expr ":" expr ":" expr block
+for_stmt -> "for" "::" ID ":=" expr ";" expr ";" expr block
 while_stmt -> "while" "::" expr block
 
 if_stmt -> "if" "::" expr block elif_stmt_list else_stmt

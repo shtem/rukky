@@ -83,9 +83,9 @@ class IdentifierASTNode(ExprASTNode):
     def __str__(self):
         out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.listFlag else ''} "
         if self.index:
-            self.index.level = self.level + 4
-            out += f"\n{' ' * (self.level + 1)}@-¬"
-            out += f"\n{' ' * (self.level + 4)}-{repr(self.index)}"
+            self.index.level = self.level + 3
+            out += f"\n{' ' * (self.level)}@-¬"
+            out += f"\n{' ' * (self.level + 3)}-{repr(self.index)}"
 
         return out
 
@@ -169,9 +169,11 @@ class CallExprASTNode(ExprASTNode):
     def __str__(self):
         self.callee.level = self.level
         out = f"-> CallExprASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.callee)} "
-        for arg in self.args:
-            arg.level = self.level + 1
-            out += f"\n{' ' * (self.level + 1)}-{repr(arg)}"
+        if self.args:
+            out += f"\n{' ' * (self.level)}()-¬"
+            for arg in self.args:
+                arg.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(arg)}"
 
         return out
 
@@ -207,8 +209,12 @@ class AssignASTNode(ExprASTNode):
 
     def __str__(self):
         self.var.level = self.level
-        self.value.level = self.level
-        return f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.var)}\n{' ' * (self.level)}-{repr(self.value)}"
+        self.value.level = self.level + 3
+        out = f"-> AssignASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.var)} "
+        out += f"\n{' ' * (self.level)}:=-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.value)}"
+
+        return out
 
     def get_var(self):
         return self.var
@@ -243,9 +249,14 @@ class ElifStmtASTNode(StmtASTNode):
         self.elifBody = elifBody
 
     def __str__(self):
-        self.cond.level = self.level
+        self.cond.level = self.level + 3
         self.elifBody.level = self.level
-        return f"-> ElifStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)}\n{' ' * (self.level)}-{repr(self.elifBody)} "
+        out = f"-> ElifStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out += f"\n{' ' * (self.level)}?-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
+        out += f"\n{' ' * (self.level)}-{repr(self.elifBody)}"
+
+        return out
 
     def code_gen(self):
         pass
@@ -268,9 +279,12 @@ class IfStmtASTNode(StmtASTNode):
         self.elseBody = elseBody
 
     def __str__(self):
-        self.cond.level = self.level
+        self.cond.level = self.level + 3
         self.ifBody.level = self.level
-        out = f"-> IfStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)}\n{' ' * (self.level)}-{repr(self.ifBody)} "
+        out = f"-> IfStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out += f"\n{' ' * (self.level)}?-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
+        out += f"\n{' ' * (self.level)}-{repr(self.ifBody)}"
         if self.elifStmts:
             for el in self.elifStmts:
                 el.level = self.level
@@ -293,8 +307,10 @@ class WhileStmtASTNode(StmtASTNode):
         self.whileBody = whileBody
 
     def __str__(self):
-        self.cond.level = self.level
-        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.cond)} "
+        self.cond.level = self.level + 3
+        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out += f"\n{' ' * (self.level)}?-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
         if self.whileBody:
             self.whileBody.level = self.level
             out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
@@ -325,10 +341,14 @@ class ForStmtASTNode(StmtASTNode):
 
     def __str__(self):
         self.counter.level = self.level
-        self.start.level = self.level
-        self.end.level = self.level
-        self.increment.level = self.level
-        out = f"-> ForStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.counter)}\n{' ' * (self.level)}-{repr(self.start)}\n{' ' * (self.level)}-{repr(self.end)}\n{' ' * (self.level)}-{repr(self.increment)} "
+        self.start.level = self.level + 3
+        self.end.level = self.level + 3
+        self.increment.level = self.level + 3
+        out = f"-> ForStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.counter)} "
+        out += f"\n{' ' * (self.level)}#-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.start)}"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.end)}"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.increment)}"
         if self.forBody:
             self.forBody.level = self.level
             out += f"\n{' ' * (self.level)}-{repr(self.forBody)}"
@@ -387,9 +407,10 @@ class FunctionASTNode(ASTNode):
         self.funcName.level = self.level
         out = f"-> FunctionASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.funcName)} "
         if self.params:
+            out += f"\n{' ' * (self.level)}()-¬"
             for par in self.params:
-                par.level = self.level
-                out += f"\n{' ' * (self.level)}-{repr(par)}"
+                par.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(par)}"
         if self.funcBody:
             self.funcBody.level = self.level
             out += f"\n{' ' * (self.level)}-{repr(self.funcBody)}"
@@ -406,11 +427,12 @@ class ProgramASTNode(ASTNode):
         self.declarList = declarList
 
     def __str__(self):
-        out = f"-> ProgramASTNode "
+        out = f"|-> ProgramASTNode "
         if self.declarList:
             for decl in self.declarList:
                 decl.level = self.level
                 out += f"\n{' ' * (self.level)}-{repr(decl)}"
+        out +="\n<-|"
 
         return out
 

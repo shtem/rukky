@@ -2,6 +2,7 @@ from common.lex_enums import TokenType
 from common.errors import ParserError
 from src.lexer import Lexer
 from data.ast import *
+import random
 import math
 import sys
 
@@ -75,6 +76,7 @@ class Parser:
             TokenType.LENGTH,
             TokenType.STRINGIFY,
             TokenType.REALIFY,
+            TokenType.RANDOM,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -318,6 +320,7 @@ class Parser:
             TokenType.LENGTH,
             TokenType.STRINGIFY,
             TokenType.REALIFY,
+            TokenType.RANDOM,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -379,6 +382,40 @@ class Parser:
     """
 
     def stmt_list(self):
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.IF,
+            TokenType.FOR,
+            TokenType.WHILE,
+            TokenType.RETURN,
+            TokenType.BREAK,
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+            TokenType.DISPLAY,
+            TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
+            TokenType.RANDOM,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.EOL,
+        ]
+
         stmtList = []
 
         stmt = self.stmt()
@@ -386,9 +423,10 @@ class Parser:
             stmtList.append(stmt)
 
         while True:
-            stmt = self.stmt()
-            if stmt:
-                stmtList.append(stmt)
+            if self.currTok.type in possibleStartToks:
+                stmt = self.stmt()
+                if stmt:
+                    stmtList.append(stmt)
             elif self.currTok.type == TokenType.RBRACE:
                 return stmtList
             else:
@@ -420,6 +458,7 @@ class Parser:
             TokenType.LENGTH,
             TokenType.STRINGIFY,
             TokenType.REALIFY,
+            TokenType.RANDOM,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -574,8 +613,7 @@ class Parser:
                 self.error("newline")
 
     """
-    expr_stmt -> expr EOL
-            | EOL
+    for_stmt -> "for" "::" ID ":=" expr ";" expr ";" expr block
     """
 
     def for_stmt(self):
@@ -596,11 +634,11 @@ class Parser:
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
                         start = self.expr()
-                        if self.currTok.type == TokenType.COLON:
-                            self.eat()  # eat :
+                        if self.currTok.type == TokenType.SEM_COLON:
+                            self.eat()  # eat ;
                             end = self.expr()
-                            if self.currTok.type == TokenType.COLON:
-                                self.eat()  # eat :
+                            if self.currTok.type == TokenType.SEM_COLON:
+                                self.eat()  # eat ;
                                 increment = self.expr()
                                 if start and end and increment:
                                     body = self.block()
@@ -713,6 +751,7 @@ class Parser:
             TokenType.LENGTH,
             TokenType.STRINGIFY,
             TokenType.REALIFY,
+            TokenType.RANDOM,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -924,6 +963,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -961,6 +1001,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1000,6 +1041,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1043,6 +1085,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1093,6 +1136,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1145,6 +1189,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1200,6 +1245,7 @@ class Parser:
             TokenType.ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
+            TokenType.SEM_COLON,
             TokenType.RES_COLON,
             TokenType.LBRACE,
         ]
@@ -1255,7 +1301,7 @@ class Parser:
                     else:
                         return CallExprASTNode(
                             token=tok, callee=identAST, args=[]
-                        )  # id: :: 1st way to make a function call with no arguments
+                        )  # id: :: make a function call with no arguments
                 else:
                     self.error('"::"')
             elif self.currTok.type == TokenType.LSQUARE:
@@ -1321,6 +1367,7 @@ class Parser:
             TokenType.LENGTH,
             TokenType.STRINGIFY,
             TokenType.REALIFY,
+            TokenType.RANDOM,
             TokenType.FLOOR,
             TokenType.CEIL,
             TokenType.SQRT,
@@ -1391,6 +1438,7 @@ class Parser:
             TokenType.LENGTH: len,
             TokenType.STRINGIFY: str,
             TokenType.REALIFY: float,
+            TokenType.RANDOM: random.random,
             TokenType.FLOOR: math.floor,
             TokenType.CEIL: math.ceil,
             TokenType.SQRT: math.sqrt,
@@ -1418,7 +1466,9 @@ class Parser:
                             token=tok, callee=keyWordAST, args=args
                         )  # keyword: args::
                     else:
-                        return self.epsilon()  # keyword: ::
+                        return CallExprASTNode(
+                            token=tok, callee=keyWordAST, args=[]
+                        )  # keyword: ::
                 else:
                     self.error('"::"')
             else:

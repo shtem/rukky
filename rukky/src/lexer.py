@@ -343,6 +343,14 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
+            elif self.currChar == ";":
+                self.advance()
+                return Token(
+                    type=TokenType.SEM_COLON,
+                    lexVal=TokenType.SEM_COLON.value,
+                    lineNo=self.lineNo,
+                    columnNo=self.columnNo,
+                )
             elif self.currChar == ":":
                 return self._make_colon_or_assign()
             else:
