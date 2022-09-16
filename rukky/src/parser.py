@@ -22,10 +22,9 @@ class Parser:
         sys.exit(0)
 
     def eat(self):
+        # eat current token by assigning current token to next token in the input
         self.prevTok = self.currTok
-        self.currTok = (
-            self.lexer.get_next_token()
-        )  # eat current token by assigning current token to next token in the input
+        self.currTok = self.lexer.get_next_token()
 
     def peek(self):
         return self.lexer.peek_next_token()
@@ -496,10 +495,36 @@ class Parser:
     decl_stmt -> var_type ID EOL
             | var_type ID ":=" expr EOL
             | var_type "[]" ID EOL
+            | var_type "[]" ID ":=" expr EOL
             | var_type "[]" ID ":=" "[" args "]" EOL
     """
 
     def decl_stmt(self):
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.LENGTH,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
+            TokenType.RANDOM,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+            TokenType.EOL,
+        ]
+
         tok = self.currTok
         vType = self.var_type()
 
@@ -581,8 +606,18 @@ class Parser:
                                             )
                                 else:
                                     self.error('"]"')
+                            elif self.currTok.type in possibleStartToks:
+                                val = self.expr()
+                                if self.currTok.type == TokenType.EOL:
+                                    self.eat()  # eat \n
+                                    if val:
+                                        return AssignASTNode(
+                                            token=tok, var=identAST, value=val
+                                        )
+                                else:
+                                    self.error("newline")
                             else:
-                                self.error('"["')
+                                self.error('expression or "["')
                         else:
                             self.error('newline or ":="')
                     else:
@@ -922,10 +957,11 @@ class Parser:
                 identAST = IdentifierASTNode(
                     token=tok, type=None, ident=ident, index=None, listFlag=True
                 )
+                op = self.currTok
                 self.eat()  # eat <<
                 val = self.expr()
                 if val:
-                    return AssignASTNode(token=tok, var=identAST, value=val)
+                    return BinaryExprASTNode(op=op, lhs=identAST, rhs=val)
             elif self.peek().type == TokenType.LIST_ASSIGN:
                 ident = tok.lexVal
                 self.eat()  # eat id
@@ -1339,7 +1375,8 @@ class Parser:
             self.eat()  # eat real number
             return realNum
         elif self.currTok.type == TokenType.BOOL_LIT:
-            boolVal = BoolASTNode(token=self.currTok, value=self.currTok.lexVal)
+            val = 1 if self.currTok.lexVal == "true" else 0
+            boolVal = BoolASTNode(token=self.currTok, value=val)
             self.eat()  # eat boolean value
             return boolVal
         elif self.currTok.type == TokenType.STRING_LIT:

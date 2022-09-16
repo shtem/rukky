@@ -9,13 +9,13 @@ class ASTNode(ABC):
     def update_level(self):
         self.level = self.level + 1
 
-    @abstractmethod
-    def __str__(self):
-        pass
-
     def __repr__(self):
         self.update_level()
         return self.__str__()
+
+    @abstractmethod
+    def __str__(self):
+        pass
 
     @abstractmethod
     def code_gen(self):
@@ -44,7 +44,7 @@ class RealASTNode(ExprASTNode):
 
 
 class BoolASTNode(ExprASTNode):
-    def __init__(self, token: Token, value: str):
+    def __init__(self, token: Token, value: int):
         super().__init__()
         self.token = token
         self.value = bool(value)
@@ -432,7 +432,7 @@ class ProgramASTNode(ASTNode):
             for decl in self.declarList:
                 decl.level = self.level
                 out += f"\n{' ' * (self.level)}-{repr(decl)}"
-        out +="\n<-|"
+        out += "\n<-|"
 
         return out
 

@@ -34,6 +34,7 @@ stmt -> decl_stmt
 decl_stmt -> var_type ID EOL
             | var_type ID ":=" expr EOL
             | var_type "[]" ID EOL
+            | var_type "[]" ID ":=" expr EOL
             | var_type "[]" ID ":=" "[" args "]" EOL
 expr_stmt -> expr EOL
             | EOL
