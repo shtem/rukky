@@ -1,0 +1,30 @@
+$ 
+   function calculateLcm(x, y) finds lowest common multiple between x and y
+   Input x = 54, y = 24
+   Output 216
+$
+
+:: real calculateLcm := (real x, real y) {
+    real greater
+    
+    if:: x > y {
+        greater := x
+    }
+    else:: {
+        greater := y
+    }
+
+    while:: true {
+        if:: (greater % x <> 0) && (greater % y <> 0) {
+            lcm := greater
+            break::
+        }
+        greater := greater + 1
+    }
+
+    return:: lcm
+}
+
+real x := 54
+real y := 24
+display:"L.C.M is " + getStr:calculateLcm:x, y::::::

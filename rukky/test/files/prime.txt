@@ -1,0 +1,25 @@
+$ 
+   function primeInterval(l, u) displays all prime numbers between an interval [l,u)
+   Input l = 900, u = 1000
+   Output 907 911 919 929 937 941 947 953 967 971 977 983 991 997
+$
+
+
+:: void primeInterval := (real lower, real upper) {
+    
+    for:: num := lower ; upper + 1 ; 1 {
+        if:: num > 1 {
+            for:: i := 2 ; num ; 1 {
+                if:: num % i <> 0 {
+                    break::
+                }
+            }
+
+            display:num::
+        }
+    }
+}
+
+real l := 900
+real u := 1000
+primeInterval:l, u::

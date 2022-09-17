@@ -1,0 +1,24 @@
+$ 
+   function factorial(n) calculates n!
+   Input n = 5
+   Output 120
+$
+
+
+:: real factorial := (real n) {
+    real i
+    real factorial
+
+    factorial := 1
+    i := 1
+
+    while:: i <= n {
+        factorial := factorial * i
+        i := i + 1
+    }
+
+    return:: factorial
+}
+
+real fac := factorial:5::
+display:fac::

@@ -1,0 +1,39 @@
+$ 
+   function rotateArray(ar[], d) that rotates arr[] by d elements
+   Input arr[] = [1, 2, 3, 4, 5, 6, 7], d = 2
+   Output arr[] = [3, 4, 5, 6, 7, 1, 2]
+$
+
+
+:: real[] slice := (real[] arr, real start, real end) {
+    real[] subset := []
+    real sliceLength := end - start
+
+    for:: i := 0 ; sliceLength ; 1 {
+        subset@i := arr[start + i]
+    }
+
+    return:: subset
+}
+
+:: real[] rotateArray := (real[] arr, real d) {
+    real n := len:arr::
+    real[] temp := []
+    real i := 0
+
+    while:: i < d {
+        temp << arr[i]
+        i := i + 1
+    }
+    i := 0
+    while:: d < n {
+        arr@i := arr[d]
+        i := i + 1
+        d := d + 1
+    }
+    real[] rotArr := slice:arr,0,i:: + temp
+    return:: arr
+}
+
+real[] array := [1, 2, 3, 4, 5, 6, 7]
+display:"Array after left rotation is: " + getStr:rotateArray:array, 2::::::

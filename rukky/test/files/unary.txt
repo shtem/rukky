@@ -1,0 +1,35 @@
+$ 
+   function unary(n, m) tests unary calculations between n and m and sums them up
+   Input n = 2, m = 3
+   Output 4
+$
+
+
+:: real unary := (real n, real m) {
+    real result
+    real sum
+
+    sum := 0
+
+    result := n + m
+    display:result::
+    sum := sum + result
+
+    result := n + -m
+    display:result::
+    sum := sum + result
+
+    result := n + --m
+    display:result::
+    sum := sum + result
+
+    result := -n + -m
+    display:result::
+    sum := sum + result
+
+    return:: sum
+}
+
+real n := 2
+real m := 3
+display:unary:n, m::::

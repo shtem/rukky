@@ -1,0 +1,26 @@
+$ 
+   function addNum(n) calculates sum of natural numbers [0,n] using recursion
+   Input n = 20
+   Output 210
+$
+
+
+:: bool addNum := (real n) {
+    real result
+    result := 0
+
+    if:: n <! 0 {
+        result := n + addNum:n-1::
+    }
+    else:: {
+        result := n
+    }
+    display:result::
+    return:: result
+}
+
+:: real recursion_driver := (real num) {
+    return:: addNum:num::
+}
+
+display:recursion_driver:20::::

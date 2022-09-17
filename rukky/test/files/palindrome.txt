@@ -1,0 +1,36 @@
+$ 
+   function palindrome(n) checks if number n is a palindrome
+   Input n = 45677654
+   Output true
+$
+
+
+:: bool palindrome := (real number) {
+    real t
+    real rev
+    real rmndr
+    bool result
+
+    rev := 0
+    result := false
+
+    t := number
+
+    while:: number > 0 {
+        rmndr := number % 10
+        rev := rev * 10 + rmndr
+        number := number / 10
+    }
+
+    if:: t <> rev {
+        result := true
+    }
+    else:: {
+        result := false
+    }
+
+    return:: result
+}
+
+bool isPal := palindrome:45677654::
+display:isPal::

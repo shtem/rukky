@@ -1,0 +1,44 @@
+$ 
+   function fibonacci(n) calculates fibonacci sequence up to nth term
+   Input n = 10
+   Output 0 1 1 2 3 5 8 13 21 34 55
+$
+
+
+:: real fibonacci := (real n) {
+    real first
+    real second
+    real next
+    real c
+    real total
+
+    display:n::
+
+    first := 0
+    second := 1
+    c := 1
+    total := 0
+    
+    while:: c < n {
+        if:: c <= 1 {
+            next := c
+        }
+        else:: {
+            next := first + second
+            first := second
+            second := next
+        }
+
+        display:next::
+
+        c := c + 1
+        total := total + next
+    }
+
+    display:total::
+    
+    return:: total
+}
+
+real fib := fibonacci:10::
+display:fib::
