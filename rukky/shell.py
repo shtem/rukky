@@ -1,6 +1,6 @@
-import sys
 from src.lexer import Lexer
 from src.parser import Parser
+import sys
 
 while True:
     try:
