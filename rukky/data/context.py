@@ -76,8 +76,8 @@ class TheContext:
         # case (3) check types of lhs and rhs values match in binary operation
         return type(left) == type(right)
 
-    def isCondBool(self, cond):
-        return isinstance(cond, bool)
+    def isValBool(self, value):
+        return isinstance(value, bool)
 
     def isValReal(self, value):
         return isinstance(value, (int, float))
