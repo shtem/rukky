@@ -51,6 +51,7 @@ class TokenType(Enum):
 
     DISPLAY = "display"
     LENGTH = "len"
+    TYPE = "type"
     STRINGIFY = "getStr"
     REALIFY = "getReal"
     RANDOM = "rand"
