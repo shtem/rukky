@@ -40,7 +40,7 @@ class RealASTNode(ExprASTNode):
         return f"-> RealASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self):
-        pass
+        return self.value
 
 
 class BoolASTNode(ExprASTNode):
@@ -53,7 +53,7 @@ class BoolASTNode(ExprASTNode):
         return f"-> BoolASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self):
-        pass
+        return self.value
 
 
 class StringASTNode(ExprASTNode):
@@ -66,7 +66,7 @@ class StringASTNode(ExprASTNode):
         return f"-> StringASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self):
-        pass
+        return self.value
 
 
 class IdentifierASTNode(ExprASTNode):
