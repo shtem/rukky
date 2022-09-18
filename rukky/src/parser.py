@@ -1,4 +1,3 @@
-from common.lex_enums import TokenType
 from common.errors import ParserError
 from src.lexer import Lexer
 from data.ast import *
@@ -944,11 +943,11 @@ class Parser:
                     if self.currTok.type == TokenType.RSQUARE:
                         self.eat()  # eat ]
                         if elems:
-                            identAST.set_listFlag(True)
+                            identAST.set_list_flag(True)
                             listAST = ListASTNode(token=listTok, elems=elems)
                             return AssignASTNode(token=tok, var=identAST, value=listAST)
                         else:
-                            identAST.set_listFlag(True)
+                            identAST.set_list_flag(True)
                             listAST = ListASTNode(token=listTok, elems=[])
                             return AssignASTNode(token=tok, var=identAST, value=listAST)
                     else:
@@ -1353,7 +1352,7 @@ class Parser:
                     self.eat()  # eat ]
                     if index:
                         identAST.set_index(index)
-                        identAST.set_listFlag(True)
+                        identAST.set_list_flag(True)
                         return identAST  # id[expr]
                     else:
                         self.error("valid expression as index")

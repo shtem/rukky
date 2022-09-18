@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
-from data.token import Token
+from common.lex_enums import TokenType
 from data.context import TheContext
+from data.token import Token
+from abc import ABC, abstractmethod
 
 
 class ASTNode(ABC):
@@ -40,7 +41,7 @@ class RealASTNode(ExprASTNode):
     def __str__(self):
         return f"-> RealASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         return self.value
 
 
@@ -53,7 +54,7 @@ class BoolASTNode(ExprASTNode):
     def __str__(self):
         return f"-> BoolASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         return self.value
 
 
@@ -66,7 +67,7 @@ class StringASTNode(ExprASTNode):
     def __str__(self):
         return f"-> StringASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         return self.value
 
 
@@ -99,7 +100,7 @@ class IdentifierASTNode(ExprASTNode):
     def set_index(self, i):
         self.index = i
 
-    def set_listFlag(self, flag):
+    def set_list_flag(self, flag):
         self.listFlag = flag
 
     def is_list(self):
@@ -115,6 +116,8 @@ class IdentifierASTNode(ExprASTNode):
                 return type(False), False
             elif self.type == "str":
                 return type(""), ""
+            elif self.type == "void": # only applies to functions
+                return type(None), None
             else:
                 raise TypeError
 
@@ -123,15 +126,15 @@ class IdentifierASTNode(ExprASTNode):
         if self.type: # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
             type, defaultValue = self.determine_type_value()
             context.set_ident(symbol=symbol, type=type, value=defaultValue, index=None)
-        else: # variable retrieval: type == None e.g. ID or ID[expr]
+        else: # variable retrieval: type = None e.g. ID or ID[expr]
             if self.index:
-                indexVal = self.index.code_gen(context)
+                indexVal = self.index.code_gen(context=context)
                 if context.is_real(indexVal):
                     varValue = context.get_ident(symbol=symbol, index=int(indexVal))
                 else:
                     raise TypeError
             else:
-                varValue = context.get_ident(symbol=symbol)
+                varValue = context.get_ident(symbol=symbol, index=None)
 
             return varValue
 
@@ -151,8 +154,8 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
     def __str__(self):
         return f"-> ReservedKeyWordASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.value}"
 
-    def code_gen(self):
-        pass
+    def code_gen(self, context: TheContext):
+        return self.value
 
 
 class UnaryExprASTNode(ExprASTNode):
@@ -165,8 +168,26 @@ class UnaryExprASTNode(ExprASTNode):
         self.rhs.level = self.level
         return f"-> UnaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
-    def code_gen(self):
-        pass
+    def code_gen(self, context: TheContext):
+        rVal = self.rhs.code_gen(context=context)
+
+        if not rVal:
+            raise ValueError
+
+        match self.op.type:
+            case TokenType.MINUS:
+                if context.is_real(value=rVal):
+                    return -rVal
+                else:
+                    raise TypeError # incompatible types
+            case TokenType.NOT:
+                if context.is_bool(value=rVal):
+                    return not rVal
+                else:
+                    raise TypeError
+            case _:
+                raise ValueError # invalid operator
+
 
 
 class BinaryExprASTNode(ExprASTNode):
@@ -181,8 +202,110 @@ class BinaryExprASTNode(ExprASTNode):
         self.lhs.level = self.level
         return f"-> BinaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.lhs)}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
-    def code_gen(self):
-        pass
+    def code_gen(self, context: TheContext):
+        rVal = self.rhs.code_gen(context=context)
+        lVal = self.lhs.code_gen(context=context)
+
+        if not lVal or not rVal:
+            raise ValueError
+
+        match self.op.type:
+            case TokenType.PLUS:
+                if context.type_checker(left=lVal, right=rVal):
+                    result = lVal + rVal # allows for addition and concatenation
+                    if context.is_real(value=result):
+                        return float(result) 
+                    else:
+                        return result 
+                else:
+                    raise TypeError # incompatible types
+            case TokenType.MINUS:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal - rVal)
+                else:
+                    raise TypeError
+            case TokenType.MUL:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal * rVal)
+                else:
+                    raise TypeError
+            case TokenType.FLOAT_DIV:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal / rVal)
+                else:
+                    raise TypeError
+            case TokenType.INT_DIV:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal // rVal)
+                else:
+                    raise TypeError
+            case TokenType.MOD:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal % rVal)
+                else:
+                    raise TypeError
+            case TokenType.EXP:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return float(lVal ** rVal)
+                else:
+                    raise TypeError
+            case TokenType.AND:
+                if context.is_bool(value=lVal) and context.is_bool(value=rVal):
+                    return bool(lVal and rVal)
+                else:
+                    raise TypeError
+            case TokenType.OR:
+                if context.is_bool(value=lVal) and context.is_bool(value=rVal):
+                    return bool(lVal or rVal)
+                else:
+                    raise TypeError
+            case TokenType.GT:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return bool(lVal > rVal)
+                else:
+                    raise TypeError
+            case TokenType.GE:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return bool(lVal >= rVal)
+                else:
+                    raise TypeError
+            case TokenType.LT:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return bool(lVal < rVal)
+                else:
+                    raise TypeError
+            case TokenType.LE:
+                if context.is_real(value=lVal) and context.is_real(value=rVal):
+                    return bool(lVal <= rVal)
+                else:
+                    raise TypeError
+            case TokenType.EQ:
+                if context.type_checker(left=lVal, right=rVal):
+                    return bool(lVal == rVal)
+                else:
+                    raise TypeError
+            case TokenType.NE:
+                if context.type_checker(left=lVal, right=rVal):
+                    return bool(lVal != rVal)
+                else:
+                    raise TypeError
+            case TokenType.APPEND:
+                if isinstance(self.lhs, IdentifierASTNode):
+                    ident = self.lhs.ident
+                    if isinstance(lVal, list):
+                        lVal.append(rVal)
+                        if context.verify_list_type(lVal):
+                            lType = type([]) # doesn't catch the case when list is empty, could real[] << true, could create Real/Str/BoolList object
+                            context.set_ident(symbol=ident, type=lType, value=lVal, index=None)
+                            return lVal
+                        else:
+                            raise TypeError # check all values in the list are the same type
+                    else:
+                        raise TypeError
+                else:
+                    raise TypeError
+            case _:
+                raise ValueError # invalid operator
 
 
 class CallExprASTNode(ExprASTNode):
@@ -205,7 +328,7 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -224,7 +347,7 @@ class ListASTNode(ExprASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -247,7 +370,7 @@ class AssignASTNode(ExprASTNode):
     def get_var(self):
         return self.var
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -265,7 +388,7 @@ class StmtBlockASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -286,7 +409,7 @@ class ElifStmtASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -323,7 +446,7 @@ class IfStmtASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -345,7 +468,7 @@ class WhileStmtASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -383,7 +506,7 @@ class ForStmtASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -401,7 +524,7 @@ class ReturnStmtASTNode(StmtASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -413,7 +536,7 @@ class BreakStmtASTNode(StmtASTNode):
     def __str__(self):
         return f"-> BreakStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 
@@ -445,7 +568,7 @@ class FunctionASTNode(ASTNode):
 
         return out
 
-    def code_gen(self):
+    def code_gen(self, context: TheContext):
         pass
 
 

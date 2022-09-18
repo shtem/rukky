@@ -1,6 +1,3 @@
-from data.ast import FunctionASTNode
-
-
 class Entry:
     def __init__(self, type: type):
         self.type = type
@@ -13,10 +10,10 @@ class SymbolEntry(Entry):
 
 
 class FuncEntry(Entry):
-    def __init__(self, returnType: type, argTypes: list, func: FunctionASTNode):
+    def __init__(self, returnType: type, argTypes: list, func):
         super().__init__(returnType)
         self.argTypes = argTypes
-        self.func = func
+        # self.func = func # FunctionASTnode
 
 
 class TheContext:
@@ -65,7 +62,7 @@ class TheContext:
         del self.symbolTable[symbol]
 
     def set_func(
-        self, symbol: str, returnType: type, argTypes: list, func: FunctionASTNode
+        self, symbol: str, returnType: type, argTypes: list, func
     ):
         vEntry = FuncEntry(type=returnType, argTypes=argTypes, func=func)
         self.funcTable[symbol] = vEntry
@@ -80,16 +77,21 @@ class TheContext:
     def remove_func(self, symbol: str):
         del self.funcTable[symbol]
 
-    def type_checker(self, left: list, right: list):
+    def type_checker_params(self, left: list, right: list):
         # case (1) check all func param types match call param types
         return left == right
 
     def type_checker(self, left: Entry, right):
         # case (2) check func/var type matches return/assigned value type
+        if not right: # when value = None 'null' keyword, allow it to be stored
+            return True
         return left.type == type(right)
 
     def type_checker(self, left, right):
         # case (3) check types of lhs and rhs values match in binary operation
+        if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+            return True
+            
         return type(left) == type(right)
 
     def is_bool(self, value):
@@ -97,3 +99,13 @@ class TheContext:
 
     def is_real(self, value):
         return isinstance(value, (int, float))
+    
+    def verify_list_type(self, lst: list):
+        return all(isinstance(x, (int, float)) for x in lst) or all(isinstance(x, str) for x in lst) or all(isinstance(x, bool) for x in lst)
+
+    def _type_builtin(self, left, right):
+        # function for type keyword
+        if not (isinstance(left, list) or isinstance(right, list)):
+            return type(left) == type(right)
+        else: # doesn't get type for list
+            raise ValueError
