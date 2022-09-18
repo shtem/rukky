@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from data.token import Token
+from data.context import TheContext
 
 
 class ASTNode(ABC):
@@ -103,9 +104,36 @@ class IdentifierASTNode(ExprASTNode):
 
     def is_list(self):
         return self.listFlag
+    
+    def determine_type_value(self):
+        if self.listFlag: # type = list
+            return type([]), []
+        else:
+            if self.type == "real":
+                return type(0.0), 0.0
+            elif self.type == "bool":
+                return type(False), False
+            elif self.type == "str":
+                return type(""), ""
+            else:
+                raise TypeError
 
-    def code_gen(self):
-        pass
+    def code_gen(self, context: TheContext):
+        symbol = self.ident
+        if self.type: # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
+            type, defaultValue = self.determine_type_value()
+            context.set_ident(symbol=symbol, type=type, value=defaultValue, index=None)
+        else: # variable retrieval: type == None e.g. ID or ID[expr]
+            if self.index:
+                indexVal = self.index.code_gen(context)
+                if context.is_real(indexVal):
+                    varValue = context.get_ident(symbol=symbol, index=int(indexVal))
+                else:
+                    raise TypeError
+            else:
+                varValue = context.get_ident(symbol=symbol)
+
+            return varValue
 
 
 class ReservedKeyWordASTNode(IdentifierASTNode):
