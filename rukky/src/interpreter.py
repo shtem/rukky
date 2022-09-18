@@ -28,4 +28,4 @@ class Interpreter:
     #   display, getStr - any, len - list|str, type - real|bool|str|null, getReal - real|bool|str
     #   rand, floor, ceil, sqrt, log, sin, cos, tan - real
 
-    # create new context everytime stmts block is created, create global context in program ast 
+    # create new context everytime stmts block is created, create global context in program ast

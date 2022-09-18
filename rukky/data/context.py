@@ -24,28 +24,28 @@ class TheContext:
 
     def set_ident(self, symbol: str, type: type, value, index=None):
         if index:
-            sList = self.get_ident(symbol) # get list
-            sListType = self.get_ident_type(symbol) # get list type
+            sList = self.get_ident(symbol)  # get list
+            sListType = self.get_ident_type(symbol)  # get list type
             if not sListType:
                 raise TypeError
-            sList[index] = value # change value at index to new value
+            sList[index] = value  # change value at index to new value
             sEntryNew = SymbolEntry(type=sListType, value=sList)
             self.symbolTable[symbol] = sEntryNew
         else:
-            if type: # new variable declaration
-                sType = type 
-            else: # variable re assignment
+            if type:  # new variable declaration
+                sType = type
+            else:  # variable re assignment
                 sType = self.get_ident_type(symbol)
                 if not sType:
                     raise TypeError
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
-    
+
     def get_ident_type(self, symbol: str):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
             sEntry = self.parent.get_ident(symbol)
-        
+
         return sEntry.type
 
     def get_ident(self, symbol: str, index=None):
@@ -61,9 +61,7 @@ class TheContext:
     def remove_ident(self, symbol: str):
         del self.symbolTable[symbol]
 
-    def set_func(
-        self, symbol: str, returnType: type, argTypes: list, func
-    ):
+    def set_func(self, symbol: str, returnType: type, argTypes: list, func):
         vEntry = FuncEntry(type=returnType, argTypes=argTypes, func=func)
         self.funcTable[symbol] = vEntry
 
@@ -83,7 +81,7 @@ class TheContext:
 
     def type_checker(self, left: Entry, right):
         # case (2) check func/var type matches return/assigned value type
-        if not right: # when value = None 'null' keyword, allow it to be stored
+        if not right:  # when value = None 'null' keyword, allow it to be stored
             return True
         return left.type == type(right)
 
@@ -91,7 +89,7 @@ class TheContext:
         # case (3) check types of lhs and rhs values match in binary operation
         if isinstance(left, (int, float)) and isinstance(right, (int, float)):
             return True
-            
+
         return type(left) == type(right)
 
     def is_bool(self, value):
@@ -99,13 +97,17 @@ class TheContext:
 
     def is_real(self, value):
         return isinstance(value, (int, float))
-    
+
     def verify_list_type(self, lst: list):
-        return all(isinstance(x, (int, float)) for x in lst) or all(isinstance(x, str) for x in lst) or all(isinstance(x, bool) for x in lst)
+        return (
+            all(isinstance(x, (int, float)) for x in lst)
+            or all(isinstance(x, str) for x in lst)
+            or all(isinstance(x, bool) for x in lst)
+        )
 
     def _type_builtin(self, left, right):
         # function for type keyword
         if not (isinstance(left, list) or isinstance(right, list)):
             return type(left) == type(right)
-        else: # doesn't get type for list
+        else:  # doesn't get type for list
             raise ValueError

@@ -105,9 +105,9 @@ class IdentifierASTNode(ExprASTNode):
 
     def is_list(self):
         return self.listFlag
-    
+
     def determine_type_value(self):
-        if self.listFlag: # type = list
+        if self.listFlag:  # type = list
             return type([]), []
         else:
             if self.type == "real":
@@ -116,17 +116,19 @@ class IdentifierASTNode(ExprASTNode):
                 return type(False), False
             elif self.type == "str":
                 return type(""), ""
-            elif self.type == "void": # only applies to functions
+            elif self.type == "void":  # only applies to functions
                 return type(None), None
             else:
                 raise TypeError
 
     def code_gen(self, context: TheContext):
         symbol = self.ident
-        if self.type: # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
+        if (
+            self.type
+        ):  # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
             type, defaultValue = self.determine_type_value()
             context.set_ident(symbol=symbol, type=type, value=defaultValue, index=None)
-        else: # variable retrieval: type = None e.g. ID or ID[expr]
+        else:  # variable retrieval: type = None e.g. ID or ID[expr]
             if self.index:
                 indexVal = self.index.code_gen(context=context)
                 if context.is_real(indexVal):
@@ -179,15 +181,14 @@ class UnaryExprASTNode(ExprASTNode):
                 if context.is_real(value=rVal):
                     return -rVal
                 else:
-                    raise TypeError # incompatible types
+                    raise TypeError  # incompatible types
             case TokenType.NOT:
                 if context.is_bool(value=rVal):
                     return not rVal
                 else:
                     raise TypeError
             case _:
-                raise ValueError # invalid operator
-
+                raise ValueError  # invalid operator
 
 
 class BinaryExprASTNode(ExprASTNode):
@@ -212,13 +213,13 @@ class BinaryExprASTNode(ExprASTNode):
         match self.op.type:
             case TokenType.PLUS:
                 if context.type_checker(left=lVal, right=rVal):
-                    result = lVal + rVal # allows for addition and concatenation
+                    result = lVal + rVal  # allows for addition and concatenation
                     if context.is_real(value=result):
-                        return float(result) 
+                        return float(result)
                     else:
-                        return result 
+                        return result
                 else:
-                    raise TypeError # incompatible types
+                    raise TypeError  # incompatible types
             case TokenType.MINUS:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
                     return float(lVal - rVal)
@@ -246,7 +247,7 @@ class BinaryExprASTNode(ExprASTNode):
                     raise TypeError
             case TokenType.EXP:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
-                    return float(lVal ** rVal)
+                    return float(lVal**rVal)
                 else:
                     raise TypeError
             case TokenType.AND:
@@ -295,17 +296,21 @@ class BinaryExprASTNode(ExprASTNode):
                     if isinstance(lVal, list):
                         lVal.append(rVal)
                         if context.verify_list_type(lVal):
-                            lType = type([]) # doesn't catch the case when list is empty, could real[] << true, could create Real/Str/BoolList object
-                            context.set_ident(symbol=ident, type=lType, value=lVal, index=None)
+                            lType = type(
+                                []
+                            )  # doesn't catch the case when list is empty, could real[] << true, could create Real/Str/BoolList object
+                            context.set_ident(
+                                symbol=ident, type=lType, value=lVal, index=None
+                            )
                             return lVal
                         else:
-                            raise TypeError # check all values in the list are the same type
+                            raise TypeError  # check all values in the list are the same type
                     else:
                         raise TypeError
                 else:
                     raise TypeError
             case _:
-                raise ValueError # invalid operator
+                raise ValueError  # invalid operator
 
 
 class CallExprASTNode(ExprASTNode):
