@@ -1,5 +1,6 @@
 from src.lexer import Lexer
 from src.parser import Parser
+from src.interpreter import Interpreter
 import sys
 
 while True:
@@ -10,6 +11,7 @@ while True:
 
         lex = Lexer(text=text)
         parser = Parser(lexer=lex)
+        interp = Interpreter(parser=parser)
 
         print("\nInput\n------\n", text)
 
@@ -21,6 +23,11 @@ while True:
         lex.reset()
         programAST = parser.parse()
         print(repr(programAST))
+
+        print("\nResult\n---------\n")
+        parser.reset()
+        res, symb = interp.interpret()
+        print(res, symb, "\n")
 
     except KeyboardInterrupt:
         sys.exit(0)

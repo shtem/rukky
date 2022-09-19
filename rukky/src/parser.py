@@ -20,6 +20,11 @@ class Parser:
         )
         sys.exit(0)
 
+    def reset(self):
+        self.lexer.reset()
+        self.prevTok: Token = None
+        self.currTok: Token = None
+
     def eat(self):
         # eat current token by assigning current token to next token in the input
         self.prevTok = self.currTok

@@ -107,19 +107,16 @@ class IdentifierASTNode(ExprASTNode):
         return self.listFlag
 
     def determine_type_value(self):
-        if self.listFlag:  # type = list
-            return type([]), []
+        if self.type == "real":
+            return type(0.0), 0.0
+        elif self.type == "bool":
+            return type(False), False
+        elif self.type == "str":
+            return type(""), ""
+        elif self.type == "void":  # only applies to functions
+            return type(None), None
         else:
-            if self.type == "real":
-                return type(0.0), 0.0
-            elif self.type == "bool":
-                return type(False), False
-            elif self.type == "str":
-                return type(""), ""
-            elif self.type == "void":  # only applies to functions
-                return type(None), None
-            else:
-                raise TypeError
+            raise TypeError
 
     def code_gen(self, context: TheContext):
         symbol = self.ident
@@ -127,16 +124,33 @@ class IdentifierASTNode(ExprASTNode):
             self.type
         ):  # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
             type, defaultValue = self.determine_type_value()
-            context.set_ident(symbol=symbol, type=type, value=defaultValue, index=None)
+
+            if self.listFlag:
+                defaultValue = []
+
+            context.set_ident(
+                symbol=symbol,
+                valType=type,
+                value=defaultValue,
+                index=None,
+                isAppend=False,
+                isList=self.listFlag,
+            )
+
+            return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
             if self.index:
                 indexVal = self.index.code_gen(context=context)
                 if context.is_real(indexVal):
-                    varValue = context.get_ident(symbol=symbol, index=int(indexVal))
+                    varValue = context.get_ident(
+                        symbol=symbol, index=int(indexVal), getList=self.listFlag
+                    )
                 else:
                     raise TypeError
             else:
-                varValue = context.get_ident(symbol=symbol, index=None)
+                varValue = context.get_ident(
+                    symbol=symbol, index=None, getList=self.listFlag
+                )
 
             return varValue
 
@@ -173,7 +187,7 @@ class UnaryExprASTNode(ExprASTNode):
     def code_gen(self, context: TheContext):
         rVal = self.rhs.code_gen(context=context)
 
-        if not rVal:
+        if rVal == None:
             raise ValueError
 
         match self.op.type:
@@ -204,15 +218,29 @@ class BinaryExprASTNode(ExprASTNode):
         return f"-> BinaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.lhs)}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
     def code_gen(self, context: TheContext):
-        rVal = self.rhs.code_gen(context=context)
         lVal = self.lhs.code_gen(context=context)
+        rVal = self.rhs.code_gen(context=context)
 
-        if not lVal or not rVal:
-            raise ValueError
+        if (
+            lVal == None
+            and not isinstance(
+                self.lhs, (ReservedKeyWordASTNode, IdentifierASTNode, CallExprASTNode)
+            )
+        ) or (
+            rVal == None
+            and not isinstance(
+                self.rhs, (ReservedKeyWordASTNode, IdentifierASTNode, CallExprASTNode)
+            )
+        ):
+            raise ValueError  # allow for null checks
 
         match self.op.type:
             case TokenType.PLUS:
-                if context.type_checker(left=lVal, right=rVal):
+                if (
+                    context.type_checker(left=lVal, right=rVal)
+                    and lVal != None
+                    and rVal != None
+                ):
                     result = lVal + rVal  # allows for addition and concatenation
                     if context.is_real(value=result):
                         return float(result)
@@ -292,19 +320,17 @@ class BinaryExprASTNode(ExprASTNode):
                     raise TypeError
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
-                    ident = self.lhs.ident
-                    if isinstance(lVal, list):
-                        lVal.append(rVal)
-                        if context.verify_list_type(lVal):
-                            lType = type(
-                                []
-                            )  # doesn't catch the case when list is empty, could real[] << true, could create Real/Str/BoolList object
-                            context.set_ident(
-                                symbol=ident, type=lType, value=lVal, index=None
-                            )
-                            return lVal
-                        else:
-                            raise TypeError  # check all values in the list are the same type
+                    if self.lhs.is_list():
+                        ident = self.lhs.ident
+                        context.set_ident(
+                            symbol=ident,
+                            valType=None,
+                            value=rVal,
+                            index=None,
+                            isAppend=True,
+                            isList=True,
+                        )
+                        return context.get_ident(symbol=ident, index=None, getList=True)
                     else:
                         raise TypeError
                 else:
@@ -353,7 +379,9 @@ class ListASTNode(ExprASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        listVal = [elem.code_gen(context=context) for elem in self.elems]
+
+        return listVal
 
 
 class AssignASTNode(ExprASTNode):
@@ -581,6 +609,7 @@ class ProgramASTNode(ASTNode):
     def __init__(self, declarList: list[ASTNode]):
         super().__init__()
         self.declarList = declarList
+        self.programContext = TheContext(parent=None)
 
     def __str__(self):
         out = f"|-> ProgramASTNode "
@@ -593,4 +622,5 @@ class ProgramASTNode(ASTNode):
         return out
 
     def code_gen(self):
-        pass
+        for decl in self.declarList:
+            return decl.code_gen(context=self.programContext)

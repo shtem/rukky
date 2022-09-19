@@ -1,3 +1,39 @@
+class ListValue:
+    def __init__(self, type: type, lst=[]):
+        self.valType = type
+        self.lst = lst
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"ListValue({self.valType}, {repr(self.lst)})"
+
+    def verify_value(self, value):
+        return isinstance(value, self.valType)
+
+    def add(self, value, index=None):
+        if self.verify_value(value=value):
+            if index:
+                if index < len(self.lst):
+                    self.lst[index] = value
+                else:
+                    raise IndexError
+            else:
+                self.lst.append(value)
+        else:
+            raise TypeError
+
+    def get_lst(self, index=None):
+        if index:
+            if index < len(self.lst):
+                return self.lst[index]
+            else:
+                raise IndexError
+        else:
+            return self.lst
+
+
 class Entry:
     def __init__(self, type: type):
         self.type = type
@@ -8,12 +44,24 @@ class SymbolEntry(Entry):
         super().__init__(type)
         self.value = value
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"SymbolEntry({self.type}, {repr(self.value)})"
+
 
 class FuncEntry(Entry):
     def __init__(self, returnType: type, argTypes: list, func):
         super().__init__(returnType)
         self.argTypes = argTypes
-        # self.func = func # FunctionASTnode
+        self.func = func  # FunctionASTnode (?)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"FuncEntry({self.type}, {repr(self.argTypes)})"
 
 
 class TheContext:
@@ -22,39 +70,71 @@ class TheContext:
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
 
-    def set_ident(self, symbol: str, type: type, value, index=None):
-        if index:
-            sList = self.get_ident(symbol)  # get list
-            sListType = self.get_ident_type(symbol)  # get list type
-            if not sListType:
-                raise TypeError
-            sList[index] = value  # change value at index to new value
-            sEntryNew = SymbolEntry(type=sListType, value=sList)
-            self.symbolTable[symbol] = sEntryNew
+    def get_ident_type(self, symbol: str, getList=False):
+        sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
+        if not sEntry and self.parent:
+            sEntry = self.parent.get_ident(symbol=symbol)
+
+        if getList:
+            sList: ListValue = sEntry.value
+            return sList.valType
         else:
-            if type:  # new variable declaration
-                sType = type
+            return sEntry.type
+
+    def set_ident(
+        self,
+        symbol: str,
+        valType: type,
+        value,
+        index=None,
+        isAppend=False,
+        isList=False,
+    ):
+        if isList:
+            sListType = type([])
+            if index:
+                sList: ListValue = self.get_ident(symbol=symbol)  # get list object
+                sList.add(value=value, index=index)  # add value at index
+                sEntryNew = SymbolEntry(type=sListType, value=sList)
+                self.symbolTable[symbol] = sEntryNew
+            elif isAppend:
+                sList: ListValue = self.get_ident(symbol=symbol)  # get list object
+                sList.add(value=value)  # append at index
+                sEntryNew = SymbolEntry(type=sListType, value=sList)
+                self.symbolTable[symbol] = sEntryNew
+            else:
+                if valType:  # new list declaration
+                    sType = valType
+                else:  # list re assignment
+                    sType = self.get_ident_type(symbol=symbol, getList=True)
+                    if not sType:
+                        raise TypeError
+
+                if not self.verify_list_type(lst=value, type=sType):
+                    raise TypeError
+                lstVal = ListValue(type=sType, lst=value)
+                sEntry = SymbolEntry(type=sListType, value=lstVal)
+                self.symbolTable[symbol] = sEntry
+        else:
+            if valType:  # new variable declaration
+                sType = valType
             else:  # variable re assignment
-                sType = self.get_ident_type(symbol)
+                sType = self.get_ident_type(symbol=symbol)
                 if not sType:
                     raise TypeError
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
 
-    def get_ident_type(self, symbol: str):
+    def get_ident(self, symbol: str, index=None, getList=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            sEntry = self.parent.get_ident(symbol)
+            sEntry = self.parent.get_ident(symbol=symbol)
 
-        return sEntry.type
-
-    def get_ident(self, symbol: str, index=None):
-        sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
-        if not sEntry and self.parent:
-            sEntry = self.parent.get_ident(symbol)
-
-        if index:
-            return sEntry.value[index]
+        if getList:
+            if index:
+                return sEntry.value.get_lst(index=index)
+            else:
+                return sEntry.value.get_lst()
         else:
             return sEntry.value
 
@@ -90,6 +170,9 @@ class TheContext:
         if isinstance(left, (int, float)) and isinstance(right, (int, float)):
             return True
 
+        if isinstance(left, type(None)) or isinstance(right, type(None)):
+            return True
+
         return type(left) == type(right)
 
     def is_bool(self, value):
@@ -98,12 +181,8 @@ class TheContext:
     def is_real(self, value):
         return isinstance(value, (int, float))
 
-    def verify_list_type(self, lst: list):
-        return (
-            all(isinstance(x, (int, float)) for x in lst)
-            or all(isinstance(x, str) for x in lst)
-            or all(isinstance(x, bool) for x in lst)
-        )
+    def verify_list_type(self, lst: list, type: type):
+        return all(isinstance(x, type) for x in lst)
 
     def _type_builtin(self, left, right):
         # function for type keyword
