@@ -159,11 +159,15 @@ class TheContext:
         # case (1) check all func param types match call param types
         return left == right
 
-    def type_checker(self, left: Entry, right):
+    def type_checker_assign(self, left: str, right, hasIndex=False):
         # case (2) check func/var type matches return/assigned value type
-        if not right:  # when value = None 'null' keyword, allow it to be stored
+        if right == None:  # when value = None 'null' keyword, allow it to be stored
             return True
-        return left.type == type(right)
+
+        if hasIndex:
+            return self.get_ident_type(symbol=left, getList=True) == type(right)
+        else:
+            return self.get_ident_type(symbol=left) == type(right)
 
     def type_checker(self, left, right):
         # case (3) check types of lhs and rhs values match in binary operation
@@ -182,6 +186,8 @@ class TheContext:
         return isinstance(value, (int, float))
 
     def verify_list_type(self, lst: list, type: type):
+        if lst == None:
+            return False  # don't want lists to be null but variables can be null
         return all(isinstance(x, type) for x in lst)
 
     def _type_builtin(self, left, right):

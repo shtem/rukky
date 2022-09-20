@@ -404,7 +404,45 @@ class AssignASTNode(ExprASTNode):
         return self.var
 
     def code_gen(self, context: TheContext):
-        pass
+        if self.var.get_type():
+            self.var.code_gen(context=context)
+
+        assignVal = self.value.code_gen(context=context)
+        symbol = self.var.get_ident()
+
+        if assignVal == None and not isinstance(
+            self.value, (ReservedKeyWordASTNode, IdentifierASTNode, CallExprASTNode)
+        ):
+            raise ValueError
+
+        if self.var.index:
+            if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
+                context.set_ident(
+                    symbol=symbol,
+                    valType=None,
+                    value=assignVal,
+                    index=self.var.index,
+                    isAppend=False,
+                    isList=self.var.listFlag,
+                )
+            else:
+                raise TypeError
+        else:
+            if context.type_checker_assign(
+                left=symbol, right=assignVal, hasIndex=False
+            ):
+                context.set_ident(
+                    symbol=symbol,
+                    valType=None,
+                    value=assignVal,
+                    index=self.var.index,
+                    isAppend=False,
+                    isList=self.var.listFlag,
+                )
+            else:
+                raise TypeError
+
+        return assignVal
 
 
 class StmtBlockASTNode(StmtASTNode):
@@ -422,7 +460,15 @@ class StmtBlockASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if not self.stmtList:
+            raise ValueError  # block empty
+
+        childContext = TheContext(parent=context)
+        stmtVal = None
+        for decl in self.stmtList:
+            stmtVal = decl.code_gen(context=childContext)
+
+        return stmtVal
 
 
 class ElifStmtASTNode(StmtASTNode):
@@ -443,7 +489,15 @@ class ElifStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if self.cond == None or self.elifBody == None:
+            raise ValueError
+
+        condVal = self.cond.code_gen(context=context)
+
+        if not context.is_bool(value=condVal):
+            raise TypeError
+
+        return condVal, self.elifBody
 
 
 class IfStmtASTNode(StmtASTNode):
@@ -480,7 +534,27 @@ class IfStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if self.cond == None or self.ifBody == None:
+            raise ValueError  # empty block
+
+        condVal = self.cond.code_gen(context=context)
+
+        if not context.is_bool(value=condVal):
+            raise TypeError  # invalid boolean expression
+
+        if condVal:  # if condition true evaluate if body
+            return self.ifBody.code_gen(context=context)
+
+        if self.elifStmts:
+            for el in self.elifStmts:
+                elCond, elBody = el.code_gen(context=context)
+                if elCond:
+                    return elBody.code_gen(context=context)
+
+        if self.elseBody:
+            return self.elseBody.code_gen(context=context)
+
+        return None
 
 
 class WhileStmtASTNode(StmtASTNode):
@@ -502,7 +576,20 @@ class WhileStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if self.cond == None or self.whileBody == None:
+            raise ValueError
+
+        while True:
+            condVal = self.cond.code_gen(context=context)
+            if not context.is_bool(value=condVal):
+                raise TypeError
+
+            if not condVal:
+                break
+
+            bVal = self.whileBody.code_gen()
+
+        return bVal
 
 
 class ForStmtASTNode(StmtASTNode):
@@ -540,7 +627,52 @@ class ForStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if (
+            self.counter == None
+            or self.start == None
+            or self.end == None
+            or self.increment == None
+            or self.forBody == None
+        ):
+            raise ValueError  # empty block
+
+        self.counter.code_gen(context=context)
+        symbol = self.counter.ident
+
+        sVal = self.start.code_gen(context=context)
+        endVal = self.end.code_gen(context=context)
+        incVal = self.increment.code_gen(context=context)
+
+        if (
+            not context.is_real(value=sVal)
+            or not context.is_real(value=endVal)
+            or not context.is_real(value=incVal)
+        ):
+            raise TypeError
+
+        i = sVal
+
+        if incVal == 0:
+            raise ValueError  # invalid increment value
+
+        if incVal >= 0:
+            for_cond = lambda: i < endVal
+        else:
+            for_cond = lambda: i > endVal
+
+        while for_cond():
+            context.set_ident(
+                symbol=symbol,
+                valType=None,
+                value=sVal,
+                index=None,
+                isAppend=False,
+                isList=False,
+            )
+            i += incVal
+            bVal = self.forBody.code_gen(context=context)
+
+        return bVal
 
 
 class ReturnStmtASTNode(StmtASTNode):
@@ -622,5 +754,8 @@ class ProgramASTNode(ASTNode):
         return out
 
     def code_gen(self):
+        progVal = None
         for decl in self.declarList:
-            return decl.code_gen(context=self.programContext)
+            progVal = decl.code_gen(context=self.programContext)
+
+        return progVal
