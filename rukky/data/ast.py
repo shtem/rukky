@@ -690,7 +690,13 @@ class ReturnStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        context.returnFlag = True
+
+        if self.returnBody:
+            rVal = self.returnBody.code_gen(context=context)
+            context.funcReturnVal = rVal
+        
+        return rVal
 
 
 class BreakStmtASTNode(StmtASTNode):
@@ -702,7 +708,7 @@ class BreakStmtASTNode(StmtASTNode):
         return f"-> BreakStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
 
     def code_gen(self, context: TheContext):
-        pass
+        context.breakFlag = True
 
 
 class FunctionASTNode(ASTNode):

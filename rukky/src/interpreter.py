@@ -32,6 +32,7 @@ class Interpreter:
     # create wrapper for value error (tried to find type of list, no lhs/rhs for operation or lhs/rhs == null, invalid operator)
     # create wrapper for ZeroDivisionError
     # - create specific errors that are children of python errors so I can try catch here (?)
+    # - better idea !! - just pass message to exception itself and capture message and pass to parser error !!
 
     # store list ast type as list type in symbol and func entries but when assigning or appending is taking place check ast type matches first
     # always convert index to int in identifier ast and assignment ast in codegen

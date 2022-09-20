@@ -70,6 +70,22 @@ class TheContext:
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
 
+        self.returnFlag = False
+        self.breakFlag = False
+        self.inLoop = False
+        self.inFunc = False
+        self.funcReturnVal = None
+
+        self.should_return = lambda: self.inFunc and self.returnFlag
+        self.should_break = lambda: self.inLoop and self.breakFlag
+    
+    def reset_flags(self):
+        self.returnFlag = False
+        self.breakFlag = False
+        self.inLoop = False
+        self.inFunc = False
+        self.funcReturnVal = None
+
     def get_ident_type(self, symbol: str, getList=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
