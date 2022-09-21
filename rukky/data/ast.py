@@ -435,7 +435,7 @@ class AssignASTNode(ExprASTNode):
                     symbol=symbol,
                     valType=None,
                     value=assignVal,
-                    index=self.var.index,
+                    index=None,
                     isAppend=False,
                     isList=self.var.listFlag,
                 )
@@ -467,6 +467,9 @@ class StmtBlockASTNode(StmtASTNode):
         stmtVal = None
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=childContext)
+
+            if context.should_return():
+                return stmtVal
 
         return stmtVal
 
@@ -578,6 +581,8 @@ class WhileStmtASTNode(StmtASTNode):
     def code_gen(self, context: TheContext):
         if self.cond == None or self.whileBody == None:
             raise ValueError
+        
+        context.inLoop = True
 
         while True:
             condVal = self.cond.code_gen(context=context)
@@ -588,6 +593,17 @@ class WhileStmtASTNode(StmtASTNode):
                 break
 
             bVal = self.whileBody.code_gen()
+            context.inLoop = True
+
+            if context.should_return() and not context.breakFlag:
+                context.inLoop = False
+                return bVal
+
+            if context.should_break():
+                context.breakFlag = False
+                break
+        
+        context.inLoop = False
 
         return bVal
 
@@ -634,7 +650,9 @@ class ForStmtASTNode(StmtASTNode):
             or self.increment == None
             or self.forBody == None
         ):
-            raise ValueError  # empty block
+            raise ValueError 
+
+        context.inLoop = True
 
         self.counter.code_gen(context=context)
         symbol = self.counter.ident
@@ -671,6 +689,17 @@ class ForStmtASTNode(StmtASTNode):
             )
             i += incVal
             bVal = self.forBody.code_gen(context=context)
+            context.inLoop = True
+
+            if context.should_return() and not context.breakFlag:
+                context.inLoop = False
+                return bVal
+
+            if context.should_break():
+                context.breakFlag = False
+                break
+        
+        context.inLoop = False
 
         return bVal
 
@@ -690,6 +719,9 @@ class ReturnStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        if not context.inFunc:
+            raise ValueError # trying to return outside a function
+
         context.returnFlag = True
 
         if self.returnBody:
@@ -708,7 +740,12 @@ class BreakStmtASTNode(StmtASTNode):
         return f"-> BreakStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
 
     def code_gen(self, context: TheContext):
+        if not context.inLoop:
+            raise ValueError # trying to break outside a loop
+
         context.breakFlag = True
+        
+        return None
 
 
 class FunctionASTNode(ASTNode):
