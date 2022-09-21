@@ -464,6 +464,11 @@ class StmtBlockASTNode(StmtASTNode):
             raise ValueError  # block empty
 
         childContext = TheContext(parent=context)
+        childContext.returnFlag = context.returnFlag
+        childContext.breakFlag = context.breakFlag
+        childContext.inLoop = context.inLoop
+        childContext.inFunc = context.inFunc
+
         stmtVal = None
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=childContext)
@@ -777,7 +782,30 @@ class FunctionASTNode(ASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        pass
+        if self.funcName == None and self.funcBody == None:
+            raise ValueError
+        
+        self.funcName.code_gen(context=context)
+        symbol = self.funcName.ident
+        isReturnList = self.funcName.is_list()
+        returnType, _ = self.funcName.determine_type_value()
+
+        argSymbols = []
+
+        funcContext = TheContext(parent=context)
+        funcContext.returnFlag = context.returnFlag
+        funcContext.breakFlag = context.breakFlag
+        funcContext.inLoop = context.inLoop
+        funcContext.inFunc = True
+
+        for par in self.params:
+            argSymbols.append(par.ident)
+            par.code_gen(context=funcContext) # add parameters as variables to function context
+        
+        context.set_func(symbol=symbol, returnType=returnType, argSymbols=argSymbols, func=self.funcBody, context=funcContext, isReturnList=isReturnList)
+
+        return None
+        
 
 
 class ProgramASTNode(ASTNode):

@@ -52,10 +52,12 @@ class SymbolEntry(Entry):
 
 
 class FuncEntry(Entry):
-    def __init__(self, returnType: type, argTypes: list, func):
+    def __init__(self, returnType: type, argSymbols: list, func, context, isReturnList=False):
         super().__init__(returnType)
-        self.argTypes = argTypes
-        self.func = func  # FunctionASTnode (?)
+        self.argSymbols = argSymbols
+        self.func = func  # functionBody
+        self.context = context
+        self.isReturnList = isReturnList
 
     def __repr__(self):
         return self.__str__()
@@ -157,16 +159,16 @@ class TheContext:
     def remove_ident(self, symbol: str):
         del self.symbolTable[symbol]
 
-    def set_func(self, symbol: str, returnType: type, argTypes: list, func):
-        vEntry = FuncEntry(type=returnType, argTypes=argTypes, func=func)
-        self.funcTable[symbol] = vEntry
+    def set_func(self, symbol: str, returnType: type, argSymbols: list, func, context, isReturnList=False):
+        fEntry = FuncEntry(type=returnType, argTypes=argSymbols, func=func, context=context, isReturnList=isReturnList)
+        self.funcTable[symbol] = fEntry
 
     def get_func(self, symbol: str):
-        vEntry: FuncEntry = self.funcTable.get(symbol, None)
-        if not vEntry and self.parent:
+        fEntry: FuncEntry = self.funcTable.get(symbol, None)
+        if not fEntry and self.parent:
             return self.parent.get_func(symbol)
         else:
-            return vEntry
+            return fEntry
 
     def remove_func(self, symbol: str):
         del self.funcTable[symbol]
