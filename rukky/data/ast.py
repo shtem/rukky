@@ -1,5 +1,5 @@
 from common.lex_enums import TokenType
-from data.context import TheContext
+from data.context import TheContext, FuncEntry
 from data.token import Token
 from abc import ABC, abstractmethod
 
@@ -359,8 +359,64 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
-    def code_gen(self, context: TheContext):
+    def reserved_calls(self):
+        # if null pi eul raise valueerror
+        # make sure for rand len(self.args) = 0 or self.args = None
+        # make sure for type len(self.args) = 2
+        # make sure for rest len(self.args) = 1
+        # find out how to perform print just print or return function ?
         pass
+
+    def execute(self, fEntry: FuncEntry):
+        # codegen func body using funcContext
+        # return fEntry back
+        pass
+
+    def code_gen(self, context: TheContext):
+        if self.callee == None:
+            raise ValueError
+
+        if isinstance(self.callee, ReservedKeyWordASTNode):
+            return self.reserved_calls()
+        else:
+            symbol = self.callee.ident
+            fEntry = context.get_func(symbol=symbol)
+
+            if fEntry == None:
+                raise ValueError  # function doesn't exist/ has not yet been defined
+
+            if len(self.args) != len(fEntry.argSymbols):
+                raise ValueError  # incorrect number of arguments
+
+            argValues = [arg.code_gen(context=context) for arg in self.args]
+            argValSymb = zip(fEntry.argSymbols, argValues)
+
+            for (
+                par,
+                val,
+            ) in (
+                argValSymb
+            ):  # for each argument try assigning to parameter variables to check types
+                if fEntry.context.type_checker_assign(
+                    left=par, right=val, hasIndex=False
+                ):
+                    fEntry.context.set_ident(
+                        symbol=par,
+                        valType=None,
+                        value=val,
+                        index=None,
+                        isAppend=False,
+                        isList=fEntry.context.get_ident_type(symbol=par, getList=False)
+                        == type([]),
+                    )
+                else:
+                    raise TypeError
+
+            fEntry = self.execute(fEntry=fEntry)
+
+            # type check func returnval matches func type and islist for funcContext
+            # if it does store func returnval, reset flags in funcContext
+            # return stored func returnval
 
 
 class ListASTNode(ExprASTNode):
@@ -586,7 +642,7 @@ class WhileStmtASTNode(StmtASTNode):
     def code_gen(self, context: TheContext):
         if self.cond == None or self.whileBody == None:
             raise ValueError
-        
+
         context.inLoop = True
 
         while True:
@@ -607,7 +663,7 @@ class WhileStmtASTNode(StmtASTNode):
             if context.should_break():
                 context.breakFlag = False
                 break
-        
+
         context.inLoop = False
 
         return bVal
@@ -655,7 +711,7 @@ class ForStmtASTNode(StmtASTNode):
             or self.increment == None
             or self.forBody == None
         ):
-            raise ValueError 
+            raise ValueError
 
         context.inLoop = True
 
@@ -703,7 +759,7 @@ class ForStmtASTNode(StmtASTNode):
             if context.should_break():
                 context.breakFlag = False
                 break
-        
+
         context.inLoop = False
 
         return bVal
@@ -725,14 +781,14 @@ class ReturnStmtASTNode(StmtASTNode):
 
     def code_gen(self, context: TheContext):
         if not context.inFunc:
-            raise ValueError # trying to return outside a function
+            raise ValueError  # trying to return outside a function
 
         context.returnFlag = True
 
         if self.returnBody:
             rVal = self.returnBody.code_gen(context=context)
             context.funcReturnVal = rVal
-        
+
         return rVal
 
 
@@ -746,10 +802,10 @@ class BreakStmtASTNode(StmtASTNode):
 
     def code_gen(self, context: TheContext):
         if not context.inLoop:
-            raise ValueError # trying to break outside a loop
+            raise ValueError  # trying to break outside a loop
 
         context.breakFlag = True
-        
+
         return None
 
 
@@ -784,7 +840,7 @@ class FunctionASTNode(ASTNode):
     def code_gen(self, context: TheContext):
         if self.funcName == None and self.funcBody == None:
             raise ValueError
-        
+
         self.funcName.code_gen(context=context)
         symbol = self.funcName.ident
         isReturnList = self.funcName.is_list()
@@ -793,19 +849,24 @@ class FunctionASTNode(ASTNode):
         argSymbols = []
 
         funcContext = TheContext(parent=context)
-        funcContext.returnFlag = context.returnFlag
-        funcContext.breakFlag = context.breakFlag
-        funcContext.inLoop = context.inLoop
         funcContext.inFunc = True
 
         for par in self.params:
-            argSymbols.append(par.ident)
-            par.code_gen(context=funcContext) # add parameters as variables to function context
-        
-        context.set_func(symbol=symbol, returnType=returnType, argSymbols=argSymbols, func=self.funcBody, context=funcContext, isReturnList=isReturnList)
+            argSymbols.append(par.ident)  # store parameter variable names
+            par.code_gen(
+                context=funcContext
+            )  # add parameters as variables to function context
+
+        context.set_func(
+            symbol=symbol,
+            returnType=returnType,
+            argSymbols=argSymbols,
+            func=self.funcBody,
+            context=funcContext,
+            isReturnList=isReturnList,
+        )
 
         return None
-        
 
 
 class ProgramASTNode(ASTNode):

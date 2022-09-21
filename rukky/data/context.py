@@ -52,7 +52,9 @@ class SymbolEntry(Entry):
 
 
 class FuncEntry(Entry):
-    def __init__(self, returnType: type, argSymbols: list, func, context, isReturnList=False):
+    def __init__(
+        self, returnType: type, argSymbols: list, func, context, isReturnList=False
+    ):
         super().__init__(returnType)
         self.argSymbols = argSymbols
         self.func = func  # functionBody
@@ -80,7 +82,7 @@ class TheContext:
 
         self.should_return = lambda: self.inFunc and self.returnFlag
         self.should_break = lambda: self.inLoop and self.breakFlag
-    
+
     def reset_flags(self):
         self.returnFlag = False
         self.breakFlag = False
@@ -159,8 +161,22 @@ class TheContext:
     def remove_ident(self, symbol: str):
         del self.symbolTable[symbol]
 
-    def set_func(self, symbol: str, returnType: type, argSymbols: list, func, context, isReturnList=False):
-        fEntry = FuncEntry(type=returnType, argTypes=argSymbols, func=func, context=context, isReturnList=isReturnList)
+    def set_func(
+        self,
+        symbol: str,
+        returnType: type,
+        argSymbols: list,
+        func,
+        context,
+        isReturnList=False,
+    ):
+        fEntry = FuncEntry(
+            type=returnType,
+            argTypes=argSymbols,
+            func=func,
+            context=context,
+            isReturnList=isReturnList,
+        )
         self.funcTable[symbol] = fEntry
 
     def get_func(self, symbol: str):
@@ -172,10 +188,6 @@ class TheContext:
 
     def remove_func(self, symbol: str):
         del self.funcTable[symbol]
-
-    def type_checker_params(self, left: list, right: list):
-        # case (1) check all func param types match call param types
-        return left == right
 
     def type_checker_assign(self, left: str, right, hasIndex=False):
         # case (2) check func/var type matches return/assigned value type
