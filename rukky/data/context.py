@@ -115,7 +115,7 @@ class TheContext:
                 return sList.valType
             else:
                 return sEntry.type
-        
+
         return None
 
     def set_ident(

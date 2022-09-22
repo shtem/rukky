@@ -8,36 +8,24 @@ $
 :: real fibonacci := (real n) {
     real first
     real second
-    real next
     real c
     real total
 
-    display:n::
-
     first := 0
     second := 1
-    c := 1
+    c := 0
     total := 0
     
     while:: c < n {
-        if:: c <= 1 {
-            next := c
-        }
-        else:: {
-            next := first + second
-            first := second
-            second := next
-        }
-
-        display:next::
+        display:first::
+        total := first + second
+        first := second
+        second := total
 
         c := c + 1
-        total := total + next
     }
 
-    display:total::
-    
-    return:: total
+    return:: first
 }
 
 real fib := fibonacci:10::

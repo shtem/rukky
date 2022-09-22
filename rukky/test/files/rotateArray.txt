@@ -10,7 +10,7 @@ $
     real sliceLength := end - start
 
     for:: i := 0 ; sliceLength ; 1 {
-        subset@i := arr[start + i]
+        subset << arr[start + i]
     }
 
     return:: subset
@@ -18,8 +18,8 @@ $
 
 :: real[] rotateArray := (real[] arr, real d) {
     real n := len:arr::
-    real[] temp := []
-    real i := 0
+    real[] temp
+    real i
 
     while:: i < d {
         temp << arr[i]
@@ -32,8 +32,10 @@ $
         d := d + 1
     }
     real[] rotArr := slice:arr,0,i:: + temp
-    return:: arr
+    return:: rotArr
 }
 
 real[] array := [1, 2, 3, 4, 5, 6, 7]
-display:"Array after left rotation is: " + getStr:rotateArray:array, 2::::::
+real d := 2
+display:"Array before left rotation by d=" + getStr:d:: + " is: " + getStr:array::::
+display:"Array after left rotation is: " + getStr:rotateArray:array, d::::::

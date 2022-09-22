@@ -19,7 +19,7 @@ $
     while:: number > 0 {
         rmndr := number % 10
         rev := rev * 10 + rmndr
-        number := number / 10
+        number := number // 10
     }
 
     if:: t <> rev {

@@ -5,7 +5,7 @@ $
 $
 
 
-:: bool addNum := (real n) {
+:: real addNum := (real n) {
     real result
     result := 0
 

@@ -141,7 +141,7 @@ class IdentifierASTNode(ExprASTNode):
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
             valType = context.get_ident_type(symbol=symbol, getList=False)
             if not valType:
-                raise ValueError # variable does not exist
+                raise ValueError  # variable does not exist
 
             if self.index:
                 indexVal = self.index.code_gen(context=context)
@@ -153,9 +153,7 @@ class IdentifierASTNode(ExprASTNode):
                     raise TypeError
             else:
                 isList = isinstance([], valType) if valType else False
-                varValue = context.get_ident(
-                    symbol=symbol, index=None, getList=isList
-                )
+                varValue = context.get_ident(symbol=symbol, index=None, getList=isList)
 
             return varValue
 
@@ -434,6 +432,8 @@ class CallExprASTNode(ExprASTNode):
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError  # incorrect number of arguments
 
+        context.inFunc = True  # inside function
+
         argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(fEntry.argSymbols, argValues)
 
@@ -583,6 +583,7 @@ class StmtBlockASTNode(StmtASTNode):
             stmtVal = decl.code_gen(context=context)
 
             if context.should_return():
+                context.inFunc = False
                 return stmtVal
 
         return stmtVal
@@ -818,7 +819,7 @@ class ForStmtASTNode(StmtASTNode):
                 context.inLoop = False
                 context.breakFlag = False
                 break
-                
+
             context.set_ident(
                 symbol=symbol,
                 valType=None,
@@ -956,5 +957,6 @@ class ProgramASTNode(ASTNode):
         progVal = None
         for decl in self.declarList:
             progVal = decl.code_gen(context=self.programContext)
+            self.programContext.inFunc = False
 
         return progVal
