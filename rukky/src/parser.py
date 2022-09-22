@@ -1481,28 +1481,99 @@ class Parser:
     """
 
     def _reserved_keywords(self):
+        mulTypes = (str, float, int, bool, list)
         keyWordToFuncDict = {
-            TokenType.DISPLAY: print,
-            TokenType.LENGTH: len,
-            TokenType.TYPE: type,
-            TokenType.STRINGIFY: str,
-            TokenType.REALIFY: float,
-            TokenType.RANDOM: random.random,
-            TokenType.FLOOR: math.floor,
-            TokenType.CEIL: math.ceil,
-            TokenType.SQRT: math.sqrt,
-            TokenType.LOG: math.log,
-            TokenType.SIN: math.sin,
-            TokenType.COS: math.cos,
-            TokenType.TAN: math.tan,
+            TokenType.DISPLAY: {
+                "value": print,
+                "argNum": 1,
+                "returnType": type(None),
+                "argType": mulTypes,
+            },
+            TokenType.LENGTH: {
+                "value": len,
+                "argNum": 1,
+                "returnType": (int, float),
+                "argType": (str, list),
+            },
+            TokenType.TYPE: {
+                "value": type,
+                "argNum": 2,
+                "returnType": bool,
+                "argType": mulTypes[:4],
+            },
+            TokenType.STRINGIFY: {
+                "value": str,
+                "argNum": 1,
+                "returnType": str,
+                "argType": mulTypes,
+            },
+            TokenType.REALIFY: {
+                "value": float,
+                "argNum": 1,
+                "returnType": float,
+                "argType": mulTypes[:4],
+            },
+            TokenType.RANDOM: {
+                "value": random.random,
+                "argNum": 0,
+                "returnType": float,
+                "argType": None,
+            },
+            TokenType.FLOOR: {
+                "value": math.floor,
+                "argNum": 1,
+                "returnType": (int, float),
+                "argType": (int, float),
+            },
+            TokenType.CEIL: {
+                "value": math.ceil,
+                "argNum": 1,
+                "returnType": (int, float),
+                "argType": (int, float),
+            },
+            TokenType.SQRT: {
+                "value": math.sqrt,
+                "argNum": 1,
+                "returnType": float,
+                "argType": (int, float),
+            },
+            TokenType.LOG: {
+                "value": math.log,
+                "argNum": 1,
+                "returnType": float,
+                "argType": (int, float),
+            },
+            TokenType.SIN: {
+                "value": math.sin,
+                "argNum": 1,
+                "returnType": float,
+                "argType": (int, float),
+            },
+            TokenType.COS: {
+                "value": math.cos,
+                "argNum": 1,
+                "returnType": float,
+                "argType": (int, float),
+            },
+            TokenType.TAN: {
+                "value": math.tan,
+                "argNum": 1,
+                "returnType": float,
+                "argType": (int, float),
+            },
         }
 
         if self.currTok.type in list(keyWordToFuncDict.keys()):
             tok = self.currTok
+            funcMap = keyWordToFuncDict.get(self.currTok.type)
             keyWordAST = ReservedKeyWordASTNode(
                 token=tok,
                 ident=self.currTok.lexVal,
-                value=keyWordToFuncDict.get(self.currTok.type),
+                value=funcMap["value"],
+                isFunc=True,
+                returnType=funcMap["returnType"],
+                argNum=funcMap["argNum"],
+                argType=funcMap["argType"],
             )
             self.eat()  # eat reserved function keyword
             if self.currTok.type == TokenType.COLON:
@@ -1524,19 +1595,28 @@ class Parser:
                 self.error('":"')
         elif self.currTok.type == TokenType.NULL:
             nullVal = ReservedKeyWordASTNode(
-                token=self.currTok, ident=self.currTok.lexVal, value=None
+                token=self.currTok,
+                ident=self.currTok.lexVal,
+                value=None,
+                isFunc=False,
             )
             self.eat()  # eat 'null'
             return nullVal
         elif self.currTok.type == TokenType.PI:
             piVal = ReservedKeyWordASTNode(
-                token=self.currTok, ident=self.currTok.lexVal, value=math.pi
+                token=self.currTok,
+                ident=self.currTok.lexVal,
+                value=math.pi,
+                isFunc=False,
             )
             self.eat()  # eat 'pi'
             return piVal
         elif self.currTok.type == TokenType.EULER:
             eulVal = ReservedKeyWordASTNode(
-                token=self.currTok, ident=self.currTok.lexVal, value=math.e
+                token=self.currTok,
+                ident=self.currTok.lexVal,
+                value=math.e,
+                isFunc=False,
             )
             self.eat()  # eat 'eul'
             return eulVal

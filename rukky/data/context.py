@@ -53,11 +53,11 @@ class SymbolEntry(Entry):
 
 class FuncEntry(Entry):
     def __init__(
-        self, returnType: type, argSymbols: list, func, context, isReturnList=False
+        self, returnType: type, argSymbols: list, funcBody, context, isReturnList=False
     ):
         super().__init__(returnType)
         self.argSymbols = argSymbols
-        self.func = func  # functionBody
+        self.funcBody = funcBody
         self.context = context
         self.isReturnList = isReturnList
 
@@ -65,7 +65,21 @@ class FuncEntry(Entry):
         return self.__str__()
 
     def __str__(self):
-        return f"FuncEntry({self.type}, {repr(self.argTypes)})"
+        return f"FuncEntry({self.type}, {repr(self.argSymbols)})"
+
+    def type_checker_return(self):
+        # check function type matches return type
+        return (
+            (isinstance(self.context.funcReturnVal, self.type))
+            or (
+                isinstance(self.funcReturnVal, list)
+                and (
+                    not self.funcReturnVal
+                    or isinstance(self.funcReturnVal[0], self.type)
+                )
+            )
+            or (self.funcReturnVal == None and not self.isReturnList)
+        )
 
 
 class TheContext:
@@ -166,14 +180,14 @@ class TheContext:
         symbol: str,
         returnType: type,
         argSymbols: list,
-        func,
+        funcBody,
         context,
         isReturnList=False,
     ):
         fEntry = FuncEntry(
-            type=returnType,
-            argTypes=argSymbols,
-            func=func,
+            returnType=returnType,
+            argSymbols=argSymbols,
+            funcBody=funcBody,
             context=context,
             isReturnList=isReturnList,
         )
@@ -190,17 +204,17 @@ class TheContext:
         del self.funcTable[symbol]
 
     def type_checker_assign(self, left: str, right, hasIndex=False):
-        # case (2) check func/var type matches return/assigned value type
+        # check variable type matches assigned value type
         if right == None:  # when value = None 'null' keyword, allow it to be stored
             return True
 
         if hasIndex:
-            return self.get_ident_type(symbol=left, getList=True) == type(right)
+            return isinstance(right, self.get_ident_type(symbol=left, getList=True))
         else:
-            return self.get_ident_type(symbol=left) == type(right)
+            return isinstance(right, self.get_ident_type(symbol=left))
 
     def type_checker(self, left, right):
-        # case (3) check types of lhs and rhs values match in binary operation
+        # check types of lhs and rhs values match in binary operation
         if isinstance(left, (int, float)) and isinstance(right, (int, float)):
             return True
 

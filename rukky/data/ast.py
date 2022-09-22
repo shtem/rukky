@@ -161,17 +161,62 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         token: Token,
         ident: str,
         value,
+        isFunc=False,
+        returnType=None,
+        argNum=0,
+        argType=None,
     ):
         super().__init__(
             token=token, type=None, ident=ident, index=None, listFlag=False
         )
         self.value = value
+        self.isFunc = isFunc
+        self.returnType = returnType
+        self.argNum = argNum
+        self.argType = argType
 
     def __str__(self):
         return f"-> ReservedKeyWordASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.value}"
 
+    def generate_builtin(self, context: TheContext):
+        symbol = self.get_ident()
+        isReturnList = False
+        returnType = self.returnType
+
+        argSymbols = []
+
+        funcContext = TheContext(parent=context)
+        funcContext.inFunc = True
+
+        for par in range(self.argNum):
+            argSymbols.append(str(par))  # store parameter variable names
+            # add parameters as variables to function context, don't care about list content type for display and stringify
+            funcContext.set_ident(
+                symbol=str(par),
+                valType=self.argType,
+                value=None,
+                index=None,
+                isAppend=False,
+                isList=False,
+            )
+
+        context.set_func(
+            symbol=symbol,
+            returnType=returnType,
+            argSymbols=argSymbols,
+            funcBody=context._type_builtin
+            if symbol == TokenType.TYPE.value
+            else self.value,
+            context=funcContext,
+            isReturnList=isReturnList,
+        )
+
     def code_gen(self, context: TheContext):
-        return self.value
+        if self.isFunc:
+            self.generate_builtin(context=context)
+            return None
+        else:
+            return self.value
 
 
 class UnaryExprASTNode(ExprASTNode):
@@ -321,7 +366,7 @@ class BinaryExprASTNode(ExprASTNode):
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_list():
-                        ident = self.lhs.ident
+                        ident = self.lhs.get_ident()
                         context.set_ident(
                             symbol=ident,
                             valType=None,
@@ -359,64 +404,71 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
-    def reserved_calls(self):
-        # if null pi eul raise valueerror
-        # make sure for rand len(self.args) = 0 or self.args = None
-        # make sure for type len(self.args) = 2
-        # make sure for rest len(self.args) = 1
-        # find out how to perform print just print or return function ?
-        pass
-
-    def execute(self, fEntry: FuncEntry):
-        # codegen func body using funcContext
-        # return fEntry back
-        pass
+    def execute_builtin(self, fEntry: FuncEntry):
+        # retrieve args values from context of reserved call and pass to inbuilt function
+        argVals = (
+            fEntry.context.get_ident(symbol=arg, index=None, getList=False)
+            for arg in fEntry.argSymbols
+        )
+        rVal = fEntry.funcBody(*argVals)
+        fEntry.context.funcReturnVal = rVal
 
     def code_gen(self, context: TheContext):
         if self.callee == None:
             raise ValueError
 
         if isinstance(self.callee, ReservedKeyWordASTNode):
-            return self.reserved_calls()
+            self.callee.code_gen(context=context)  # generate builtin function
+
+        symbol = self.callee.get_ident()
+        fEntry = context.get_func(symbol=symbol)
+
+        if fEntry == None:
+            raise ValueError  # function doesn't exist/ has not yet been defined
+
+        if len(self.args) != len(fEntry.argSymbols):
+            raise ValueError  # incorrect number of arguments
+
+        argValues = [arg.code_gen(context=context) for arg in self.args]
+        argValSymb = zip(fEntry.argSymbols, argValues)
+
+        for (
+            par,
+            val,
+        ) in (
+            argValSymb
+        ):  # for each argument value try assigning to parameter to check types in function context
+            if fEntry.context.type_checker_assign(left=par, right=val, hasIndex=False):
+                fEntry.context.set_ident(
+                    symbol=par,
+                    valType=None,
+                    value=val,
+                    index=None,
+                    isAppend=False,
+                    isList=fEntry.context.get_ident_type(symbol=par, getList=False)
+                    == type([]),
+                )
+            else:
+                raise TypeError
+
+        if isinstance(self.callee, ReservedKeyWordASTNode):
+            self.execute_builtin(fEntry=fEntry)
         else:
-            symbol = self.callee.ident
-            fEntry = context.get_func(symbol=symbol)
+            fEntry.funcBody.code_gen(
+                context=fEntry.context
+            )  # execute function body using function context
 
-            if fEntry == None:
-                raise ValueError  # function doesn't exist/ has not yet been defined
+        funcContext: TheContext = fEntry.context
 
-            if len(self.args) != len(fEntry.argSymbols):
-                raise ValueError  # incorrect number of arguments
-
-            argValues = [arg.code_gen(context=context) for arg in self.args]
-            argValSymb = zip(fEntry.argSymbols, argValues)
-
-            for (
-                par,
-                val,
-            ) in (
-                argValSymb
-            ):  # for each argument try assigning to parameter variables to check types
-                if fEntry.context.type_checker_assign(
-                    left=par, right=val, hasIndex=False
-                ):
-                    fEntry.context.set_ident(
-                        symbol=par,
-                        valType=None,
-                        value=val,
-                        index=None,
-                        isAppend=False,
-                        isList=fEntry.context.get_ident_type(symbol=par, getList=False)
-                        == type([]),
-                    )
-                else:
-                    raise TypeError
-
-            fEntry = self.execute(fEntry=fEntry)
-
-            # type check func returnval matches func type and islist for funcContext
-            # if it does store func returnval, reset flags in funcContext
-            # return stored func returnval
+        if fEntry.type_checker_return():
+            rVal = funcContext.funcReturnVal
+            fEntry.context.reset_flags()
+            if context.is_real(value=rVal) and not context.is_bool(value=rVal):
+                return float(rVal)
+            else:
+                return rVal
+        else:
+            raise TypeError  # function type doesn't match return type
 
 
 class ListASTNode(ExprASTNode):
@@ -716,7 +768,7 @@ class ForStmtASTNode(StmtASTNode):
         context.inLoop = True
 
         self.counter.code_gen(context=context)
-        symbol = self.counter.ident
+        symbol = self.counter.get_ident()
 
         sVal = self.start.code_gen(context=context)
         endVal = self.end.code_gen(context=context)
@@ -841,8 +893,7 @@ class FunctionASTNode(ASTNode):
         if self.funcName == None and self.funcBody == None:
             raise ValueError
 
-        self.funcName.code_gen(context=context)
-        symbol = self.funcName.ident
+        symbol = self.funcName.get_ident()
         isReturnList = self.funcName.is_list()
         returnType, _ = self.funcName.determine_type_value()
 
@@ -852,7 +903,7 @@ class FunctionASTNode(ASTNode):
         funcContext.inFunc = True
 
         for par in self.params:
-            argSymbols.append(par.ident)  # store parameter variable names
+            argSymbols.append(par.get_ident())  # store parameter variable names
             par.code_gen(
                 context=funcContext
             )  # add parameters as variables to function context
@@ -861,7 +912,7 @@ class FunctionASTNode(ASTNode):
             symbol=symbol,
             returnType=returnType,
             argSymbols=argSymbols,
-            func=self.funcBody,
+            funcBody=self.funcBody,
             context=funcContext,
             isReturnList=isReturnList,
         )
