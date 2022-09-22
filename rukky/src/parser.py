@@ -982,6 +982,7 @@ class Parser:
                 index = self.expr()
                 if index:
                     identAST.set_index(index)
+                    identAST.set_list_flag(True)
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
                         val = self.expr()

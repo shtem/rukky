@@ -14,7 +14,7 @@ class ListValue:
 
     def add(self, value, index=None):
         if self.verify_value(value=value):
-            if index:
+            if index != None:
                 if index < len(self.lst):
                     self.lst[index] = value
                 else:
@@ -25,7 +25,7 @@ class ListValue:
             raise TypeError
 
     def get_lst(self, index=None):
-        if index:
+        if index != None:
             if index < len(self.lst):
                 return self.lst[index]
             else:
@@ -72,13 +72,13 @@ class FuncEntry(Entry):
         return (
             (isinstance(self.context.funcReturnVal, self.type))
             or (
-                isinstance(self.funcReturnVal, list)
+                isinstance(self.context.funcReturnVal, list)
                 and (
-                    not self.funcReturnVal
-                    or isinstance(self.funcReturnVal[0], self.type)
+                    not self.context.funcReturnVal
+                    or isinstance(self.context.funcReturnVal[0], self.type)
                 )
             )
-            or (self.funcReturnVal == None and not self.isReturnList)
+            or (self.context.funcReturnVal == None and not self.isReturnList)
         )
 
 
@@ -107,7 +107,7 @@ class TheContext:
     def get_ident_type(self, symbol: str, getList=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            sEntry = self.parent.get_ident(symbol=symbol)
+            return self.parent.get_ident_type(symbol=symbol, getList=getList)
 
         if getList:
             sList: ListValue = sEntry.value
@@ -126,7 +126,7 @@ class TheContext:
     ):
         if isList:
             sListType = type([])
-            if index:
+            if index != None:
                 sList: ListValue = self.get_ident(symbol=symbol)  # get list object
                 sList.add(value=value, index=index)  # add value at index
                 sEntryNew = SymbolEntry(type=sListType, value=sList)
@@ -162,10 +162,10 @@ class TheContext:
     def get_ident(self, symbol: str, index=None, getList=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            sEntry = self.parent.get_ident(symbol=symbol)
+            return self.parent.get_ident(symbol=symbol, index=index, getList=getList)
 
         if getList:
-            if index:
+            if index != None:
                 return sEntry.value.get_lst(index=index)
             else:
                 return sEntry.value.get_lst()
@@ -196,7 +196,7 @@ class TheContext:
     def get_func(self, symbol: str):
         fEntry: FuncEntry = self.funcTable.get(symbol, None)
         if not fEntry and self.parent:
-            return self.parent.get_func(symbol)
+            return self.parent.get_func(symbol=symbol)
         else:
             return fEntry
 

@@ -148,8 +148,9 @@ class IdentifierASTNode(ExprASTNode):
                 else:
                     raise TypeError
             else:
+                isList = isinstance([], context.get_ident_type(symbol=symbol, getList=False))
                 varValue = context.get_ident(
-                    symbol=symbol, index=None, getList=self.listFlag
+                    symbol=symbol, index=None, getList=isList
                 )
 
             return varValue
@@ -454,9 +455,10 @@ class CallExprASTNode(ExprASTNode):
         if isinstance(self.callee, ReservedKeyWordASTNode):
             self.execute_builtin(fEntry=fEntry)
         else:
-            fEntry.funcBody.code_gen(
+            funcReturn = fEntry.funcBody.code_gen(
                 context=fEntry.context
             )  # execute function body using function context
+            fEntry.context.funcReturnVal = funcReturn
 
         funcContext: TheContext = fEntry.context
 
@@ -525,11 +527,12 @@ class AssignASTNode(ExprASTNode):
 
         if self.var.index:
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
+                indexVal = self.var.index.code_gen(context=context)
                 context.set_ident(
                     symbol=symbol,
                     valType=None,
                     value=assignVal,
-                    index=self.var.index,
+                    index=int(indexVal),
                     isAppend=False,
                     isList=self.var.listFlag,
                 )

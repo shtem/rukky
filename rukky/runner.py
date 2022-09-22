@@ -1,6 +1,7 @@
 # Runner converts program to stream and passes it to lexer, then lexer tokens to parser, then AST to interpreter, then interpreter evaluates it and reuslt is returned
 from src.lexer import Lexer
 from src.parser import Parser
+from src.interpreter import Interpreter
 import sys
 
 
@@ -12,6 +13,7 @@ def main():
 
     lex = Lexer(text=text)
     parser = Parser(lexer=lex)
+    interp = Interpreter(parser=parser)
 
     print("\nInput\n------\n", text)
 
@@ -23,6 +25,11 @@ def main():
     lex.reset()
     programAST = parser.parse()
     print(repr(programAST))
+
+    print("\nResult\n---------\n")
+    parser.reset()
+    res, symb = interp.interpret()
+    print(res, symb, "\n")
 
 
 main()
