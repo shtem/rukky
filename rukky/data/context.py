@@ -18,18 +18,18 @@ class ListValue:
                 if index < len(self.lst):
                     self.lst[index] = value
                 else:
-                    raise IndexError
+                    raise IndexError("Index out of range")
             else:
                 self.lst.append(value)
         else:
-            raise TypeError
+            raise TypeError("Element type does not match array type")
 
     def get_lst(self, index=None):
         if index != None:
             if index < len(self.lst):
                 return self.lst[index]
             else:
-                raise IndexError
+                raise IndexError("Index out of range")
         else:
             return self.lst
 
@@ -88,6 +88,9 @@ class TheContext:
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
 
+        self.lineNo = 1
+        self.columnNo = 1
+
         self.returnFlag = False
         self.breakFlag = False
         self.inLoop = False
@@ -144,11 +147,9 @@ class TheContext:
                     sType = valType
                 else:  # list re assignment
                     sType = self.get_ident_type(symbol=symbol, getList=True)
-                    if not sType:
-                        raise TypeError
 
                 if not self.verify_list_type(lst=value, type=sType):
-                    raise TypeError
+                    raise TypeError("Element(s) in array do not match array type")
                 lstVal = ListValue(type=sType, lst=value)
                 sEntry = SymbolEntry(type=sListType, value=lstVal)
                 self.symbolTable[symbol] = sEntry
@@ -157,8 +158,6 @@ class TheContext:
                 sType = valType
             else:  # variable re assignment
                 sType = self.get_ident_type(symbol=symbol)
-                if not sType:
-                    raise TypeError
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
 
@@ -213,11 +212,20 @@ class TheContext:
         # check variable type matches assigned value type
         if right == None:  # when value = None 'null' keyword, allow it to be stored
             return True
+            
 
         if hasIndex:
-            return isinstance(right, self.get_ident_type(symbol=left, getList=True))
+            varType = self.get_ident_type(symbol=left, getList=True)
+            if varType:
+                return isinstance(right, varType)
+            else:
+                raise ValueError("Variable doesn't exist/has not yet been defined")
         else:
-            return isinstance(right, self.get_ident_type(symbol=left))
+            varType = self.get_ident_type(symbol=left)
+            if varType:
+                return isinstance(right, varType)
+            else:
+                raise ValueError("Variable doesn't exist/has not yet been defined")
 
     def type_checker(self, left, right):
         # check types of lhs and rhs values match in binary operation
