@@ -41,6 +41,6 @@ class Interpreter:
     #   display, getStr - any, len - list|str, type - real|bool|str|null, getReal - real|bool|str
     #   rand, floor, ceil, sqrt, log, sin, cos, tan - real
 
-    # create new context everytime stmts block is created, create global context in program ast
+    # create new context everytime function is created, create global context in program ast
 
     # append in binary operation, doesn't catch the case when list is empty, could real[] << true, could create Real/Str/BoolList object

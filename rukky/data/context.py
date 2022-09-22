@@ -109,11 +109,14 @@ class TheContext:
         if not sEntry and self.parent:
             return self.parent.get_ident_type(symbol=symbol, getList=getList)
 
-        if getList:
-            sList: ListValue = sEntry.value
-            return sList.valType
-        else:
-            return sEntry.type
+        if sEntry:
+            if getList:
+                sList: ListValue = sEntry.value
+                return sList.valType
+            else:
+                return sEntry.type
+        
+        return None
 
     def set_ident(
         self,
@@ -164,13 +167,16 @@ class TheContext:
         if not sEntry and self.parent:
             return self.parent.get_ident(symbol=symbol, index=index, getList=getList)
 
-        if getList:
-            if index != None:
-                return sEntry.value.get_lst(index=index)
+        if sEntry:
+            if getList:
+                if index != None:
+                    return sEntry.value.get_lst(index=index)
+                else:
+                    return sEntry.value.get_lst()
             else:
-                return sEntry.value.get_lst()
-        else:
-            return sEntry.value
+                return sEntry.value
+
+        return None
 
     def remove_ident(self, symbol: str):
         del self.symbolTable[symbol]

@@ -6,16 +6,23 @@ $
 
 
 :: void primeInterval := (real lower, real upper) {
-    
+    bool primeFlag
+
     for:: num := lower ; upper + 1 ; 1 {
         if:: num > 1 {
+            primeFlag := true
+
             for:: i := 2 ; num ; 1 {
                 if:: num % i <> 0 {
+                    primeFlag := false
                     break::
                 }
             }
 
-            display:num::
+            if:: primeFlag {
+                display:num::
+            }
+            
         }
     }
 }

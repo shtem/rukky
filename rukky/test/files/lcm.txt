@@ -6,6 +6,7 @@ $
 
 :: real calculateLcm := (real x, real y) {
     real greater
+    real lcm
     
     if:: x > y {
         greater := x

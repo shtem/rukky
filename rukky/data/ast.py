@@ -139,6 +139,10 @@ class IdentifierASTNode(ExprASTNode):
 
             return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
+            valType = context.get_ident_type(symbol=symbol, getList=False)
+            if not valType:
+                raise ValueError # variable does not exist
+
             if self.index:
                 indexVal = self.index.code_gen(context=context)
                 if context.is_real(indexVal):
@@ -148,7 +152,7 @@ class IdentifierASTNode(ExprASTNode):
                 else:
                     raise TypeError
             else:
-                isList = isinstance([], context.get_ident_type(symbol=symbol, getList=False))
+                isList = isinstance([], valType) if valType else False
                 varValue = context.get_ident(
                     symbol=symbol, index=None, getList=isList
                 )
@@ -574,15 +578,9 @@ class StmtBlockASTNode(StmtASTNode):
         if not self.stmtList:
             raise ValueError  # block empty
 
-        childContext = TheContext(parent=context)
-        childContext.returnFlag = context.returnFlag
-        childContext.breakFlag = context.breakFlag
-        childContext.inLoop = context.inLoop
-        childContext.inFunc = context.inFunc
-
         stmtVal = None
         for decl in self.stmtList:
-            stmtVal = decl.code_gen(context=childContext)
+            stmtVal = decl.code_gen(context=context)
 
             if context.should_return():
                 return stmtVal
@@ -662,16 +660,19 @@ class IfStmtASTNode(StmtASTNode):
             raise TypeError  # invalid boolean expression
 
         if condVal:  # if condition true evaluate if body
-            return self.ifBody.code_gen(context=context)
+            bVal = self.ifBody.code_gen(context=context)
+            return bVal
 
         if self.elifStmts:
             for el in self.elifStmts:
                 elCond, elBody = el.code_gen(context=context)
                 if elCond:
-                    return elBody.code_gen(context=context)
+                    bVal = elBody.code_gen(context=context)
+                    return bVal
 
         if self.elseBody:
-            return self.elseBody.code_gen(context=context)
+            bVal = self.elseBody.code_gen(context=context)
+            return bVal
 
         return None
 
@@ -708,7 +709,7 @@ class WhileStmtASTNode(StmtASTNode):
             if not condVal:
                 break
 
-            bVal = self.whileBody.code_gen()
+            bVal = self.whileBody.code_gen(context=context)
             context.inLoop = True
 
             if context.should_return() and not context.breakFlag:
@@ -716,6 +717,7 @@ class WhileStmtASTNode(StmtASTNode):
                 return bVal
 
             if context.should_break():
+                context.inLoop = False
                 context.breakFlag = False
                 break
 
@@ -794,15 +796,16 @@ class ForStmtASTNode(StmtASTNode):
         else:
             for_cond = lambda: i > endVal
 
+        context.set_ident(
+            symbol=symbol,
+            valType=None,
+            value=sVal,
+            index=None,
+            isAppend=False,
+            isList=False,
+        )
+
         while for_cond():
-            context.set_ident(
-                symbol=symbol,
-                valType=None,
-                value=sVal,
-                index=None,
-                isAppend=False,
-                isList=False,
-            )
             i += incVal
             bVal = self.forBody.code_gen(context=context)
             context.inLoop = True
@@ -812,8 +815,18 @@ class ForStmtASTNode(StmtASTNode):
                 return bVal
 
             if context.should_break():
+                context.inLoop = False
                 context.breakFlag = False
                 break
+                
+            context.set_ident(
+                symbol=symbol,
+                valType=None,
+                value=i,
+                index=None,
+                isAppend=False,
+                isList=False,
+            )
 
         context.inLoop = False
 
