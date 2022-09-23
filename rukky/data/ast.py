@@ -42,6 +42,8 @@ class RealASTNode(ExprASTNode):
         return f"-> RealASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         return self.value
 
 
@@ -55,6 +57,8 @@ class BoolASTNode(ExprASTNode):
         return f"-> BoolASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         return self.value
 
 
@@ -68,6 +72,8 @@ class StringASTNode(ExprASTNode):
         return f"-> StringASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.value}"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         return self.value
 
 
@@ -119,6 +125,8 @@ class IdentifierASTNode(ExprASTNode):
             raise TypeError
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         symbol = self.ident
         if (
             self.type
@@ -142,7 +150,9 @@ class IdentifierASTNode(ExprASTNode):
             valType = context.get_ident_type(symbol=symbol, getArr=False)
             if not valType:
                 raise ValueError(
-                    f"Variable {symbol} doesn't exist/has not yet been defined"
+                    context.get_error_message(
+                        f"Variable {symbol} doesn't exist/has not yet been defined"
+                    )
                 )  # variable does not exist
 
             if self.index:
@@ -152,7 +162,11 @@ class IdentifierASTNode(ExprASTNode):
                         symbol=symbol, index=int(indexVal), getArr=self.arrFlag
                     )
                 else:
-                    raise TypeError("Invalid index type. Should be real value")
+                    raise TypeError(
+                        context.get_error_message(
+                            "Invalid index type. Should be real value"
+                        )
+                    )
             else:
                 isArr = isinstance([], valType) if valType else False
                 varValue = context.get_ident(symbol=symbol, index=None, getArr=isArr)
@@ -215,6 +229,8 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         )
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.isFunc:
             self.generate_builtin(context=context)
             return None
@@ -233,24 +249,34 @@ class UnaryExprASTNode(ExprASTNode):
         return f"-> UnaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.op.lineNo, columnNo=self.op.columnNo)
+
         rVal = self.rhs.code_gen(context=context)
 
         if rVal == None:
-            raise ValueError("Unexpected null value")
+            raise ValueError(context.get_error_message("Unexpected null value"))
 
         match self.op.type:
             case TokenType.MINUS:
                 if context.is_real(value=rVal):
                     return -rVal
                 else:
-                    raise TypeError("Incompatible types for unary operation")
+                    raise TypeError(
+                        context.get_error_message(
+                            "Incompatible types for unary operation"
+                        )
+                    )
             case TokenType.NOT:
                 if context.is_bool(value=rVal):
                     return not rVal
                 else:
-                    raise TypeError("Incompatible types for unary operation")
+                    raise TypeError(
+                        context.get_error_message(
+                            "Incompatible types for unary operation"
+                        )
+                    )
             case _:
-                raise ValueError("Invalid unary operator")
+                raise ValueError(context.get_error_message("Invalid unary operator"))
 
 
 class BinaryExprASTNode(ExprASTNode):
@@ -266,6 +292,8 @@ class BinaryExprASTNode(ExprASTNode):
         return f"-> BinaryExprASTNode (lineNo={self.op.lineNo}, columnNo={self.op.columnNo}) {self.op.lexVal}\n{' ' * (self.level)}-{repr(self.lhs)}\n{' ' * (self.level)}-{repr(self.rhs)}"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.op.lineNo, columnNo=self.op.columnNo)
+
         lVal = self.lhs.code_gen(context=context)
         rVal = self.rhs.code_gen(context=context)
 
@@ -280,9 +308,9 @@ class BinaryExprASTNode(ExprASTNode):
                 self.rhs, (ReservedKeyWordASTNode, IdentifierASTNode, CallExprASTNode)
             )
         ):
-            raise ValueError("Unexpected null value")
+            raise ValueError(context.get_error_message("Unexpected null value"))
 
-        errorStr = "Incompatible types for binary operation"
+        errorStr = context.get_error_message("Incompatible types for binary operation")
 
         match self.op.type:
             case TokenType.PLUS:
@@ -313,7 +341,9 @@ class BinaryExprASTNode(ExprASTNode):
                     if rVal != 0:
                         return float(lVal / rVal)
                     else:
-                        raise ZeroDivisionError("Division by zero")
+                        raise ZeroDivisionError(
+                            context.get_error_message("Division by zero")
+                        )
                 else:
                     raise TypeError(errorStr)
             case TokenType.INT_DIV:
@@ -321,7 +351,9 @@ class BinaryExprASTNode(ExprASTNode):
                     if rVal != 0:
                         return float(lVal // rVal)
                     else:
-                        raise ZeroDivisionError("Division by zero")
+                        raise ZeroDivisionError(
+                            context.get_error_message("Division by zero")
+                        )
                 else:
                     raise TypeError(errorStr)
             case TokenType.MOD:
@@ -329,7 +361,9 @@ class BinaryExprASTNode(ExprASTNode):
                     if rVal != 0:
                         return float(lVal % rVal)
                     else:
-                        raise ZeroDivisionError("Modulo by zero")
+                        raise ZeroDivisionError(
+                            context.get_error_message("Modulo by zero")
+                        )
                 else:
                     raise TypeError(errorStr)
             case TokenType.EXP:
@@ -391,11 +425,17 @@ class BinaryExprASTNode(ExprASTNode):
                         )
                         return context.get_ident(symbol=ident, index=None, getArr=True)
                     else:
-                        raise TypeError("Can only append to an array")
+                        raise TypeError(
+                            context.get_error_message("Can only append to an array")
+                        )
                 else:
-                    raise TypeError("Can only append to an array stored in variable")
+                    raise TypeError(
+                        context.get_error_message(
+                            "Can only append to an array stored in variable"
+                        )
+                    )
             case _:
-                raise ValueError("Invalid binary operator")
+                raise ValueError(context.get_error_message("Invalid binary operator"))
 
 
 class CallExprASTNode(ExprASTNode):
@@ -438,8 +478,10 @@ class CallExprASTNode(ExprASTNode):
         fEntry.context.funcReturnVal = rVal
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.callee == None:
-            raise ValueError("Invalid function call")
+            raise ValueError(context.get_error_message("Invalid function call"))
 
         if isinstance(self.callee, ReservedKeyWordASTNode):
             self.callee.code_gen(context=context)  # generate builtin function
@@ -449,11 +491,13 @@ class CallExprASTNode(ExprASTNode):
 
         if fEntry == None:
             raise ValueError(
-                f"Function {symbol} doesn't exist/has not yet been defined"
+                context.get_error_message(
+                    f"Function {symbol} doesn't exist/has not yet been defined"
+                )
             )
 
         if len(self.args) != len(fEntry.argSymbols):
-            raise ValueError("Incorrect number of arguments")
+            raise ValueError(context.get_error_message("Incorrect number of arguments"))
 
         argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(fEntry.argSymbols, argValues)
@@ -476,7 +520,9 @@ class CallExprASTNode(ExprASTNode):
                 )
             else:
                 raise TypeError(
-                    f"Type of argument {val} does not match type of positional function parameter"
+                    context.get_error_message(
+                        f"Type of argument {val} does not match type of positional function parameter"
+                    )
                 )
 
         if isinstance(self.callee, ReservedKeyWordASTNode):
@@ -497,7 +543,9 @@ class CallExprASTNode(ExprASTNode):
             else:
                 return rVal
         else:
-            raise TypeError("Function type does not match return type")
+            raise TypeError(
+                context.get_error_message("Function type does not match return type")
+            )
 
 
 class ArrayASTNode(ExprASTNode):
@@ -516,6 +564,8 @@ class ArrayASTNode(ExprASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         arrVal = [elem.code_gen(context=context) for elem in self.elems]
 
         return arrVal
@@ -541,6 +591,8 @@ class AssignASTNode(ExprASTNode):
         return self.var
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.var.get_type():
             self.var.code_gen(context=context)
 
@@ -550,13 +602,17 @@ class AssignASTNode(ExprASTNode):
         if assignVal == None and not isinstance(
             self.value, (ReservedKeyWordASTNode, IdentifierASTNode, CallExprASTNode)
         ):
-            raise ValueError("Unexpected null value")
+            raise ValueError(context.get_error_message("Unexpected null value"))
 
         if self.var.index:
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
                 indexVal = self.var.index.code_gen(context=context)
                 if not context.is_real(indexVal):
-                    raise TypeError("Invalid index type. Should be real value")
+                    raise TypeError(
+                        context.get_error_message(
+                            "Invalid index type. Should be real value"
+                        )
+                    )
 
                 context.set_ident(
                     symbol=symbol,
@@ -567,7 +623,11 @@ class AssignASTNode(ExprASTNode):
                     isArr=self.var.arrFlag,
                 )
             else:
-                raise TypeError("Value type does not match variable type in assignment")
+                raise TypeError(
+                    context.get_error_message(
+                        "Value type does not match variable type in assignment"
+                    )
+                )
         else:
             if context.type_checker_assign(
                 left=symbol, right=assignVal, hasIndex=False
@@ -581,7 +641,11 @@ class AssignASTNode(ExprASTNode):
                     isArr=self.var.arrFlag,
                 )
             else:
-                raise TypeError("Value type does not match variable type in assignment")
+                raise TypeError(
+                    context.get_error_message(
+                        "Value type does not match variable type in assignment"
+                    )
+                )
 
         return None
 
@@ -601,8 +665,10 @@ class StmtBlockASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if not self.stmtList:
-            raise ValueError("Empty block")
+            raise ValueError(context.get_error_message("Empty block"))
 
         stmtVal = None
         for decl in self.stmtList:
@@ -632,13 +698,21 @@ class ElifStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.cond == None or self.elifBody == None:
-            raise ValueError("Invalid condition or elif body")
+            raise ValueError(
+                context.get_error_message("Invalid condition or elif body")
+            )
 
         condVal = self.cond.code_gen(context=context)
 
         if not context.is_bool(value=condVal):
-            raise TypeError("Invalid condition type. Should be boolean value")
+            raise TypeError(
+                context.get_error_message(
+                    "Invalid condition type. Should be boolean value"
+                )
+            )
 
         return condVal, self.elifBody
 
@@ -677,13 +751,19 @@ class IfStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.cond == None or self.ifBody == None:
-            raise ValueError("Invalid condition or if body")
+            raise ValueError(context.get_error_message("Invalid condition or if body"))
 
         condVal = self.cond.code_gen(context=context)
 
         if not context.is_bool(value=condVal):
-            raise TypeError("Invalid condition type. Should be boolean value")
+            raise TypeError(
+                context.get_error_message(
+                    "Invalid condition type. Should be boolean value"
+                )
+            )
 
         bVal = None
 
@@ -724,8 +804,12 @@ class WhileStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.cond == None or self.whileBody == None:
-            raise ValueError("Invalid condition or while body")
+            raise ValueError(
+                context.get_error_message("Invalid condition or while body")
+            )
 
         context.inLoop = True
 
@@ -734,7 +818,11 @@ class WhileStmtASTNode(StmtASTNode):
         while True:
             condVal = self.cond.code_gen(context=context)
             if not context.is_bool(value=condVal):
-                raise TypeError("Invalid condition type. Should be boolean value")
+                raise TypeError(
+                    context.get_error_message(
+                        "Invalid condition type. Should be boolean value"
+                    )
+                )
 
             if not condVal:
                 break
@@ -789,6 +877,8 @@ class ForStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if (
             self.counter == None
             or self.start == None
@@ -796,7 +886,7 @@ class ForStmtASTNode(StmtASTNode):
             or self.increment == None
             or self.forBody == None
         ):
-            raise ValueError("Invalid condition or for body")
+            raise ValueError(context.get_error_message("Invalid condition or for body"))
 
         context.inLoop = True
 
@@ -813,13 +903,17 @@ class ForStmtASTNode(StmtASTNode):
             or not context.is_real(value=incVal)
         ):
             raise TypeError(
-                "Invalid start, end or increment type. Should be real value"
+                context.get_error_message(
+                    "Invalid start, end or increment type. Should be real value"
+                )
             )
 
         i = sVal
 
         if incVal == 0:
-            raise ValueError("Invalid increment value. Cannot be zero")
+            raise ValueError(
+                context.get_error_message("Invalid increment value. Cannot be zero")
+            )
 
         if incVal >= 0:
             for_cond = lambda: i < endVal
@@ -878,8 +972,12 @@ class ReturnStmtASTNode(StmtASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if not context.inFunc:
-            raise ValueError("Cannot return outside a function")
+            raise ValueError(
+                context.get_error_message("Cannot return outside a function")
+            )
 
         rVal = None
         context.returnFlag = True
@@ -900,8 +998,10 @@ class BreakStmtASTNode(StmtASTNode):
         return f"-> BreakStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if not context.inLoop:
-            raise ValueError("Cannot break outside a loop")
+            raise ValueError(context.get_error_message("Cannot break outside a loop"))
 
         context.breakFlag = True
 
@@ -937,8 +1037,12 @@ class FunctionASTNode(ASTNode):
         return out
 
     def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
         if self.funcName == None and self.funcBody == None:
-            raise ValueError("Invalid function name or function body")
+            raise ValueError(
+                context.get_error_message("Invalid function name or function body")
+            )
 
         symbol = self.funcName.get_ident()
         isReturnArr = self.funcName.is_arr()
@@ -950,7 +1054,7 @@ class FunctionASTNode(ASTNode):
         funcContext.inFunc = True
 
         for par in self.params:
-            argSymbols.append(par.get_ident())  # store parameter variable names
+            argSymbols.append(par.get_ident())  # store parameter names
             par.code_gen(
                 context=funcContext
             )  # add parameters as variables to function context

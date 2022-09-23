@@ -134,15 +134,31 @@ class TheContext:
         if isArr:
             sArrType = type([])
             if index != None:
-                sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
-                sArr.add(value=value, index=index)  # add value at index
-                sEntryNew = SymbolEntry(type=sArrType, value=sArr)
-                self.symbolTable[symbol] = sEntryNew
+                if not isinstance(self.get_ident(symbol=symbol), ArrayValue):
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not an array")
+                    )
+
+                try:
+                    sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
+                    sArr.add(value=value, index=index)  # add value at index
+                    sEntryNew = SymbolEntry(type=sArrType, value=sArr)
+                    self.symbolTable[symbol] = sEntryNew
+                except Exception as e:
+                    raise ValueError(self.get_error_message(str(e)))
             elif isAppend:
-                sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
-                sArr.add(value=value)  # append at index
-                sEntryNew = SymbolEntry(type=sArrType, value=sArr)
-                self.symbolTable[symbol] = sEntryNew
+                if not isinstance(self.get_ident(symbol=symbol), ArrayValue):
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not an array")
+                    )
+
+                try:
+                    sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
+                    sArr.add(value=value)  # append at index
+                    sEntryNew = SymbolEntry(type=sArrType, value=sArr)
+                    self.symbolTable[symbol] = sEntryNew
+                except Exception as e:
+                    raise ValueError(self.get_error_message(str(e)))
             else:
                 if valType:  # new arr declaration
                     sType = valType
@@ -150,11 +166,17 @@ class TheContext:
                     sType = self.get_ident_type(symbol=symbol, getArr=True)
                     if not sType:
                         raise ValueError(
-                            f"Variable {symbol} doesn't exist/has not yet been defined"
+                            self.get_error_message(
+                                f"Variable {symbol} doesn't exist/has not yet been defined"
+                            )
                         )
 
                 if not self.verify_arr_type(arr=value, arrType=sType):
-                    raise TypeError("Element(s) in array do not match array type")
+                    raise TypeError(
+                        self.get_error_message(
+                            "Element(s) in array do not match array type"
+                        )
+                    )
 
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)
@@ -166,7 +188,9 @@ class TheContext:
                 sType = self.get_ident_type(symbol=symbol)
                 if not sType:
                     raise ValueError(
-                        f"Variable {symbol} doesn't exist/has not yet been defined"
+                        self.get_error_message(
+                            f"Variable {symbol} doesn't exist/has not yet been defined"
+                        )
                     )
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
@@ -177,13 +201,16 @@ class TheContext:
             return self.parent.get_ident(symbol=symbol, index=index, getArr=getArr)
 
         if sEntry:
-            if getArr:
-                if index != None:
-                    return sEntry.value.get_arr(index=index)
+            try:
+                if getArr:
+                    if index != None:
+                        return sEntry.value.get_arr(index=index)
+                    else:
+                        return sEntry.value.get_arr()
                 else:
-                    return sEntry.value.get_arr()
-            else:
-                return sEntry.value
+                    return sEntry.value
+            except Exception as e:
+                raise ValueError(self.get_error_message(str(e)))
 
         return None
 
@@ -229,7 +256,9 @@ class TheContext:
                 return isinstance(right, varType)
             else:
                 raise ValueError(
-                    f"Variable {left} doesn't exist/has not yet been defined"
+                    self.get_error_message(
+                        f"Variable {left} doesn't exist/has not yet been defined"
+                    )
                 )
         else:
             varType = self.get_ident_type(symbol=left)
@@ -237,7 +266,9 @@ class TheContext:
                 return isinstance(right, varType)
             else:
                 raise ValueError(
-                    f"Variable {left} doesn't exist/has not yet been defined"
+                    self.get_error_message(
+                        f"Variable {left} doesn't exist/has not yet been defined"
+                    )
                 )
 
     def type_checker(self, left, right):
@@ -261,6 +292,13 @@ class TheContext:
             return False  # don't want arrs to be null but variables can be null
         return all(isinstance(x, arrType) for x in arr)
 
+    def update_line_col(self, lineNo: int, columnNo: int):
+        self.lineNo = lineNo
+        self.columnNo = columnNo
+
+    def get_error_message(self, message):
+        return f"line: {repr(self.lineNo)} column: {repr(self.columnNo)}. {message}"
+
     def _type_builtin(self, left, right):
         # function for type keyword
         if isinstance(left, (str, int, float, bool)) and isinstance(
@@ -275,4 +313,4 @@ class TheContext:
             else:
                 return type(left[0]) == type(right[0])  # else compare their contents
         else:
-            raise ValueError("Argument(s) have invalid types")
+            raise ValueError(self.get_error_message("Argument(s) have invalid types"))
