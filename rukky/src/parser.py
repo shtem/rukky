@@ -62,6 +62,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -152,7 +153,7 @@ class Parser:
     def func_type(self):
         if self.currTok.type == TokenType.VOID:
             self.eat()  # eat 'void'
-            return "void", False  # can't have void list so always false
+            return "void", False  # can't have void arr so always false
         elif self.currTok.type in [
             TokenType.REAL,
             TokenType.BOOL,
@@ -181,7 +182,7 @@ class Parser:
                         type=fType,
                         ident=ident,
                         index=None,
-                        listFlag=isReturnList,
+                        arrFlag=isReturnList,
                     )
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
@@ -289,7 +290,7 @@ class Parser:
                 ident = self.currTok.lexVal
                 self.eat()  # eat id
                 return IdentifierASTNode(
-                    token=tok, type=pType, ident=ident, index=None, listFlag=isList
+                    token=tok, type=pType, ident=ident, index=None, arrFlag=isList
                 )
             else:
                 self.error("identifier")
@@ -308,6 +309,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -392,6 +394,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -456,6 +459,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -504,7 +508,6 @@ class Parser:
             | var_type ID ":=" expr EOL
             | var_type "[]" ID EOL
             | var_type "[]" ID ":=" expr EOL
-            | var_type "[]" ID ":=" "[" args "]" EOL
     """
 
     def decl_stmt(self):
@@ -513,6 +516,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -543,7 +547,7 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, listFlag=False
+                        token=tok, type=vType, ident=ident, index=None, arrFlag=False
                     )
                     self.eat()  # eat \n
                     return identAST
@@ -551,7 +555,7 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, listFlag=False
+                        token=tok, type=vType, ident=ident, index=None, arrFlag=False
                     )
                     self.eat()  # eat :=
                     val = self.expr()
@@ -576,7 +580,7 @@ class Parser:
                                 type=vType,
                                 ident=ident,
                                 index=None,
-                                listFlag=True,
+                                arrFlag=True,
                             )
                             self.eat()  # eat \n
                             return identAST
@@ -588,38 +592,16 @@ class Parser:
                                 type=vType,
                                 ident=ident,
                                 index=None,
-                                listFlag=True,
+                                arrFlag=True,
                             )
                             self.eat()  # eat :=
-                            if self.currTok.type == TokenType.LSQUARE:
-                                listTok = self.currTok
-                                self.eat()  # eat [
-                                elems = self.args()
-                                if self.currTok.type == TokenType.RSQUARE:
-                                    self.eat()  # eat ]
-                                    if self.currTok.type == TokenType.EOL:
-                                        self.eat()  # eat \n
-                                        if elems:
-                                            listAST = ListASTNode(
-                                                token=listTok, elems=elems
-                                            )
-                                            return AssignASTNode(
-                                                token=tok, var=identAST, value=listAST
-                                            )
-                                        else:
-                                            listAST = ListASTNode(
-                                                token=listTok, elems=[]
-                                            )
-                                            return AssignASTNode(
-                                                token=tok, var=identAST, value=listAST
-                                            )
-                                else:
-                                    self.error('"]"')
-                            elif self.currTok.type in possibleStartToks:
+                            if self.currTok.type in possibleStartToks:
                                 val = self.expr()
                                 if self.currTok.type == TokenType.EOL:
                                     self.eat()  # eat \n
                                     if val:
+                                        if isinstance(val, ArrayASTNode):
+                                            identAST.set_arr_flag(True)
                                         return AssignASTNode(
                                             token=tok, var=identAST, value=val
                                         )
@@ -672,7 +654,7 @@ class Parser:
                         type="real",
                         ident=self.currTok.lexVal,
                         index=None,
-                        listFlag=False,
+                        arrFlag=False,
                     )
                     self.eat()  # eat id
                     if self.currTok.type == TokenType.ASSIGN:
@@ -776,6 +758,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -917,7 +900,6 @@ class Parser:
 
     """
     expr -> ID ":=" expr
-        | ID ":=" "[" args "]"
         | ID "@" expr ":=" expr
         | ID "<<" expr
         | disjunc
@@ -938,34 +920,19 @@ class Parser:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, listFlag=False
+                    token=tok, type=None, ident=ident, index=None, arrFlag=False
                 )
                 self.eat()  # eat :=
-                if self.currTok.type == TokenType.LSQUARE:
-                    listTok = self.currTok
-                    self.eat()  # eat [
-                    elems = self.args()
-                    if self.currTok.type == TokenType.RSQUARE:
-                        self.eat()  # eat ]
-                        if elems:
-                            identAST.set_list_flag(True)
-                            listAST = ListASTNode(token=listTok, elems=elems)
-                            return AssignASTNode(token=tok, var=identAST, value=listAST)
-                        else:
-                            identAST.set_list_flag(True)
-                            listAST = ListASTNode(token=listTok, elems=[])
-                            return AssignASTNode(token=tok, var=identAST, value=listAST)
-                    else:
-                        self.error('"]"')
-                else:
-                    val = self.expr()
-                    if val:
-                        return AssignASTNode(token=tok, var=identAST, value=val)
+                val = self.expr()
+                if val:
+                    if isinstance(val, ArrayASTNode):
+                        identAST.set_arr_flag(True)
+                    return AssignASTNode(token=tok, var=identAST, value=val)
             elif self.peek().type == TokenType.APPEND:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, listFlag=True
+                    token=tok, type=None, ident=ident, index=None, arrFlag=True
                 )
                 op = self.currTok
                 self.eat()  # eat <<
@@ -976,13 +943,13 @@ class Parser:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, listFlag=True
+                    token=tok, type=None, ident=ident, index=None, arrFlag=True
                 )
                 self.eat()  # eat @
                 index = self.expr()
                 if index:
                     identAST.set_index(index)
-                    identAST.set_list_flag(True)
+                    identAST.set_arr_flag(True)
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
                         val = self.expr()
@@ -1320,6 +1287,7 @@ class Parser:
     elem -> "-" elem
         | "~" elem
         | "(" expr ")"
+        | "[" args "]"
         | ID
         | ID ":" args ":"
         | ID "[" expr "]"
@@ -1333,7 +1301,7 @@ class Parser:
             tok = self.currTok
             ident = self.currTok.lexVal
             identAST = IdentifierASTNode(
-                token=tok, type=None, ident=ident, index=None, listFlag=False
+                token=tok, type=None, ident=ident, index=None, arrFlag=False
             )
             self.eat()  # eat id
             if self.currTok.type == TokenType.COLON:
@@ -1358,7 +1326,7 @@ class Parser:
                     self.eat()  # eat ]
                     if index:
                         identAST.set_index(index)
-                        identAST.set_list_flag(True)
+                        identAST.set_arr_flag(True)
                         return identAST  # id[expr]
                     else:
                         self.error("valid expression as index")
@@ -1381,6 +1349,18 @@ class Parser:
                     return expr
             else:
                 self.error('")"')
+        elif self.currTok.type == TokenType.LSQUARE:
+            arrTok = self.currTok
+            self.eat()  # eat [
+            elems = self.args()
+            if self.currTok.type == TokenType.RSQUARE:
+                self.eat()  # eat ]
+                if elems:
+                    return ArrayASTNode(token=arrTok, elems=elems)
+                else:
+                    return ArrayASTNode(token=arrTok, elems=[])
+            else:
+                self.error('"]"')
         elif self.currTok.type == TokenType.REAL_LIT:
             realNum = RealASTNode(token=self.currTok, value=self.currTok.lexVal)
             self.eat()  # eat real number
@@ -1408,6 +1388,7 @@ class Parser:
             TokenType.MINUS,
             TokenType.NOT,
             TokenType.LPAREN,
+            TokenType.LSQUARE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -1500,7 +1481,7 @@ class Parser:
                 "value": type,
                 "argNum": 2,
                 "returnType": bool,
-                "argType": mulTypes[:4],
+                "argType": mulTypes,
             },
             TokenType.STRINGIFY: {
                 "value": str,
@@ -1623,5 +1604,5 @@ class Parser:
             return eulVal
         else:
             self.error(
-                'identifier or unary expression or "(" or real, bool or string literal'
+                'identifier or unary expression or "(" or "[" real, bool or string literal'
             )

@@ -73,17 +73,17 @@ class StringASTNode(ExprASTNode):
 
 class IdentifierASTNode(ExprASTNode):
     def __init__(
-        self, token: Token, type: str, ident: str, index: ExprASTNode, listFlag: bool
+        self, token: Token, type: str, ident: str, index: ExprASTNode, arrFlag: bool
     ):
         super().__init__()
         self.token = token
         self.type = type
         self.ident = ident
         self.index = index
-        self.listFlag = listFlag
+        self.arrFlag = arrFlag
 
     def __str__(self):
-        out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.listFlag else ''} "
+        out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.arrFlag else ''} "
         if self.index:
             self.index.level = self.level + 3
             out += f"\n{' ' * (self.level)}@-¬"
@@ -100,11 +100,11 @@ class IdentifierASTNode(ExprASTNode):
     def set_index(self, i):
         self.index = i
 
-    def set_list_flag(self, flag):
-        self.listFlag = flag
+    def set_arr_flag(self, flag):
+        self.arrFlag = flag
 
-    def is_list(self):
-        return self.listFlag
+    def is_arr(self):
+        return self.arrFlag
 
     def determine_type_value(self):
         if self.type == "real":
@@ -125,7 +125,7 @@ class IdentifierASTNode(ExprASTNode):
         ):  # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
             type, defaultValue = self.determine_type_value()
 
-            if self.listFlag:
+            if self.arrFlag:
                 defaultValue = []
 
             context.set_ident(
@@ -134,26 +134,28 @@ class IdentifierASTNode(ExprASTNode):
                 value=defaultValue,
                 index=None,
                 isAppend=False,
-                isList=self.listFlag,
+                isArr=self.arrFlag,
             )
 
             return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
-            valType = context.get_ident_type(symbol=symbol, getList=False)
+            valType = context.get_ident_type(symbol=symbol, getArr=False)
             if not valType:
-                raise ValueError  # variable does not exist
+                raise ValueError(
+                    "Variable doesn't exist/has not yet been defined"
+                )  # variable does not exist
 
             if self.index:
                 indexVal = self.index.code_gen(context=context)
                 if context.is_real(indexVal):
                     varValue = context.get_ident(
-                        symbol=symbol, index=int(indexVal), getList=self.listFlag
+                        symbol=symbol, index=int(indexVal), getArr=self.arrFlag
                     )
                 else:
-                    raise TypeError
+                    raise TypeError("Invalid index type. Should be real value")
             else:
-                isList = isinstance([], valType) if valType else False
-                varValue = context.get_ident(symbol=symbol, index=None, getList=isList)
+                isArr = isinstance([], valType) if valType else False
+                varValue = context.get_ident(symbol=symbol, index=None, getArr=isArr)
 
             return varValue
 
@@ -169,9 +171,7 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         argNum=0,
         argType=None,
     ):
-        super().__init__(
-            token=token, type=None, ident=ident, index=None, listFlag=False
-        )
+        super().__init__(token=token, type=None, ident=ident, index=None, arrFlag=False)
         self.value = value
         self.isFunc = isFunc
         self.returnType = returnType
@@ -183,7 +183,7 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
 
     def generate_builtin(self, context: TheContext):
         symbol = self.get_ident()
-        isReturnList = False
+        isReturnArr = False
         returnType = self.returnType
 
         argSymbols = []
@@ -193,14 +193,14 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
 
         for par in range(self.argNum):
             argSymbols.append(str(par))  # store parameter variable names
-            # add parameters as variables to function context, don't care about list content type for display and stringify
+            # add parameters as variables to function context, don't care about arr content type for display and stringify
             funcContext.set_ident(
                 symbol=str(par),
                 valType=self.argType,
                 value=None,
                 index=None,
                 isAppend=False,
-                isList=False,
+                isArr=False,
             )
 
         context.set_func(
@@ -211,7 +211,7 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
             if symbol == TokenType.TYPE.value
             else self.value,
             context=funcContext,
-            isReturnList=isReturnList,
+            isReturnArr=isReturnArr,
         )
 
     def code_gen(self, context: TheContext):
@@ -243,14 +243,14 @@ class UnaryExprASTNode(ExprASTNode):
                 if context.is_real(value=rVal):
                     return -rVal
                 else:
-                    raise TypeError  # incompatible types
+                    raise TypeError("Incompatible types for unary operation")
             case TokenType.NOT:
                 if context.is_bool(value=rVal):
                     return not rVal
                 else:
-                    raise TypeError
+                    raise TypeError("Incompatible types for unary operation")
             case _:
-                raise ValueError  # invalid operator
+                raise ValueError("Invalid unary operator")
 
 
 class BinaryExprASTNode(ExprASTNode):
@@ -368,7 +368,7 @@ class BinaryExprASTNode(ExprASTNode):
                     raise TypeError
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
-                    if self.lhs.is_list():
+                    if self.lhs.is_arr():
                         ident = self.lhs.get_ident()
                         context.set_ident(
                             symbol=ident,
@@ -376,9 +376,9 @@ class BinaryExprASTNode(ExprASTNode):
                             value=rVal,
                             index=None,
                             isAppend=True,
-                            isList=True,
+                            isArr=True,
                         )
-                        return context.get_ident(symbol=ident, index=None, getList=True)
+                        return context.get_ident(symbol=ident, index=None, getArr=True)
                     else:
                         raise TypeError
                 else:
@@ -410,9 +410,19 @@ class CallExprASTNode(ExprASTNode):
     def execute_builtin(self, fEntry: FuncEntry):
         # retrieve args values from context of reserved call and pass to inbuilt function
         argVals = (
-            fEntry.context.get_ident(symbol=arg, index=None, getList=False)
+            fEntry.context.get_ident(symbol=arg, index=None, getArr=False)
             for arg in fEntry.argSymbols
         )
+
+        if fEntry.funcBody == print:
+            strArg = str(*argVals)
+            strArg = (
+                strArg.replace("None", "null")
+                .replace("True", "true")
+                .replace("False", "false")
+            )
+            argVals = (strArg,)
+
         rVal = fEntry.funcBody(*argVals)
         fEntry.context.funcReturnVal = rVal
 
@@ -450,7 +460,7 @@ class CallExprASTNode(ExprASTNode):
                     value=val,
                     index=None,
                     isAppend=False,
-                    isList=fEntry.context.get_ident_type(symbol=par, getList=False)
+                    isArr=fEntry.context.get_ident_type(symbol=par, getArr=False)
                     == type([]),
                 )
             else:
@@ -477,14 +487,14 @@ class CallExprASTNode(ExprASTNode):
             raise TypeError  # function type doesn't match return type
 
 
-class ListASTNode(ExprASTNode):
+class ArrayASTNode(ExprASTNode):
     def __init__(self, token: Token, elems: list[ExprASTNode]):
         super().__init__()
         self.token = token
         self.elems = elems
 
     def __str__(self):
-        out = f"-> ListASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out = f"-> ArrayASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
         if self.elems:
             for elem in self.elems:
                 elem.level = self.level
@@ -493,9 +503,9 @@ class ListASTNode(ExprASTNode):
         return out
 
     def code_gen(self, context: TheContext):
-        listVal = [elem.code_gen(context=context) for elem in self.elems]
+        arrVal = [elem.code_gen(context=context) for elem in self.elems]
 
-        return listVal
+        return arrVal
 
 
 class AssignASTNode(ExprASTNode):
@@ -538,7 +548,7 @@ class AssignASTNode(ExprASTNode):
                     value=assignVal,
                     index=int(indexVal),
                     isAppend=False,
-                    isList=self.var.listFlag,
+                    isArr=self.var.arrFlag,
                 )
             else:
                 raise TypeError
@@ -552,7 +562,7 @@ class AssignASTNode(ExprASTNode):
                     value=assignVal,
                     index=None,
                     isAppend=False,
-                    isList=self.var.listFlag,
+                    isArr=self.var.arrFlag,
                 )
             else:
                 raise TypeError
@@ -803,7 +813,7 @@ class ForStmtASTNode(StmtASTNode):
             value=sVal,
             index=None,
             isAppend=False,
-            isList=False,
+            isArr=False,
         )
 
         while for_cond():
@@ -826,7 +836,7 @@ class ForStmtASTNode(StmtASTNode):
                 value=i,
                 index=None,
                 isAppend=False,
-                isList=False,
+                isArr=False,
             )
 
         context.inLoop = False
@@ -911,7 +921,7 @@ class FunctionASTNode(ASTNode):
             raise ValueError
 
         symbol = self.funcName.get_ident()
-        isReturnList = self.funcName.is_list()
+        isReturnArr = self.funcName.is_arr()
         returnType, _ = self.funcName.determine_type_value()
 
         argSymbols = []
@@ -931,7 +941,7 @@ class FunctionASTNode(ASTNode):
             argSymbols=argSymbols,
             funcBody=self.funcBody,
             context=funcContext,
-            isReturnList=isReturnList,
+            isReturnArr=isReturnArr,
         )
 
         return None

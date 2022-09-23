@@ -1,13 +1,13 @@
-class ListValue:
-    def __init__(self, type: type, lst=[]):
+class ArrayValue:
+    def __init__(self, type: type, arr=[]):
         self.valType = type
-        self.lst = lst
+        self.arr = arr
 
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return f"ListValue({self.valType}, {repr(self.lst)})"
+        return f"ArrayValue({self.valType}, {repr(self.arr)})"
 
     def verify_value(self, value):
         return isinstance(value, self.valType)
@@ -15,23 +15,23 @@ class ListValue:
     def add(self, value, index=None):
         if self.verify_value(value=value):
             if index != None:
-                if index < len(self.lst):
-                    self.lst[index] = value
+                if index < len(self.arr):
+                    self.arr[index] = value
                 else:
                     raise IndexError("Index out of range")
             else:
-                self.lst.append(value)
+                self.arr.append(value)
         else:
             raise TypeError("Element type does not match array type")
 
-    def get_lst(self, index=None):
+    def get_arr(self, index=None):
         if index != None:
-            if index < len(self.lst):
-                return self.lst[index]
+            if index < len(self.arr):
+                return self.arr[index]
             else:
                 raise IndexError("Index out of range")
         else:
-            return self.lst
+            return self.arr
 
 
 class Entry:
@@ -53,13 +53,13 @@ class SymbolEntry(Entry):
 
 class FuncEntry(Entry):
     def __init__(
-        self, returnType: type, argSymbols: list, funcBody, context, isReturnList=False
+        self, returnType: type, argSymbols: list, funcBody, context, isReturnArr=False
     ):
         super().__init__(returnType)
         self.argSymbols = argSymbols
         self.funcBody = funcBody
         self.context = context
-        self.isReturnList = isReturnList
+        self.isReturnArr = isReturnArr
 
     def __repr__(self):
         return self.__str__()
@@ -78,7 +78,7 @@ class FuncEntry(Entry):
                     or isinstance(self.context.funcReturnVal[0], self.type)
                 )
             )
-            or (self.context.funcReturnVal == None and not self.isReturnList)
+            or (self.context.funcReturnVal == None and not self.isReturnArr)
         )
 
 
@@ -107,15 +107,15 @@ class TheContext:
         self.inFunc = False
         self.funcReturnVal = None
 
-    def get_ident_type(self, symbol: str, getList=False):
+    def get_ident_type(self, symbol: str, getArr=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            return self.parent.get_ident_type(symbol=symbol, getList=getList)
+            return self.parent.get_ident_type(symbol=symbol, getArr=getArr)
 
         if sEntry:
-            if getList:
-                sList: ListValue = sEntry.value
-                return sList.valType
+            if getArr:
+                sArr: ArrayValue = sEntry.value
+                return sArr.valType
             else:
                 return sEntry.type
 
@@ -128,50 +128,57 @@ class TheContext:
         value,
         index=None,
         isAppend=False,
-        isList=False,
+        isArr=False,
     ):
-        if isList:
-            sListType = type([])
+        if isArr:
+            sArrType = type([])
             if index != None:
-                sList: ListValue = self.get_ident(symbol=symbol)  # get list object
-                sList.add(value=value, index=index)  # add value at index
-                sEntryNew = SymbolEntry(type=sListType, value=sList)
+                sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
+                sArr.add(value=value, index=index)  # add value at index
+                sEntryNew = SymbolEntry(type=sArrType, value=sArr)
                 self.symbolTable[symbol] = sEntryNew
             elif isAppend:
-                sList: ListValue = self.get_ident(symbol=symbol)  # get list object
-                sList.add(value=value)  # append at index
-                sEntryNew = SymbolEntry(type=sListType, value=sList)
+                sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
+                sArr.add(value=value)  # append at index
+                sEntryNew = SymbolEntry(type=sArrType, value=sArr)
                 self.symbolTable[symbol] = sEntryNew
             else:
-                if valType:  # new list declaration
+                if valType:  # new arr declaration
                     sType = valType
-                else:  # list re assignment
-                    sType = self.get_ident_type(symbol=symbol, getList=True)
+                else:  # arr re assignment
+                    sType = self.get_ident_type(symbol=symbol, getArr=True)
+                    if not sType:
+                        raise ValueError(
+                            "Variable doesn't exist/has not yet been defined"
+                        )
 
-                if not self.verify_list_type(lst=value, type=sType):
+                if not self.verify_arr_type(arr=value, type=sType):
                     raise TypeError("Element(s) in array do not match array type")
-                lstVal = ListValue(type=sType, lst=value)
-                sEntry = SymbolEntry(type=sListType, value=lstVal)
+
+                arrVal = ArrayValue(type=sType, arr=value)
+                sEntry = SymbolEntry(type=sArrType, value=arrVal)
                 self.symbolTable[symbol] = sEntry
         else:
             if valType:  # new variable declaration
                 sType = valType
             else:  # variable re assignment
                 sType = self.get_ident_type(symbol=symbol)
+                if not sType:
+                    raise ValueError("Variable doesn't exist/has not yet been defined")
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
 
-    def get_ident(self, symbol: str, index=None, getList=False):
+    def get_ident(self, symbol: str, index=None, getArr=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            return self.parent.get_ident(symbol=symbol, index=index, getList=getList)
+            return self.parent.get_ident(symbol=symbol, index=index, getArr=getArr)
 
         if sEntry:
-            if getList:
+            if getArr:
                 if index != None:
-                    return sEntry.value.get_lst(index=index)
+                    return sEntry.value.get_arr(index=index)
                 else:
-                    return sEntry.value.get_lst()
+                    return sEntry.value.get_arr()
             else:
                 return sEntry.value
 
@@ -187,14 +194,14 @@ class TheContext:
         argSymbols: list,
         funcBody,
         context,
-        isReturnList=False,
+        isReturnArr=False,
     ):
         fEntry = FuncEntry(
             returnType=returnType,
             argSymbols=argSymbols,
             funcBody=funcBody,
             context=context,
-            isReturnList=isReturnList,
+            isReturnArr=isReturnArr,
         )
         self.funcTable[symbol] = fEntry
 
@@ -212,10 +219,9 @@ class TheContext:
         # check variable type matches assigned value type
         if right == None:  # when value = None 'null' keyword, allow it to be stored
             return True
-            
 
         if hasIndex:
-            varType = self.get_ident_type(symbol=left, getList=True)
+            varType = self.get_ident_type(symbol=left, getArr=True)
             if varType:
                 return isinstance(right, varType)
             else:
@@ -243,14 +249,23 @@ class TheContext:
     def is_real(self, value):
         return isinstance(value, (int, float))
 
-    def verify_list_type(self, lst: list, type: type):
-        if lst == None:
-            return False  # don't want lists to be null but variables can be null
-        return all(isinstance(x, type) for x in lst)
+    def verify_arr_type(self, arr: list, type: type):
+        if arr == None:
+            return False  # don't want arrs to be null but variables can be null
+        return all(isinstance(x, type) for x in arr)
 
     def _type_builtin(self, left, right):
         # function for type keyword
-        if not (isinstance(left, list) or isinstance(right, list)):
+        if isinstance(left, (str, int, float, bool)) and isinstance(
+            right, (str, int, float, bool)
+        ):
             return type(left) == type(right)
-        else:  # doesn't get type for list
-            raise ValueError
+        elif isinstance(left, list) and isinstance(right, list):
+            if (
+                len(left) == 0 or len(right) == 0
+            ):  # if either arrs are empty return false
+                return False
+            else:
+                return type(left[0]) == type(right[0])  # else compare their contents
+        else:
+            raise ValueError("Argument(s) have invalid types")

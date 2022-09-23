@@ -36,4 +36,4 @@ class Interpreter:
     # create wrapper for ZeroDivisionError
 
     # fix line number and column number -> store in program context - in each ast node set line no and column no in context using token
-    # when raising errors in context use context line and column number, in ast node use token line and column number (?) 
+    # when raising errors in context use context line and column number, in ast node use token line and column number (?)

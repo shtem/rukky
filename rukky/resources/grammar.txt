@@ -35,7 +35,6 @@ decl_stmt -> var_type ID EOL
             | var_type ID ":=" expr EOL
             | var_type "[]" ID EOL
             | var_type "[]" ID ":=" expr EOL
-            | var_type "[]" ID ":=" "[" args "]" EOL
 expr_stmt -> expr EOL
             | EOL
 for_stmt -> "for" "::" ID ":=" expr ";" expr ";" expr block
@@ -54,7 +53,6 @@ return_stmt -> "return" "::" EOL
 break_stmt -> "break" "::" EOL
 
 expr -> ID ":=" expr
-        | ID ":=" "[" args "]"
         | ID "@" expr ":=" expr
         | ID "<<" expr
         | disjunc
@@ -83,6 +81,7 @@ expo -> expo "^" elem
 elem -> "-" elem
         | "~" elem
         | "(" expr ")"
+        | "[" args "]"
         | ID
         | ID ":" args ":"
         | ID "[" expr "]"
