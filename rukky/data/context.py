@@ -97,14 +97,15 @@ class TheContext:
         self.inFunc = False
         self.funcReturnVal = None
 
-        self.should_return = lambda: self.inFunc and self.returnFlag
+        self.should_return = (
+            lambda: self.inFunc and self.returnFlag and not self.breakFlag
+        )
         self.should_break = lambda: self.inLoop and self.breakFlag
 
-    def reset_flags(self):
+    def reset_flags_func(self):
         self.returnFlag = False
         self.breakFlag = False
         self.inLoop = False
-        self.inFunc = False
         self.funcReturnVal = None
 
     def get_ident_type(self, symbol: str, getArr=False):

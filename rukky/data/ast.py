@@ -455,8 +455,6 @@ class CallExprASTNode(ExprASTNode):
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError("Incorrect number of arguments")
 
-        context.inFunc = True  # inside function
-
         argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(fEntry.argSymbols, argValues)
 
@@ -493,7 +491,7 @@ class CallExprASTNode(ExprASTNode):
 
         if fEntry.type_checker_return():
             rVal = funcContext.funcReturnVal
-            fEntry.context.reset_flags()
+            fEntry.context.reset_flags_func()
             if context.is_real(value=rVal) and not context.is_bool(value=rVal):
                 return float(rVal)
             else:
@@ -585,7 +583,7 @@ class AssignASTNode(ExprASTNode):
             else:
                 raise TypeError("Value type does not match variable type in assignment")
 
-        return assignVal
+        return None
 
 
 class StmtBlockASTNode(StmtASTNode):
@@ -611,7 +609,6 @@ class StmtBlockASTNode(StmtASTNode):
             stmtVal = decl.code_gen(context=context)
 
             if context.should_return():
-                context.inFunc = False
                 return stmtVal
 
         return stmtVal
@@ -688,6 +685,8 @@ class IfStmtASTNode(StmtASTNode):
         if not context.is_bool(value=condVal):
             raise TypeError("Invalid condition type. Should be boolean value")
 
+        bVal = None
+
         if condVal:  # if condition true evaluate if body
             bVal = self.ifBody.code_gen(context=context)
             return bVal
@@ -703,7 +702,7 @@ class IfStmtASTNode(StmtASTNode):
             bVal = self.elseBody.code_gen(context=context)
             return bVal
 
-        return None
+        return bVal
 
 
 class WhileStmtASTNode(StmtASTNode):
@@ -730,6 +729,8 @@ class WhileStmtASTNode(StmtASTNode):
 
         context.inLoop = True
 
+        bVal = None
+
         while True:
             condVal = self.cond.code_gen(context=context)
             if not context.is_bool(value=condVal):
@@ -741,12 +742,10 @@ class WhileStmtASTNode(StmtASTNode):
             bVal = self.whileBody.code_gen(context=context)
             context.inLoop = True
 
-            if context.should_return() and not context.breakFlag:
-                context.inLoop = False
+            if context.should_return():
                 return bVal
 
             if context.should_break():
-                context.inLoop = False
                 context.breakFlag = False
                 break
 
@@ -836,17 +835,17 @@ class ForStmtASTNode(StmtASTNode):
             isArr=False,
         )
 
+        bVal = None
+
         while for_cond():
             i += incVal
             bVal = self.forBody.code_gen(context=context)
             context.inLoop = True
 
-            if context.should_return() and not context.breakFlag:
-                context.inLoop = False
+            if context.should_return():
                 return bVal
 
             if context.should_break():
-                context.inLoop = False
                 context.breakFlag = False
                 break
 
@@ -988,6 +987,5 @@ class ProgramASTNode(ASTNode):
         progVal = None
         for decl in self.declarList:
             progVal = decl.code_gen(context=self.programContext)
-            self.programContext.inFunc = False
 
         return progVal
