@@ -67,6 +67,7 @@ class TokenType(Enum):
 
     RETURN = "return"
     BREAK = "break"
+    CONTINUE = "continue"
 
     ID = -1  # [a-zA-Z_][a-zA-Z_0-9]*
     REAL_LIT = -2  # [0-9]+ | ([0-9]*.[0-9]+)
@@ -77,7 +78,7 @@ class TokenType(Enum):
 def _build_reserved_keywords():
     tokenList = list(TokenType)
     start = tokenList.index(TokenType.VOID)
-    end = tokenList.index(TokenType.BREAK)
+    end = tokenList.index(TokenType.CONTINUE)
     reserved = {tkType.value: tkType for tkType in tokenList[start : end + 1]}
 
     return reserved

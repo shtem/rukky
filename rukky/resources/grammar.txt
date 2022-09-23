@@ -31,6 +31,7 @@ stmt -> decl_stmt
         | if_stmt
         | return_stmt
         | break_stmt
+        | cont_stmt
 decl_stmt -> var_type ID EOL
             | var_type ID ":=" expr EOL
             | var_type "[]" ID EOL
@@ -51,6 +52,7 @@ else_stmt -> "else" "::" block
 return_stmt -> "return" "::" EOL
             | "return" "::" expr EOL
 break_stmt -> "break" "::" EOL
+cont_stmt -> "continue" "::" EOL
 
 expr -> ID ":=" expr
         | ID "@" expr ":=" expr

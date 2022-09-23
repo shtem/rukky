@@ -674,7 +674,7 @@ class StmtBlockASTNode(StmtASTNode):
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_return():
+            if context.should_return() or context.should_continue():
                 return stmtVal
 
         return stmtVal
@@ -833,6 +833,10 @@ class WhileStmtASTNode(StmtASTNode):
             if context.should_return():
                 return bVal
 
+            if context.should_continue():
+                context.continueFlag = False
+                continue
+
             if context.should_break():
                 context.breakFlag = False
                 break
@@ -936,13 +940,6 @@ class ForStmtASTNode(StmtASTNode):
             bVal = self.forBody.code_gen(context=context)
             context.inLoop = True
 
-            if context.should_return():
-                return bVal
-
-            if context.should_break():
-                context.breakFlag = False
-                break
-
             context.set_ident(
                 symbol=symbol,
                 valType=None,
@@ -951,6 +948,17 @@ class ForStmtASTNode(StmtASTNode):
                 isAppend=False,
                 isArr=False,
             )
+
+            if context.should_return():
+                return bVal
+
+            if context.should_continue():
+                context.continueFlag = False
+                continue
+
+            if context.should_break():
+                context.breakFlag = False
+                break
 
         context.inLoop = False
 
@@ -1004,6 +1012,27 @@ class BreakStmtASTNode(StmtASTNode):
             raise ValueError(context.get_error_message("Cannot break outside a loop"))
 
         context.breakFlag = True
+
+        return None
+
+
+class ContinueStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token):
+        super().__init__()
+        self.token = token
+
+    def __str__(self):
+        return f"-> ContinueStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})"
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if not context.inLoop:
+            raise ValueError(
+                context.get_error_message("Cannot continue outside a loop")
+            )
+
+        context.continueFlag = True
 
         return None
 

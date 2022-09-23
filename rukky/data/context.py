@@ -93,17 +93,23 @@ class TheContext:
 
         self.returnFlag = False
         self.breakFlag = False
+        self.continueFlag = False
         self.inLoop = False
         self.inFunc = False
         self.funcReturnVal = None
 
         self.should_return = (
-            lambda: self.inFunc and self.returnFlag and not self.breakFlag
+            lambda: self.inFunc
+            and self.returnFlag
+            and not self.breakFlag
+            and not self.continueFlag
         )
         self.should_break = lambda: self.inLoop and self.breakFlag
+        self.should_continue = lambda: self.inLoop and self.continueFlag
 
     def reset_flags_func(self):
         self.returnFlag = False
+        self.continueFlag = False
         self.breakFlag = False
         self.inLoop = False
         self.funcReturnVal = None
@@ -201,16 +207,20 @@ class TheContext:
             return self.parent.get_ident(symbol=symbol, index=index, getArr=getArr)
 
         if sEntry:
-            try:
-                if getArr:
+            if getArr:
+                if not isinstance(sEntry.value, ArrayValue):
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not an array")
+                    )
+                try:
                     if index != None:
                         return sEntry.value.get_arr(index=index)
                     else:
                         return sEntry.value.get_arr()
-                else:
-                    return sEntry.value
-            except Exception as e:
-                raise ValueError(self.get_error_message(str(e)))
+                except Exception as e:
+                    raise ValueError(self.get_error_message(str(e)))
+            else:
+                return sEntry.value
 
         return None
 

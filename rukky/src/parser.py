@@ -72,6 +72,7 @@ class Parser:
             TokenType.WHILE,
             TokenType.RETURN,
             TokenType.BREAK,
+            TokenType.CONTINUE,
             TokenType.VOID,
             TokenType.REAL,
             TokenType.BOOL,
@@ -328,6 +329,7 @@ class Parser:
             TokenType.WHILE,
             TokenType.RETURN,
             TokenType.BREAK,
+            TokenType.CONTINUE,
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
@@ -378,7 +380,7 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error(
-                        'expression or "if", "while", "for", "return" or "break" statement or newline or "}"'
+                        'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "}"'
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
@@ -413,6 +415,7 @@ class Parser:
             TokenType.WHILE,
             TokenType.RETURN,
             TokenType.BREAK,
+            TokenType.CONTINUE,
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
@@ -449,7 +452,7 @@ class Parser:
                 return stmtList
             else:
                 self.error(
-                    'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str" or "}"'
+                    'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool" or "str" or "}"'
                 )
 
     """
@@ -460,6 +463,7 @@ class Parser:
         | if_stmt
         | return_stmt
         | break_stmt
+        | cont_stmt
     """
 
     def stmt(self):
@@ -501,6 +505,8 @@ class Parser:
             return self.return_stmt()
         elif self.currTok.type == TokenType.BREAK:
             return self.break_stmt()
+        elif self.currTok.type == TokenType.CONTINUE:
+            return self.cont_stmt()
         elif self.currTok.type in [TokenType.REAL, TokenType.BOOL, TokenType.STRING]:
             return self.decl_stmt()
         elif self.currTok.type in possibleStartToks:
@@ -509,7 +515,7 @@ class Parser:
             return self.epsilon()
         else:
             return self.error(
-                'expression or "if", "while", "for", "return" or "break" statement or newline or "real", "bool" or "str"'
+                'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool" or "str"'
             )
 
     """
@@ -779,6 +785,7 @@ class Parser:
             TokenType.WHILE,
             TokenType.RETURN,
             TokenType.BREAK,
+            TokenType.CONTINUE,
             TokenType.VOID,
             TokenType.REAL,
             TokenType.BOOL,
@@ -900,6 +907,26 @@ class Parser:
                 if self.currTok.type == TokenType.EOL:
                     self.eat()  # eat \n
                     return BreakStmtASTNode(token=tok)
+                else:
+                    self.error("newline")
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
+    cont_stmt -> "continue" "::" EOL
+    """
+
+    def cont_stmt(self):
+        if self.currTok.type == TokenType.CONTINUE:
+            tok = self.currTok
+            self.eat()  # eat 'continue'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                if self.currTok.type == TokenType.EOL:
+                    self.eat()  # eat \n
+                    return ContinueStmtASTNode(token=tok)
                 else:
                     self.error("newline")
             else:
