@@ -199,6 +199,15 @@ class Parser:
                                         params=params,
                                         funcBody=body,
                                     )
+                                else:
+                                    return FunctionASTNode(
+                                        token=tok,
+                                        funcName=funcName,
+                                        params=params,
+                                        funcBody=StmtBlockASTNode(
+                                            token=self.currTok, stmtList=[]
+                                        ),
+                                    )
                             else:
                                 self.error('")"')
                         else:

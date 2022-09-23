@@ -149,10 +149,10 @@ class TheContext:
                     sType = self.get_ident_type(symbol=symbol, getArr=True)
                     if not sType:
                         raise ValueError(
-                            "Variable doesn't exist/has not yet been defined"
+                            f"Variable {symbol} doesn't exist/has not yet been defined"
                         )
 
-                if not self.verify_arr_type(arr=value, type=sType):
+                if not self.verify_arr_type(arr=value, arrType=sType):
                     raise TypeError("Element(s) in array do not match array type")
 
                 arrVal = ArrayValue(type=sType, arr=value)
@@ -164,7 +164,9 @@ class TheContext:
             else:  # variable re assignment
                 sType = self.get_ident_type(symbol=symbol)
                 if not sType:
-                    raise ValueError("Variable doesn't exist/has not yet been defined")
+                    raise ValueError(
+                        f"Variable {symbol} doesn't exist/has not yet been defined"
+                    )
             sEntry = SymbolEntry(type=sType, value=value)
             self.symbolTable[symbol] = sEntry
 
@@ -225,13 +227,17 @@ class TheContext:
             if varType:
                 return isinstance(right, varType)
             else:
-                raise ValueError("Variable doesn't exist/has not yet been defined")
+                raise ValueError(
+                    f"Variable {left} doesn't exist/has not yet been defined"
+                )
         else:
             varType = self.get_ident_type(symbol=left)
             if varType:
                 return isinstance(right, varType)
             else:
-                raise ValueError("Variable doesn't exist/has not yet been defined")
+                raise ValueError(
+                    f"Variable {left} doesn't exist/has not yet been defined"
+                )
 
     def type_checker(self, left, right):
         # check types of lhs and rhs values match in binary operation
@@ -249,10 +255,10 @@ class TheContext:
     def is_real(self, value):
         return isinstance(value, (int, float))
 
-    def verify_arr_type(self, arr: list, type: type):
+    def verify_arr_type(self, arr: list, arrType: type):
         if arr == None:
             return False  # don't want arrs to be null but variables can be null
-        return all(isinstance(x, type) for x in arr)
+        return all(isinstance(x, arrType) for x in arr)
 
     def _type_builtin(self, left, right):
         # function for type keyword
