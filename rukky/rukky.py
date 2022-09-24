@@ -40,7 +40,7 @@ my_output_types.add_argument(
 )
 
 
-def execute_interp(args, text):
+def runner(args, text):
     lex = Lexer(text=text)
     parser = Parser(lexer=lex)
     interp = Interpreter(parser=parser)
@@ -83,18 +83,18 @@ def main():
         fileName = args.file
 
         if not os.path.exists(fileName):
-            print("The file path specified does not exist")
+            print(f"{fileName}: The file path does not exist")
             sys.exit()
 
         with open(fileName, "r") as file:
             text = file.read()
 
-        execute_interp(args=args, text=text)
+        runner(args=args, text=text)
+        return
 
     if args.shell:
-        print(
-            'rukky 1.0.0 REPL\nType "start" for multiline input, "end" to evaluate multiline input, "bye" to exit.'
-        )
+        shellHelp = 'rukky 1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL and "help" to display this message again.'
+        print(shellHelp)
         try:
             while True:
                 text = input("rukky> ")
@@ -103,8 +103,12 @@ def main():
 
                 if text.strip() == "bye":
                     sys.exit(0)
+                
+                if text.strip() == "help":
+                    print(shellHelp)
+                    continue
 
-                if text.strip() == "start":
+                if text.strip() == "begin":
                     buffer = []
 
                     while True:
@@ -113,10 +117,15 @@ def main():
                             break
                         buffer.append(line.strip())
 
+                    print(">>")
                     text = "\n".join(buffer)
 
                 text += "\n "
-                execute_interp(args=args, text=text)
+
+                try:
+                    runner(args=args, text=text)
+                except SystemExit:
+                    pass
         except KeyboardInterrupt:
             sys.exit(0)
 
