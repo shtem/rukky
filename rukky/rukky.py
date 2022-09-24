@@ -76,17 +76,17 @@ def execute(args, text):
 
 def runner():
     args = rukky_arg_parser.parse_args()
-    fileName = ""
+    filePath = ""
     text = ""
 
     if args.file:
-        fileName = args.file
+        filePath = args.file
 
-        if not os.path.exists(fileName):
-            print(f"{fileName}: The file path does not exist")
-            sys.exit()
+        if not os.path.exists(filePath):
+            print(f"{filePath}: The file path does not exist")
+            sys.exit(0)
 
-        with open(fileName, "r") as file:
+        with open(filePath, "r") as file:
             text = file.read()
 
         execute(args=args, text=text)
