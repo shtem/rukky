@@ -24,7 +24,7 @@ class Interpreter:
 
         try:
             if programAST:
-                return programAST.code_gen(), programAST.programContext
+                return programAST.code_gen(), programAST
             else:
                 return "", {}
         except Exception as e:

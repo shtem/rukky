@@ -467,11 +467,7 @@ class CallExprASTNode(ExprASTNode):
 
         if fEntry.funcBody == print:
             strArg = str(*argVals)
-            strArg = (
-                strArg.replace("None", "null")
-                .replace("True", "true")
-                .replace("False", "false")
-            )
+            strArg = fEntry.context._display_builtin_helper(strOut=strArg)
             argVals = (strArg,)
 
         rVal = fEntry.funcBody(*argVals)
@@ -918,7 +914,7 @@ class ForStmtASTNode(StmtASTNode):
             )
 
         i = sVal
-        
+
         if incVal >= 0:
             for_cond = lambda: i < endVal
         else:

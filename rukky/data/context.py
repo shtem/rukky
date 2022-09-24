@@ -324,3 +324,10 @@ class TheContext:
                 return type(left[0]) == type(right[0])  # else compare their contents
         else:
             raise ValueError(self.get_error_message("Argument(s) have invalid types"))
+
+    def _display_builtin_helper(self, strOut: str):
+        return (
+            strOut.replace("None", "null")
+            .replace("True", "true")
+            .replace("False", "false")
+        )
