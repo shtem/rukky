@@ -5,11 +5,13 @@ $
 $
 
 
-:: real fibonacci := (real n) {
+:: real[] fibonacci := (real n) {
     real first
     real second
     real c
     real total
+
+    real[] result
 
     first := 0
     second := 1
@@ -17,7 +19,7 @@ $
     total := 0
     
     while:: c < n {
-        display:first::
+        result << first
         total := first + second
         first := second
         second := total
@@ -25,8 +27,9 @@ $
         c := c + 1
     }
 
-    return:: first
+    result << first
+    return:: result
 }
 
-real fib := fibonacci:10::
-display:fib::
+real[] fib := fibonacci:10::
+display:"result: " + getStr:fib::::

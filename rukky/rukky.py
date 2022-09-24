@@ -3,11 +3,11 @@ from src.parser import Parser
 from src.lexer import Lexer
 import sys, os, argparse
 
-rukky_parser = argparse.ArgumentParser(
+rukky_arg_parser = argparse.ArgumentParser(
     description='Interpreter for the "rukky" functional programming language. Interprets code and outputs result.'
 )
 
-my_modes = rukky_parser.add_mutually_exclusive_group(required=True)
+my_modes = rukky_arg_parser.add_mutually_exclusive_group(required=True)
 my_modes.add_argument(
     "-s",
     "--shell",
@@ -22,7 +22,7 @@ my_modes.add_argument(
     help="run interpreter in file mode. Pass path to file to be interpreted",
 )
 
-my_output_types = rukky_parser.add_mutually_exclusive_group(required=False)
+my_output_types = rukky_arg_parser.add_mutually_exclusive_group(required=False)
 my_output_types.add_argument(
     "-t",
     dest="token",
@@ -40,7 +40,7 @@ my_output_types.add_argument(
 )
 
 
-def runner(args, text):
+def execute(args, text):
     lex = Lexer(text=text)
     parser = Parser(lexer=lex)
     interp = Interpreter(parser=parser)
@@ -74,8 +74,8 @@ def runner(args, text):
         return
 
 
-def main():
-    args = rukky_parser.parse_args()
+def runner():
+    args = rukky_arg_parser.parse_args()
     fileName = ""
     text = ""
 
@@ -89,7 +89,7 @@ def main():
         with open(fileName, "r") as file:
             text = file.read()
 
-        runner(args=args, text=text)
+        execute(args=args, text=text)
         return
 
     if args.shell:
@@ -103,7 +103,7 @@ def main():
 
                 if text.strip() == "bye":
                     sys.exit(0)
-                
+
                 if text.strip() == "help":
                     print(shellHelp)
                     continue
@@ -123,11 +123,12 @@ def main():
                 text += "\n "
 
                 try:
-                    runner(args=args, text=text)
+                    execute(args=args, text=text)
                 except SystemExit:
                     pass
         except KeyboardInterrupt:
             sys.exit(0)
 
 
-main()
+if __name__ == "__main__":
+    runner()

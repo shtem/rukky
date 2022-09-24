@@ -21,4 +21,4 @@ $
 }
 
 real fac := factorial:5::
-display:fac::
+display:"result: " + getStr:fac::::

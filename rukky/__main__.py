@@ -1,4 +1,4 @@
-from rukky import main
+from rukky import runner
 
 if __name__ == "__main__":
-    main()
+    runner()

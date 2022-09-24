@@ -28,4 +28,4 @@ $
 
 real x := 54
 real y := 24
-display:"L.C.M is " + getStr:calculateLcm:x, y::::::
+display:"result: " + getStr:calculateLcm:x, y::::::

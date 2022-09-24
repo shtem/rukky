@@ -33,4 +33,4 @@ $
 }
 
 bool isPal := palindrome:45677654::
-display:isPal::
+display:"result: " + getStr:isPal::::

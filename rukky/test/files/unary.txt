@@ -32,4 +32,4 @@ $
 
 real n := 2
 real m := 3
-display:unary:n, m::::
+display:"result: " + getStr:unary:n, m::::::

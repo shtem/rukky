@@ -5,8 +5,9 @@ $
 $
 
 
-:: void primeInterval := (real lower, real upper) {
+:: real[] primeInterval := (real lower, real upper) {
     bool primeFlag
+    real[] result
 
     for:: num := lower ; upper + 1 ; 1 {
         if:: num > 1 {
@@ -20,13 +21,15 @@ $
             }
 
             if:: primeFlag {
-                display:num::
+                result << num
             }
             
         }
     }
+
+    return:: result
 }
 
 real l := 900
 real u := 1000
-primeInterval:l, u::
+display:"result: " + getStr:primeInterval:l, u::::::

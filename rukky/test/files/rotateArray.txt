@@ -38,4 +38,4 @@ $
 real[] array := [1, 2, 3, 4, 5, 6, 7]
 real d := 2
 display:"Array before left rotation by d=" + getStr:d:: + " is: " + getStr:array::::
-display:"Array after left rotation is: " + getStr:rotateArray:array, d::::::
+display:"result: " + getStr:rotateArray:array, d::::::
