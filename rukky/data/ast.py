@@ -912,13 +912,13 @@ class ForStmtASTNode(StmtASTNode):
                 )
             )
 
-        i = sVal
-
         if incVal == 0:
             raise ValueError(
                 context.get_error_message("Invalid increment value. Cannot be zero")
             )
 
+        i = sVal
+        
         if incVal >= 0:
             for_cond = lambda: i < endVal
         else:

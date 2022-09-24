@@ -26,8 +26,8 @@ while True:
 
         print("\nResult\n---------\n")
         parser.reset()
-        res, symb = interp.interpret()
-        print(res, symb, "\n")
+        res, context = interp.interpret()
+        print(res, context.symbolTable, "\n")
 
     except KeyboardInterrupt:
         sys.exit(0)

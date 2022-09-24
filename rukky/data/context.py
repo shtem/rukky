@@ -7,7 +7,7 @@ class ArrayValue:
         return self.__str__()
 
     def __str__(self):
-        return f"ArrayValue({self.valType}, {repr(self.arr)})"
+        return f"ArrayValue(type={self.valType}, elems={repr(self.arr)})"
 
     def verify_value(self, value):
         return isinstance(value, self.valType)
@@ -48,7 +48,7 @@ class SymbolEntry(Entry):
         return self.__str__()
 
     def __str__(self):
-        return f"SymbolEntry({self.type}, {repr(self.value)})"
+        return f"SymbolEntry(type={self.type}, value={repr(self.value)})"
 
 
 class FuncEntry(Entry):
@@ -65,7 +65,7 @@ class FuncEntry(Entry):
         return self.__str__()
 
     def __str__(self):
-        return f"FuncEntry({self.type}, {repr(self.argSymbols)})"
+        return f"FuncEntry(type={self.type}, params={repr(self.argSymbols)})"
 
     def type_checker_return(self):
         # check function type matches return type
