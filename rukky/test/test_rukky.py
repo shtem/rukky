@@ -1,47 +1,63 @@
-import re, os, subprocess, pytest
+import re, os, subprocess
 
 TEST_CORRECT_RESULTS = {
-    "addNum": 210,
-    "factorial": 120,
-    "fibonacci": [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55],
-    "lcm": 216,
-    "palindrome": "true",
-    "prime": [907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997],
-    "rotateArray": [3, 4, 5, 6, 7, 1, 2],
-    "unary": 4,
+    "addNum": (210, float),
+    "factorial": (120, float),
+    "fibonacci": ([0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55], float),
+    "lcm": (216, float),
+    "palindrome": ("true", str),
+    "prime": (
+        [907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997],
+        float,
+    ),
+    "rotateArray": ([3, 4, 5, 6, 7, 1, 2], float),
+    "unary": (4, float),
 }
 
 
-def get_test_name(filePath: str):
-    baseName = os.path.basename(os.path.normpath(filePath))
-    testName, _ = os.path.splitext(baseName)
-    return testName
-
 def get_test_result(filePath: str):
-    currDir = os.getcwd()
-    command = (
-        f"python {currDir}\\rukky.py -f {filePath}"
-    )
+    scriptPath = os.path.join(os.getcwd(), "rukky", "rukky.py")
+    command = f"python {scriptPath} -f {filePath}"
     result = subprocess.run(command, stdout=subprocess.PIPE)
     testOut = result.stdout.decode("utf-8").replace("\r\n", "").replace("\n", "")
     search = re.search("result:\s+(.+)", testOut)
     _, match = search.group().split(":")
     return match.strip()
 
-def verify_path(filePath: str):
-    if not os.path.exists(filePath):
-        print(f"{filePath}: The file path does not exist")
-        assert False
-    else:
-        return r"" + filePath
 
 def test_sucess():
-    # loop through all test files in test folder, verify them and use returned path
-    # get test result, get test name
-    # use dictionary to get correct result and compare it to test result
-    # type cast test result using type of retrieved correct result
-    pass
+    testDir = os.path.join(os.getcwd(), "rukky", "test", "files")
+    testNamesandFiles = [
+        (os.path.splitext(f)[0], os.path.join(testDir, f))
+        for f in os.listdir(testDir)
+        if os.path.isfile(os.path.join(testDir, f))
+    ]
+    for name, filePath in testNamesandFiles:
+        testEntry = TEST_CORRECT_RESULTS.get(name, None)
+        testResult = get_test_result(filePath=filePath)
+
+        if testEntry == None:
+            print(f"No correct result found for {name}")
+            assert False
+
+        correctResult, resultType = testEntry
+        if isinstance(correctResult, list):
+            testResult = testResult[1 : len(testResult) - 1].split(",")
+            testResult = [resultType(x) for x in testResult]
+        else:
+            testResult = resultType(testResult)
+
+        if correctResult == testResult:
+            print(
+                f"Test {name}: PASSED, test result: {testResult}, correct result: {correctResult}"
+            )
+        else:
+            print(
+                f"Test {name}: FAILED, test result: {testResult}, correct result: {correctResult}"
+            )
+
+        assert correctResult == testResult
 
 
-def test_failure():
-    pass
+if __name__ == "__main__":
+    test_sucess()

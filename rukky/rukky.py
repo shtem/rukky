@@ -34,6 +34,7 @@ my_output_types.add_argument(
 )
 my_output_types.add_argument(
     "-g",
+    "--global",
     dest="table",
     action="store_true",
     help="print global symbol and function table returned by interpreter, with the result",
