@@ -28,21 +28,21 @@ my_output_types.add_argument(
     "--tokens",
     dest="token",
     action="store_true",
-    help="print list of all tokens returned by lexer",
+    help="outputs list of all tokens returned by lexer",
 )
 my_output_types.add_argument(
     "-a", 
     "--ast", 
     dest="ast", 
     action="store_true", 
-    help="print AST returned by parser"
+    help="outputs AST returned by parser"
 )
 my_output_types.add_argument(
     "-g",
     "--global",
     dest="table",
     action="store_true",
-    help="print global symbol and function table returned by interpreter, with the result",
+    help="outputs global symbol and function table returned by interpreter, along with the result",
 )
 
 
@@ -102,7 +102,10 @@ def runner():
         return
 
     if args.shell:
-        shellHelp = 'rukky 1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL and "help" to display this message again.'
+        helpOne = 'rukky 1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL, "tokens" to enable/disable token output, '
+        helpTwo = '"ast" to enable/disable AST output, "global" to enable/disable global symbol and function table output and "help" to display this message again.'
+        shellHelp = helpOne + helpTwo
+
         print(shellHelp)
         try:
             while True:
@@ -110,19 +113,37 @@ def runner():
                 if text.strip() == "":
                     continue
 
-                if text.strip() == "bye":
-                    sys.exit(0)
-
                 if text.strip() == "help":
                     print(shellHelp)
                     continue
+
+                if text.strip() == "tokens":
+                    args.token = not args.token
+                    args.ast = False
+                    args.table = False
+                    continue
+
+                if text.strip() == "ast":
+                    args.ast = not args.ast
+                    args.token = False
+                    args.table = False
+                    continue
+                    
+                if text.strip() == "global":
+                    args.table = not args.table
+                    args.ast = False
+                    args.token = False
+                    continue
+
+                if text.strip() == "bye":
+                    sys.exit(0)
 
                 if text.strip() == "begin":
                     buffer = []
 
                     while True:
                         line = input(". ")
-                        if "end" == line.strip():
+                        if line.strip() == "end":
                             break
                         buffer.append(line.strip())
 
