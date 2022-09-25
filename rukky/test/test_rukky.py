@@ -12,7 +12,7 @@ TEST_CORRECT_RESULTS = {
     ),
     "rotateArray": ([3, 4, 5, 6, 7, 1, 2], float),
     "unary": (4, float),
-}
+}  # each test and result corresponds to file in test folder
 
 
 def get_test_result(filePath: str):
@@ -20,8 +20,10 @@ def get_test_result(filePath: str):
     command = f"python {scriptPath} -f {filePath}"
     result = subprocess.run(command, stdout=subprocess.PIPE)
     testOut = result.stdout.decode("utf-8").replace("\r\n", "").replace("\n", "")
-    search = re.search("result:\s+(.+)", testOut)
-    _, match = search.group().split(":")
+    search = re.search(
+        "result:\s+(.+)", testOut
+    )  # get part of printed output where "result: <x>"
+    _, match = search.group().split(":")  # match = <x>
     return match.strip()
 
 
@@ -42,7 +44,9 @@ def test_sucess():
 
         correctResult, resultType = testEntry
         if isinstance(correctResult, list):
-            testResult = testResult[1 : len(testResult) - 1].split(",")
+            testResult = testResult[1 : len(testResult) - 1].split(
+                ","
+            )  # remove "[" and "]" from string then split
             testResult = [resultType(x) for x in testResult]
         else:
             testResult = resultType(testResult)

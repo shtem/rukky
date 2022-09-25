@@ -26,6 +26,6 @@ class Interpreter:
             if programAST:
                 return programAST.code_gen(), programAST
             else:
-                return "", {}
+                return None, None
         except Exception as e:
             self.error(str(e))

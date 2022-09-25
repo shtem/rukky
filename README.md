@@ -1,2 +1,2 @@
 # rukky
-A simple Programming Language I made for fun
+## A simple Functional Programming Language I made for fun

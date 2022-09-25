@@ -893,12 +893,12 @@ class ForStmtASTNode(StmtASTNode):
         self.counter.code_gen(context=context)
         symbol = self.counter.get_ident()
 
-        sVal = self.start.code_gen(context=context)
+        startVal = self.start.code_gen(context=context)
         endVal = self.end.code_gen(context=context)
         incVal = self.increment.code_gen(context=context)
 
         if (
-            not context.is_real(value=sVal)
+            not context.is_real(value=startVal)
             or not context.is_real(value=endVal)
             or not context.is_real(value=incVal)
         ):
@@ -913,7 +913,7 @@ class ForStmtASTNode(StmtASTNode):
                 context.get_error_message("Invalid increment value. Cannot be zero")
             )
 
-        i = sVal
+        i = startVal
 
         if incVal >= 0:
             for_cond = lambda: i < endVal
@@ -923,7 +923,7 @@ class ForStmtASTNode(StmtASTNode):
         context.set_ident(
             symbol=symbol,
             valType=None,
-            value=sVal,
+            value=startVal,
             index=None,
             isAppend=False,
             isArr=False,
@@ -1100,7 +1100,7 @@ class ProgramASTNode(ASTNode):
     def __init__(self, declarList: list[ASTNode]):
         super().__init__()
         self.declarList = declarList
-        self.programContext = TheContext(parent=None)
+        self.globalContext = TheContext(parent=None)
 
     def __str__(self):
         out = f"|-> ProgramASTNode "
@@ -1115,6 +1115,6 @@ class ProgramASTNode(ASTNode):
     def code_gen(self):
         progVal = None
         for decl in self.declarList:
-            progVal = decl.code_gen(context=self.programContext)
+            progVal = decl.code_gen(context=self.globalContext)
 
         return progVal

@@ -25,12 +25,17 @@ my_modes.add_argument(
 my_output_types = rukky_arg_parser.add_mutually_exclusive_group(required=False)
 my_output_types.add_argument(
     "-t",
+    "--tokens",
     dest="token",
     action="store_true",
     help="print list of all tokens returned by lexer",
 )
 my_output_types.add_argument(
-    "-a", dest="ast", action="store_true", help="print AST returned by parser"
+    "-a", 
+    "--ast", 
+    dest="ast", 
+    action="store_true", 
+    help="print AST returned by parser"
 )
 my_output_types.add_argument(
     "-g",
@@ -65,12 +70,12 @@ def execute(args, text):
     result, programAST = interp.interpret()
 
     if result != None and programAST and args.shell:
-        print(programAST.programContext._display_builtin_helper(strOut=str(result)))
+        print(programAST.globalContext._display_builtin_helper(strOut=str(result)))
 
-    if args.table:
+    if args.table and programAST:
         print("\nGlobal Tables\n-------------")
         print(
-            f"Symbol Table: {programAST.programContext.symbolTable}\nFunction Table: {programAST.programContext.funcTable}\n"
+            f"Symbol Table: {programAST.globalContext.symbolTable}\nFunction Table: {programAST.globalContext.funcTable}\n"
         )
         return
 
@@ -89,6 +94,9 @@ def runner():
 
         with open(filePath, "r") as file:
             text = file.read()
+
+        if text.strip() == "":
+            return
 
         execute(args=args, text=text)
         return
@@ -121,7 +129,7 @@ def runner():
                     print(">>")
                     text = "\n".join(buffer)
 
-                text += "\n "
+                text += "\n"
 
                 try:
                     execute(args=args, text=text)
