@@ -76,8 +76,8 @@ display:"result: " + getStr:fac::::
 #### Acknowledgment
 Sources and tutorials I used to help with the development of this project:
 
-[David Callanan](https://github.com/davidcallanan/py-myopl-code) - Make Your Own Programming Language in Python
+[Make Your Own Programming Language in Python](https://github.com/davidcallanan/py-myopl-code) - David Callanan
 
-[Ruslan Spivak](https://github.com/rspivak/lsbasi) - Let's Build A Simple Interpreter
+[Let's Build A Simple Interpreter](https://github.com/rspivak/lsbasi) - Ruslan Spivak
 
-[Jay Conrad](https://jayconrod.com/posts/37/a-simple-interpreter-from-scratch-in-python--part-1-) - A Simple Interpreter From Scratch In Python
+[A Simple Interpreter From Scratch In Python](https://jayconrod.com/posts/37/a-simple-interpreter-from-scratch-in-python--part-1-) - Jay Conrad
