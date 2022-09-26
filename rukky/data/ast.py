@@ -645,6 +645,19 @@ class AssignASTNode(ExprASTNode):
                     isAppend=False,
                     isArr=self.var.arrFlag,
                 )
+            elif (
+                context.get_ident_type(symbol=symbol, getArr=False) == list
+                and context.get_ident_type(symbol=symbol, getArr=True) == object
+            ):
+
+                context.set_ident(
+                    symbol=symbol,
+                    valType=object,
+                    value=assignVal,
+                    index=None,
+                    isAppend=False,
+                    isArr=self.var.arrFlag,
+                )
             else:
                 raise TypeError(
                     context.get_error_message(

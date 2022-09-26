@@ -121,8 +121,16 @@ class TheContext:
 
         if sEntry:
             if getArr:
-                sArr: ArrayValue = sEntry.value
-                return sArr.valType
+                if not isinstance(sEntry.value, ArrayValue) and sEntry.type == object:
+                    return sEntry.type
+
+                if isinstance(sEntry.value, ArrayValue):
+                    sArr: ArrayValue = sEntry.value
+                    return sArr.valType
+                else:
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not an array")
+                    )
             else:
                 return sEntry.type
 
@@ -199,7 +207,7 @@ class TheContext:
                         )
                     )
 
-            # allows for both obj y := [..] and obj[] y := [..]
+            # allows for obj y := [..]
             if isinstance(value, list) and sType == object:
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)

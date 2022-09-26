@@ -153,7 +153,7 @@ class Parser:
 
     """
     func_type -> "void"
-                | param_type
+                | decl_type
     """
 
     def func_type(self):
@@ -166,7 +166,7 @@ class Parser:
             TokenType.STRING,
             TokenType.OBJECT,
         ]:
-            return self.param_type()
+            return self.decl_type()
         else:
             self.error('"void" or "real" or "bool" or "str" or "obj"')
 
@@ -276,40 +276,19 @@ class Parser:
         return []
 
     """
-    param_type -> var_type
-                | var_type "[]"
-    """
-
-    def param_type(self):
-        vType = self.var_type()
-
-        if vType:
-            if self.currTok.type == TokenType.LSQUARE:
-                self.eat()  # eat [
-                if self.currTok.type == TokenType.RSQUARE:
-                    self.eat()  # eat ]
-                    return vType, True  # var_type[]
-                else:
-                    self.error('"]"')
-            else:
-                return vType, False  # var_type
-        else:
-            return None, False
-
-    """
-    param -> param_type ID
+    param -> decl_type ID
     """
 
     def param(self):
         tok = self.currTok
-        pType, isList = self.param_type()
+        pType, isArr = self.decl_type()
 
         if pType:
             if self.currTok.type == TokenType.ID:
                 ident = self.currTok.lexVal
                 self.eat()  # eat id
                 return IdentifierASTNode(
-                    token=tok, type=pType, ident=ident, index=None, arrFlag=isList
+                    token=tok, type=pType, ident=ident, index=None, arrFlag=isArr
                 )
             else:
                 self.error("identifier")
@@ -544,42 +523,37 @@ class Parser:
             )
 
     """
-    decl_stmt -> var_type ID EOL
-            | var_type ID ":=" expr EOL
-            | var_type "[]" ID EOL
-            | var_type "[]" ID ":=" expr EOL
+    decl_type -> var_type
+                | var_type "[]"
+    """
+
+    def decl_type(self):
+        vType = self.var_type()
+
+        if vType == "obj" and self.currTok.type == TokenType.LSQUARE:
+            self.error("identifier")  # don't want obj[] y := [..] just obj y := [..]
+
+        if vType:
+            if self.currTok.type == TokenType.LSQUARE:
+                self.eat()  # eat [
+                if self.currTok.type == TokenType.RSQUARE:
+                    self.eat()  # eat ]
+                    return vType, True  # var_type[]
+                else:
+                    self.error('"]"')
+            else:
+                return vType, False  # var_type
+        else:
+            return None, False
+
+    """
+    decl_stmt -> decl_type ID EOL
+            | decl_type ID ":=" expr EOL
     """
 
     def decl_stmt(self):
-        possibleStartToks = [
-            TokenType.ID,
-            TokenType.MINUS,
-            TokenType.NOT,
-            TokenType.LPAREN,
-            TokenType.LSQUARE,
-            TokenType.REAL_LIT,
-            TokenType.BOOL_LIT,
-            TokenType.STRING_LIT,
-            TokenType.NULL,
-            TokenType.LENGTH,
-            TokenType.TYPE,
-            TokenType.STRINGIFY,
-            TokenType.REALIFY,
-            TokenType.RANDOM,
-            TokenType.FLOOR,
-            TokenType.CEIL,
-            TokenType.SQRT,
-            TokenType.LOG,
-            TokenType.SIN,
-            TokenType.COS,
-            TokenType.TAN,
-            TokenType.PI,
-            TokenType.EULER,
-            TokenType.EOL,
-        ]
-
         tok = self.currTok
-        vType = self.var_type()
+        vType, isArr = self.decl_type()
 
         if vType:
             if self.currTok.type == TokenType.ID:
@@ -590,7 +564,7 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, arrFlag=False
+                        token=tok, type=vType, ident=ident, index=None, arrFlag=isArr
                     )
                     self.eat()  # eat \n
                     return identAST
@@ -598,7 +572,7 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, arrFlag=False
+                        token=tok, type=vType, ident=ident, index=None, arrFlag=isArr
                     )
                     self.eat()  # eat :=
                     val = self.expr()
@@ -613,62 +587,8 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error('newline or ":="')
-            elif self.currTok.type == TokenType.LSQUARE:
-                self.eat()  # eat [
-                if self.currTok.type == TokenType.RSQUARE:
-                    self.eat()  # eat ]
-                    if self.currTok.type == TokenType.ID:
-                        if (
-                            self.peek().type == TokenType.EOL
-                            or self.peek().type == TokenType.EOF
-                        ):
-                            ident = self.currTok.lexVal
-                            self.eat()  # eat id
-                            identAST = IdentifierASTNode(
-                                token=tok,
-                                type=vType,
-                                ident=ident,
-                                index=None,
-                                arrFlag=True,
-                            )
-                            self.eat()  # eat \n
-                            return identAST
-                        if self.peek().type == TokenType.ASSIGN:
-                            ident = self.currTok.lexVal
-                            self.eat()  # eat id
-                            identAST = IdentifierASTNode(
-                                token=tok,
-                                type=vType,
-                                ident=ident,
-                                index=None,
-                                arrFlag=True,
-                            )
-                            self.eat()  # eat :=
-                            if self.currTok.type in possibleStartToks:
-                                val = self.expr()
-                                if (
-                                    self.currTok.type == TokenType.EOL
-                                    or self.currTok.type == TokenType.EOF
-                                ):
-                                    self.eat()  # eat \n
-                                    if val:
-                                        if isinstance(val, ArrayASTNode):
-                                            identAST.set_arr_flag(True)
-                                        return AssignASTNode(
-                                            token=tok, var=identAST, value=val
-                                        )
-                                else:
-                                    self.error("newline")
-                            else:
-                                self.error('expression or "["')
-                        else:
-                            self.error('newline or ":="')
-                    else:
-                        self.error("identifier")
-                else:
-                    self.error('"]"')
             else:
-                self.error('identifier or "["')
+                self.error("identifier")
         else:
             return self.epsilon()
 
