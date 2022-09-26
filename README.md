@@ -1,2 +1,83 @@
 # rukky
-## A simple Functional Programming Language I made for fun
+
+### An interpreter for a simple programming language, written in Python
+I started off by writing a [grammar](https://github.com/shtem/rukky/blob/main/rukky/resources/grammar.txt) for the *rukky* procedural programming language which I then developed an interpreter for. This invented language is quite basic and borrows features and concepts from multiple programming languages with a few syntactical tweaks here and there. I didn't create the language or the interpreter with speed, efficiency or novelty in mind, just as a fun mini-project.
+
+The interpreter utilises a predictive top-down parsing technique called a recursive descent parser. The parser  is LL(1) in most cases, but not all.
+
+#### Features
+
+- [x] Comments ``$ ... $``
+- [x] Real, Boolean and String literals
+- [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
+- [x] Comparison Operations ``<>, <!, >, >=, <, <=``
+- [x] Logical Operations ``~, &&, ||``
+- [x] Types ``real, bool, str, void``
+- [x] Variables ``x := 10``
+- [x] Arrays
+    - Indexing
+        - Retrieve ``lst[0]``
+        - Update ``lst@0 := x``
+    - Appending ``lst << x``
+- [x] If statement ``if:: elif:: else::``
+- [x] Loop Statements ``for:: while::``
+- [x] Reserved Keywords ``null, pi, eul``
+- [x] Functions
+- [x] Function calls ``func:x::``
+- [x] Branching Statements ``return:: break:: continue::``
+- [x] Reserved Functions ``display, len, type, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
+- [ ] Maps
+- [ ] Classes
+
+#### Running Interpreter
+
+```
+> python rukky -f path/to/rukky/test/files/factorial.rk
+result: 120.0
+```
+
+##### Usage
+```
+> python rukky --help                                                  
+usage: rukky [-h] (-s | -f FILE) [-t | -a | -g]
+
+Interpreter for the "rukky" programming language. Interprets code and outputs result.
+
+options:
+  -h, --help    show this help message and exit
+  -s, --shell   run interpreter in shell mode. Directly enter input into REPL to be interpreted
+  -f FILE       run interpreter in file mode. Pass path to file to be interpreted
+  -t, --tokens  outputs list of all tokens returned by lexer
+  -a, --ast     outputs AST returned by parser
+  -g, --global  outputs global symbol and function table returned by interpreter, along with the result
+```
+
+##### factorial.rk
+```
+:: real factorial := (real n) {
+    real i
+    real factorial
+
+    factorial := 1
+    i := 1
+
+    while:: i <= n {
+        factorial := factorial * i
+        i := i + 1
+    }
+
+    return:: factorial
+}
+
+real fac := factorial:5::
+display:"result: " + getStr:fac::::
+```
+
+#### Acknowledgment
+Sources and tutorials I used to help with the development of this project:
+
+[David Callanan](https://github.com/davidcallanan/py-myopl-code) - Make Your Own Programming Language in Python
+
+[Ruslan Spivak](https://github.com/rspivak/lsbasi) - Let's Build A Simple Interpreter
+
+[Jay Conrad](https://jayconrod.com/posts/37/a-simple-interpreter-from-scratch-in-python--part-1-) - A Simple Interpreter From Scratch In Python

@@ -13,7 +13,7 @@ my_modes.add_argument(
     "--shell",
     dest="shell",
     action="store_true",
-    help="run interpreter in shell mode. Directly enter input to be interpreted",
+    help="run interpreter in shell mode. Directly enter input into REPL to be interpreted",
 )
 my_modes.add_argument(
     "-f",
