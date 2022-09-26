@@ -1,14 +1,16 @@
 # rukky
 
 ### An interpreter for a simple programming language, written in Python
-I started off by writing a [grammar](https://github.com/shtem/rukky/blob/main/rukky/resources/grammar.txt) for the *rukky* procedural programming language which I then developed an interpreter for. This invented language is quite basic and borrows features and concepts from multiple programming languages with a few syntactical tweaks here and there. I didn't create the language or the interpreter with speed, efficiency or novelty in mind, just as a fun mini-project.
+I began by writing a [grammar](https://github.com/shtem/rukky/blob/main/rukky/resources/grammar.txt) for the *rukky* procedural programming language which I then developed an interpreter for. This invented language is quite simple and borrows features and concepts from multiple programming languages, with a few syntactical tweaks here and there. I didn't create the language or the interpreter with speed, efficiency or novelty in mind, just as a fun mini-project.
 
 The interpreter utilises a predictive top-down parsing technique called a recursive descent parser. The parser  is LL(1) in most cases, but not all.
+
+---
 
 #### Features
 
 - [x] Comments ``$ ... $``
-- [x] Real, Boolean and String literals
+- [x] Real, Boolean and String Literals
 - [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
 - [x] Comparison Operations ``<>, <!, >, >=, <, <=``
 - [x] Logical Operations ``~, &&, ||``
@@ -19,15 +21,17 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
         - Retrieve ``lst[0]``
         - Update ``lst@0 := x``
     - Appending ``lst << x``
-- [x] If statement ``if:: elif:: else::``
+- [x] If Statement ``if:: elif:: else::``
 - [x] Loop Statements ``for:: while::``
 - [x] Reserved Keywords ``null, pi, eul``
 - [x] Functions
-- [x] Function calls ``func:x::``
+- [x] Function Calls ``func:x::``
 - [x] Branching Statements ``return:: break:: continue::``
 - [x] Reserved Functions ``display, len, type, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
 - [ ] Maps
 - [ ] Classes
+
+---
 
 #### Running Interpreter
 
@@ -73,7 +77,11 @@ real fac := factorial:5::
 display:"result: " + getStr:fac::::
 ```
 
-#### Acknowledgment
+Can find more example files [here](https://github.com/shtem/rukky/tree/main/rukky/test/files).
+
+---
+
+#### Acknowledgements
 Sources and tutorials I used to help with the development of this project:
 
 [Make Your Own Programming Language in Python](https://github.com/davidcallanan/py-myopl-code) - David Callanan

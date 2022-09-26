@@ -354,13 +354,13 @@ class Parser:
         if self.currTok.type == TokenType.LBRACE:
             tok = self.currTok
             self.eat()  # eat {
-            if self.currTok.type == TokenType.EOL:
+            if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                 if self.peek().type in possibleStartToks:
                     self.eat()  # eat \n
                     stmtList = self.stmt_list()
                     if self.currTok.type == TokenType.RBRACE:
                         self.eat()  # eat }
-                        if self.currTok.type == TokenType.EOL:
+                        if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                             self.eat()  # eat \n
                             if stmtList:
                                 return StmtBlockASTNode(token=tok, stmtList=stmtList)
@@ -373,7 +373,7 @@ class Parser:
                 elif self.peek().type == TokenType.RBRACE:
                     self.eat()  # eat \n
                     self.eat()  # eat }
-                    if self.currTok.type == TokenType.EOL:
+                    if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                         self.eat()  # eat \n
                         return self.epsilon()  # {\n} empty block
                     else:
@@ -384,7 +384,7 @@ class Parser:
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
-                if self.currTok.type == TokenType.EOL:
+                if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                     self.eat()  # eat \n
                     return self.epsilon()  # {} empty block
                 else:
@@ -558,7 +558,7 @@ class Parser:
 
         if vType:
             if self.currTok.type == TokenType.ID:
-                if self.peek().type == TokenType.EOL:
+                if self.peek().type == TokenType.EOL or self.peek().type == TokenType.EOF:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
@@ -574,7 +574,7 @@ class Parser:
                     )
                     self.eat()  # eat :=
                     val = self.expr()
-                    if self.currTok.type == TokenType.EOL:
+                    if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                         self.eat()  # eat \n
                         if val:
                             return AssignASTNode(token=tok, var=identAST, value=val)
@@ -587,7 +587,7 @@ class Parser:
                 if self.currTok.type == TokenType.RSQUARE:
                     self.eat()  # eat ]
                     if self.currTok.type == TokenType.ID:
-                        if self.peek().type == TokenType.EOL:
+                        if self.peek().type == TokenType.EOL or self.peek().type == TokenType.EOF:
                             ident = self.currTok.lexVal
                             self.eat()  # eat id
                             identAST = IdentifierASTNode(
@@ -612,7 +612,7 @@ class Parser:
                             self.eat()  # eat :=
                             if self.currTok.type in possibleStartToks:
                                 val = self.expr()
-                                if self.currTok.type == TokenType.EOL:
+                                if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                                     self.eat()  # eat \n
                                     if val:
                                         if isinstance(val, ArrayASTNode):
@@ -641,12 +641,12 @@ class Parser:
     """
 
     def expr_stmt(self):
-        if self.currTok.type == TokenType.EOL:
+        if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
             self.eat()  # eat \n
             return self.epsilon()
         else:
             expr = self.expr()
-            if self.currTok.type == TokenType.EOL:
+            if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
                 self.eat()  # eat \n
                 if expr:
                     return expr
@@ -1008,6 +1008,7 @@ class Parser:
     def disjunc(self):
         possibleEndToks = [
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1046,6 +1047,7 @@ class Parser:
         possibleEndToks = [
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1086,6 +1088,7 @@ class Parser:
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1130,6 +1133,7 @@ class Parser:
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1181,6 +1185,7 @@ class Parser:
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1234,6 +1239,7 @@ class Parser:
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
@@ -1290,6 +1296,7 @@ class Parser:
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
+            TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
             TokenType.ASSIGN,
