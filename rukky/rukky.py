@@ -4,7 +4,7 @@ from src.lexer import Lexer
 import sys, os, argparse
 
 rukky_arg_parser = argparse.ArgumentParser(
-    description='Interpreter for the "rukky" functional programming language. Interprets code and outputs result.'
+    description='Interpreter for the "rukky" programming language. Interprets code and outputs result.'
 )
 
 my_modes = rukky_arg_parser.add_mutually_exclusive_group(required=True)

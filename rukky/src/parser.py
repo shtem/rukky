@@ -1325,7 +1325,7 @@ class Parser:
         | "(" expr ")"
         | "[" args "]"
         | ID
-        | ID ":" args ":"
+        | ID ":" args "::"
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT

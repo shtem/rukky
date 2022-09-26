@@ -333,9 +333,16 @@ class BinaryExprASTNode(ExprASTNode):
                     raise TypeError(errorStr)
             case TokenType.MUL:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
-                    return float(lVal * rVal)
+                    result = lVal * rVal
+                elif isinstance(lVal, (str, list)) and context.is_real(value=rVal):
+                    result = lVal * int(rVal)
                 else:
                     raise TypeError(errorStr)
+                    
+                if context.is_real(value=result):
+                        return float(result)
+                else:
+                    return result
             case TokenType.FLOAT_DIV:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
                     if rVal != 0:
