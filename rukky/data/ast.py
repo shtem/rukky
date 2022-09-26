@@ -119,10 +119,10 @@ class IdentifierASTNode(ExprASTNode):
             return type(False), False
         elif self.type == "str":
             return type(""), ""
-        elif self.type == "obj":
-            return object, None
         elif self.type == "void":  # only applies to functions
             return type(None), None
+        elif self.type == "obj":
+            return object, None
         else:
             raise TypeError
 
@@ -411,15 +411,9 @@ class BinaryExprASTNode(ExprASTNode):
                 else:
                     raise TypeError(errorStr)
             case TokenType.EQ:
-                if context.type_checker(left=lVal, right=rVal):
-                    return bool(lVal == rVal)
-                else:
-                    raise TypeError(errorStr)
+                return bool(lVal == rVal)
             case TokenType.NE:
-                if context.type_checker(left=lVal, right=rVal):
-                    return bool(lVal != rVal)
-                else:
-                    raise TypeError(errorStr)
+                return bool(lVal != rVal)
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_arr():

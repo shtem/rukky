@@ -530,7 +530,7 @@ class Parser:
     def decl_type(self):
         vType = self.var_type()
 
-        if vType == "obj" and self.currTok.type == TokenType.LSQUARE:
+        if vType == TokenType.OBJECT.value and self.currTok.type == TokenType.LSQUARE:
             self.error("identifier")  # don't want obj[] y := [..] just obj y := [..]
 
         if vType:
