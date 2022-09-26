@@ -14,7 +14,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
 - [x] Comparison Operations ``<>, <!, >, >=, <, <=``
 - [x] Logical Operations ``~, &&, ||``
-- [x] Types ``real, bool, str, void``
+- [x] Types ``real, bool, str, void, obj``
 - [x] Variables ``x := 10``
 - [x] Arrays
     - Indexing

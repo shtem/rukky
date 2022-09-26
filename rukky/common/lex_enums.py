@@ -39,6 +39,7 @@ class TokenType(Enum):
     VOID = "void"
     REAL = "real"
     BOOL = "bool"
+    OBJECT = "obj"
     STRING = "str"
     TRUE = "true"
     FALSE = "false"

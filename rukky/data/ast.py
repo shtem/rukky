@@ -119,6 +119,8 @@ class IdentifierASTNode(ExprASTNode):
             return type(False), False
         elif self.type == "str":
             return type(""), ""
+        elif self.type == "obj":
+            return object, None
         elif self.type == "void":  # only applies to functions
             return type(None), None
         else:
@@ -168,7 +170,7 @@ class IdentifierASTNode(ExprASTNode):
                         )
                     )
             else:
-                isArr = isinstance([], valType) if valType else False
+                isArr = valType == list if valType else False
                 varValue = context.get_ident(symbol=symbol, index=None, getArr=isArr)
 
             return varValue
@@ -338,9 +340,9 @@ class BinaryExprASTNode(ExprASTNode):
                     result = lVal * int(rVal)
                 else:
                     raise TypeError(errorStr)
-                    
+
                 if context.is_real(value=result):
-                        return float(result)
+                    return float(result)
                 else:
                     return result
             case TokenType.FLOAT_DIV:

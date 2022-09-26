@@ -7,6 +7,7 @@ decl -> stmt
 var_type -> "real"
             | "bool"
             | "str"
+            | "obj"
 func_type -> "void"
             | param_type
 func_decl -> "::" func_type ID ":=" "(" params ")" block 

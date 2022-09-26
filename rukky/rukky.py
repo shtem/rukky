@@ -31,11 +31,11 @@ my_output_types.add_argument(
     help="outputs list of all tokens returned by lexer",
 )
 my_output_types.add_argument(
-    "-a", 
-    "--ast", 
-    dest="ast", 
-    action="store_true", 
-    help="outputs AST returned by parser"
+    "-a",
+    "--ast",
+    dest="ast",
+    action="store_true",
+    help="outputs AST returned by parser",
 )
 my_output_types.add_argument(
     "-g",
@@ -128,7 +128,7 @@ def runner():
                     args.token = False
                     args.table = False
                     continue
-                    
+
                 if text.strip() == "global":
                     args.table = not args.table
                     args.ast = False
@@ -149,8 +149,6 @@ def runner():
 
                     print(">>")
                     text = "\n".join(buffer)
-
-                text += "\n"
 
                 try:
                     execute(args=args, text=text)

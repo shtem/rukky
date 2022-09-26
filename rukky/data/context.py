@@ -137,8 +137,8 @@ class TheContext:
         isAppend=False,
         isArr=False,
     ):
+        sArrType = type([])
         if isArr:
-            sArrType = type([])
             if index != None:
                 if not isinstance(self.get_ident(symbol=symbol), ArrayValue):
                     raise TypeError(
@@ -198,7 +198,14 @@ class TheContext:
                             f"Variable {symbol} doesn't exist/has not yet been defined"
                         )
                     )
-            sEntry = SymbolEntry(type=sType, value=value)
+
+            # allows for both obj y := [..] and obj[] y := [..]
+            if isinstance(value, list) and sType == object:
+                arrVal = ArrayValue(type=sType, arr=value)
+                sEntry = SymbolEntry(type=sArrType, value=arrVal)
+            else:
+                sEntry = SymbolEntry(type=sType, value=value)
+
             self.symbolTable[symbol] = sEntry
 
     def get_ident(self, symbol: str, index=None, getArr=False):
@@ -316,12 +323,9 @@ class TheContext:
         ):
             return type(left) == type(right)
         elif isinstance(left, list) and isinstance(right, list):
-            if (
-                len(left) == 0 or len(right) == 0
-            ):  # if either arrs are empty return false
-                return False
-            else:
-                return type(left[0]) == type(right[0])  # else compare their contents
+            raise ValueError(
+                self.get_error_message("type function does not compare arrays")
+            )
         else:
             raise ValueError(self.get_error_message("Argument(s) have invalid types"))
 

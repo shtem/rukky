@@ -77,6 +77,7 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
             TokenType.DISPLAY,
             TokenType.LENGTH,
             TokenType.TYPE,
@@ -111,7 +112,7 @@ class Parser:
                 return declList
             else:
                 self.error(
-                    'expression or "if", "while" or "for" statement or newline or "real", "bool" or "str" or "::"'
+                    'expression or "if", "while" or "for" statement or newline or "real", "bool", "str" or "obj" or "::"'
                 )
 
     """
@@ -131,6 +132,7 @@ class Parser:
     var_type -> "real"
             | "bool"
             | "str"
+            | "obj"
     """
 
     def var_type(self):
@@ -143,8 +145,11 @@ class Parser:
         elif self.currTok.type == TokenType.STRING:
             self.eat()  # eat 'str'
             return "str"
+        elif self.currTok.type == TokenType.OBJECT:
+            self.eat()  # eat 'obj'
+            return "obj"
         else:
-            self.error('"real" or "bool" or "str"')
+            self.error('"real" or "bool" or "str" or "obj"')
 
     """
     func_type -> "void"
@@ -159,10 +164,11 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
         ]:
             return self.param_type()
         else:
-            self.error('"void" or "real" or "bool" or "str"')
+            self.error('"void" or "real" or "bool" or "str" or "obj"')
 
     """
     func_decl -> "::" func_type ID ":=" "(" params ")" block 
@@ -232,6 +238,7 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
         ]:  # func := (params)
             paramList = self.param_list()
             if paramList:
@@ -239,7 +246,7 @@ class Parser:
         elif self.currTok.type == TokenType.RPAREN:  # func := ()
             return []
         else:
-            self.error('"real" or "bool" or "str" or ")"')
+            self.error('"real" or "bool" or "str" or "obj" or ")"')
 
         return []
 
@@ -282,6 +289,8 @@ class Parser:
                 if self.currTok.type == TokenType.RSQUARE:
                     self.eat()  # eat ]
                     return vType, True  # var_type[]
+                else:
+                    self.error('"]"')
             else:
                 return vType, False  # var_type
         else:
@@ -333,6 +342,7 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
             TokenType.DISPLAY,
             TokenType.LENGTH,
             TokenType.TYPE,
@@ -360,7 +370,10 @@ class Parser:
                     stmtList = self.stmt_list()
                     if self.currTok.type == TokenType.RBRACE:
                         self.eat()  # eat }
-                        if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                        if (
+                            self.currTok.type == TokenType.EOL
+                            or self.currTok.type == TokenType.EOF
+                        ):
                             self.eat()  # eat \n
                             if stmtList:
                                 return StmtBlockASTNode(token=tok, stmtList=stmtList)
@@ -373,7 +386,10 @@ class Parser:
                 elif self.peek().type == TokenType.RBRACE:
                     self.eat()  # eat \n
                     self.eat()  # eat }
-                    if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                    if (
+                        self.currTok.type == TokenType.EOL
+                        or self.currTok.type == TokenType.EOF
+                    ):
                         self.eat()  # eat \n
                         return self.epsilon()  # {\n} empty block
                     else:
@@ -384,7 +400,10 @@ class Parser:
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
-                if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                if (
+                    self.currTok.type == TokenType.EOL
+                    or self.currTok.type == TokenType.EOF
+                ):
                     self.eat()  # eat \n
                     return self.epsilon()  # {} empty block
                 else:
@@ -419,6 +438,7 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
             TokenType.DISPLAY,
             TokenType.LENGTH,
             TokenType.TYPE,
@@ -452,7 +472,7 @@ class Parser:
                 return stmtList
             else:
                 self.error(
-                    'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool" or "str" or "}"'
+                    'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj" or "}"'
                 )
 
     """
@@ -507,7 +527,12 @@ class Parser:
             return self.break_stmt()
         elif self.currTok.type == TokenType.CONTINUE:
             return self.cont_stmt()
-        elif self.currTok.type in [TokenType.REAL, TokenType.BOOL, TokenType.STRING]:
+        elif self.currTok.type in [
+            TokenType.REAL,
+            TokenType.BOOL,
+            TokenType.STRING,
+            TokenType.OBJECT,
+        ]:
             return self.decl_stmt()
         elif self.currTok.type in possibleStartToks:
             return self.expr_stmt()
@@ -515,7 +540,7 @@ class Parser:
             return self.epsilon()
         else:
             return self.error(
-                'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool" or "str"'
+                'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj"'
             )
 
     """
@@ -558,7 +583,10 @@ class Parser:
 
         if vType:
             if self.currTok.type == TokenType.ID:
-                if self.peek().type == TokenType.EOL or self.peek().type == TokenType.EOF:
+                if (
+                    self.peek().type == TokenType.EOL
+                    or self.peek().type == TokenType.EOF
+                ):
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
@@ -574,7 +602,10 @@ class Parser:
                     )
                     self.eat()  # eat :=
                     val = self.expr()
-                    if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                    if (
+                        self.currTok.type == TokenType.EOL
+                        or self.currTok.type == TokenType.EOF
+                    ):
                         self.eat()  # eat \n
                         if val:
                             return AssignASTNode(token=tok, var=identAST, value=val)
@@ -587,7 +618,10 @@ class Parser:
                 if self.currTok.type == TokenType.RSQUARE:
                     self.eat()  # eat ]
                     if self.currTok.type == TokenType.ID:
-                        if self.peek().type == TokenType.EOL or self.peek().type == TokenType.EOF:
+                        if (
+                            self.peek().type == TokenType.EOL
+                            or self.peek().type == TokenType.EOF
+                        ):
                             ident = self.currTok.lexVal
                             self.eat()  # eat id
                             identAST = IdentifierASTNode(
@@ -612,7 +646,10 @@ class Parser:
                             self.eat()  # eat :=
                             if self.currTok.type in possibleStartToks:
                                 val = self.expr()
-                                if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                                if (
+                                    self.currTok.type == TokenType.EOL
+                                    or self.currTok.type == TokenType.EOF
+                                ):
                                     self.eat()  # eat \n
                                     if val:
                                         if isinstance(val, ArrayASTNode):
@@ -790,6 +827,7 @@ class Parser:
             TokenType.REAL,
             TokenType.BOOL,
             TokenType.STRING,
+            TokenType.OBJECT,
             TokenType.DISPLAY,
             TokenType.LENGTH,
             TokenType.TYPE,
