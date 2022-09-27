@@ -2,6 +2,7 @@ import re, os, subprocess
 
 TEST_CORRECT_RESULTS = {
     "addNum": (210, float),
+    "binarySearch": (6, float),
     "factorial": (120, float),
     "fibonacci": ([0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55], float),
     "lcm": (216, float),

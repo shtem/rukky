@@ -121,9 +121,6 @@ class TheContext:
 
         if sEntry:
             if getArr:
-                if not isinstance(sEntry.value, ArrayValue) and sEntry.type == object:
-                    return sEntry.type
-
                 if isinstance(sEntry.value, ArrayValue):
                     sArr: ArrayValue = sEntry.value
                     return sArr.valType
@@ -177,7 +174,10 @@ class TheContext:
                 if valType:  # new arr declaration
                     sType = valType
                 else:  # arr re assignment
-                    sType = self.get_ident_type(symbol=symbol, getArr=True)
+                    if self.type_checker_object(symbol=symbol):
+                        sType = object
+                    else:
+                        sType = self.get_ident_type(symbol=symbol, getArr=True)
                     if not sType:
                         raise ValueError(
                             self.get_error_message(
@@ -199,7 +199,10 @@ class TheContext:
             if valType:  # new variable declaration
                 sType = valType
             else:  # variable re assignment
-                sType = self.get_ident_type(symbol=symbol)
+                if self.type_checker_object(symbol=symbol):
+                    sType = object
+                else:
+                    sType = self.get_ident_type(symbol=symbol, getArr=False)
                 if not sType:
                     raise ValueError(
                         self.get_error_message(
@@ -286,15 +289,24 @@ class TheContext:
                     )
                 )
         else:
-            varType = self.get_ident_type(symbol=left)
-            if varType:
-                return isinstance(right, varType)
+            if self.type_checker_object(symbol=left):
+                return True
             else:
-                raise ValueError(
-                    self.get_error_message(
-                        f"Variable {left} doesn't exist/has not yet been defined"
+                varType = self.get_ident_type(symbol=left, getArr=False)
+                if varType:
+                    return isinstance(right, varType)
+                else:
+                    raise ValueError(
+                        self.get_error_message(
+                            f"Variable {left} doesn't exist/has not yet been defined"
+                        )
                     )
-                )
+
+    def type_checker_object(self, symbol: str):
+        return (
+            self.get_ident_type(symbol=symbol, getArr=False) == list
+            and self.get_ident_type(symbol=symbol, getArr=True) == object
+        ) or self.get_ident_type(symbol=symbol, getArr=False) == object
 
     def type_checker(self, left, right):
         # check types of lhs and rhs values match in binary operation

@@ -1,0 +1,36 @@
+$ 
+   function binarySearch(arr[], l, h, x) performs a binary search on arr[] to find the index of value x
+   Input arr[] = [false, true, 1, 2, 3, len:"hello"::, 22, 7*6, 8^2, 99], x = 22
+   Output 6
+$
+
+:: obj binarySearch := (obj arr, obj low, obj high, obj x) {
+
+    if:: high >= low {
+        obj mid := (high + low) // 2
+        obj h
+
+        if:: arr[mid] <> x {
+            return:: mid
+        }
+        elif:: arr[mid] > x {
+            return:: binarySearch:arr,low,mid-1,x::
+        }
+        else:: {
+            return:: binarySearch:arr,mid+1,high,x::
+        }
+    }
+    else:: {
+        return:: -1
+    }
+}
+
+$
+    obj type encompasses all value types (real, bool, str, void and their array types)
+$
+
+obj arr := [false, true, 1, 2, 3, len:"hello"::, 22, 7*6, 8^2, 99]
+obj x := 22
+
+obj result := binarySearch:arr,0,len:arr::-1,x::
+display:"result: " + getStr:result::::
