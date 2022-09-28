@@ -27,7 +27,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Functions
 - [x] Function Calls ``func:x::``
 - [x] Branching Statements ``return:: break:: continue::``
-- [x] Reserved Functions ``display, len, type, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
+- [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
 - [ ] Maps
 - [ ] Classes
 

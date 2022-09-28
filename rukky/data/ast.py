@@ -212,7 +212,7 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
             # add parameters as variables to function context, don't care about arr content type for display and stringify
             funcContext.set_ident(
                 symbol=str(par),
-                valType=self.argType,
+                valType=self.argType if self.argType != list else object,
                 value=None,
                 index=None,
                 isAppend=False,
@@ -464,7 +464,11 @@ class CallExprASTNode(ExprASTNode):
     def execute_builtin(self, fEntry: FuncEntry):
         # retrieve args values from context of reserved call and pass to inbuilt function
         argVals = (
-            fEntry.context.get_ident(symbol=arg, index=None, getArr=False)
+            fEntry.context.get_ident(
+                symbol=arg,
+                index=None,
+                getArr=fEntry.context.get_ident_type(symbol=arg, getArr=False) == list,
+            )
             for arg in fEntry.argSymbols
         )
 
@@ -515,7 +519,7 @@ class CallExprASTNode(ExprASTNode):
                     index=None,
                     isAppend=False,
                     isArr=fEntry.context.get_ident_type(symbol=par, getArr=False)
-                    == type([]),
+                    == list,
                 )
             else:
                 raise TypeError(

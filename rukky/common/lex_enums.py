@@ -55,6 +55,8 @@ class TokenType(Enum):
     TYPE = "type"
     STRINGIFY = "getStr"
     REALIFY = "getReal"
+    MAX = "max"
+    MIN = "min"
     RANDOM = "rand"
     FLOOR = "floor"
     CEIL = "ceil"

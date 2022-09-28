@@ -142,7 +142,7 @@ class TheContext:
         isAppend=False,
         isArr=False,
     ):
-        sArrType = type([])
+        sArrType = list
         if isArr:
             if index != None:
                 if not isinstance(self.get_ident(symbol=symbol), ArrayValue):
@@ -303,9 +303,14 @@ class TheContext:
                     )
 
     def type_checker_object(self, symbol: str):
+        sType = None
+        try:
+            sType = self.get_ident_type(symbol=symbol, getArr=True)
+        except Exception as e:
+            return False
+
         return (
-            self.get_ident_type(symbol=symbol, getArr=False) == list
-            and self.get_ident_type(symbol=symbol, getArr=True) == object
+            self.get_ident_type(symbol=symbol, getArr=False) == list and sType == object
         ) or self.get_ident_type(symbol=symbol, getArr=False) == object
 
     def type_checker(self, left, right):
