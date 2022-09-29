@@ -3,46 +3,46 @@ from src.parser import Parser
 from src.lexer import Lexer
 import sys, os, argparse
 
-rukky_arg_parser = argparse.ArgumentParser(
+rukkyArgParser = argparse.ArgumentParser(
     description='Interpreter for the "rukky" programming language. Interprets code and outputs result.'
 )
 
-my_modes = rukky_arg_parser.add_mutually_exclusive_group(required=True)
-my_modes.add_argument(
+myModes = rukkyArgParser.add_mutually_exclusive_group(required=True)
+myModes.add_argument(
     "-s",
     "--shell",
     dest="shell",
     action="store_true",
     help="run interpreter in shell mode. Directly enter input into the REPL to be interpreted",
 )
-my_modes.add_argument(
+myModes.add_argument(
     "-f",
     dest="file",
     type=str,
     help="run interpreter in file mode. Pass path to file to be interpreted",
 )
 
-my_output_types = rukky_arg_parser.add_mutually_exclusive_group(required=False)
-my_output_types.add_argument(
+myOutputTypes = rukkyArgParser.add_mutually_exclusive_group(required=False)
+myOutputTypes.add_argument(
     "-t",
     "--tokens",
     dest="token",
     action="store_true",
     help="outputs list of all tokens returned by lexer",
 )
-my_output_types.add_argument(
+myOutputTypes.add_argument(
     "-a",
     "--ast",
     dest="ast",
     action="store_true",
     help="outputs AST returned by parser",
 )
-my_output_types.add_argument(
+myOutputTypes.add_argument(
     "-g",
     "--global",
     dest="table",
     action="store_true",
-    help="outputs global symbol and function table returned by interpreter, along with the result",
+    help="outputs global symbol and function tables returned by interpreter, along with the result",
 )
 
 
@@ -81,7 +81,7 @@ def execute(args, text):
 
 
 def runner():
-    args = rukky_arg_parser.parse_args()
+    args = rukkyArgParser.parse_args()
     filePath = ""
     text = ""
 
@@ -102,7 +102,7 @@ def runner():
         return
 
     if args.shell:
-        helpOne = 'rukky 1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL, "tokens" to enable/disable token output, '
+        helpOne = 'rukky v1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL, "tokens" to enable/disable token output, '
         helpTwo = '"ast" to enable/disable AST output, "global" to enable/disable global symbol and function table output and "help" to display this message again.'
         shellHelp = helpOne + helpTwo
 
@@ -110,8 +110,6 @@ def runner():
         try:
             while True:
                 text = input("rukky> ")
-                if text.strip() == "":
-                    continue
 
                 if text.strip() == "help":
                     print(shellHelp)
@@ -143,6 +141,7 @@ def runner():
 
                     while True:
                         line = input(". ")
+
                         if line.strip() == "end":
                             break
                         buffer.append(line.strip())
@@ -150,11 +149,14 @@ def runner():
                     print(">>")
                     text = "\n".join(buffer)
 
+                if text.strip() == "":
+                    continue
+
                 try:
                     execute(args=args, text=text)
                 except SystemExit:
                     pass
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
             sys.exit(0)
 
 

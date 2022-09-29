@@ -53,7 +53,7 @@ options:
   -f FILE       run interpreter in file mode. Pass path to file to be interpreted
   -t, --tokens  outputs list of all tokens returned by lexer
   -a, --ast     outputs AST returned by parser
-  -g, --global  outputs global symbol and function table returned by interpreter, along with the result
+  -g, --global  outputs global symbol and function tables returned by interpreter, along with the result
 ```
 
 ##### factorial.rk

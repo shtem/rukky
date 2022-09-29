@@ -477,7 +477,15 @@ class CallExprASTNode(ExprASTNode):
             strArg = fEntry.context._display_builtin_helper(strOut=strArg)
             argVals = (strArg,)
 
-        rVal = fEntry.funcBody(*argVals)
+        try:
+            rVal = fEntry.funcBody(*argVals)
+        except Exception:
+            raise ValueError(
+                fEntry.context.get_error_message(
+                    "Invalid argument(s) passed to builtin function"
+                )
+            )
+
         fEntry.context.funcReturnVal = rVal
 
     def code_gen(self, context: TheContext):
