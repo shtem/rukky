@@ -540,10 +540,9 @@ class CallExprASTNode(ExprASTNode):
         if isinstance(self.callee, ReservedKeyWordASTNode):
             self.execute_builtin(fEntry=fEntry)
         else:
-            funcReturn = fEntry.funcBody.code_gen(
+            fEntry.funcBody.code_gen(
                 context=fEntry.context
             )  # execute function body using function context
-            fEntry.context.funcReturnVal = funcReturn
 
         if fEntry.type_checker_return():
             rVal = fEntry.context.funcReturnVal
