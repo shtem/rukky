@@ -1,0 +1,38 @@
+$ 
+   function quickSort(arr[], l, h, x) sorts an array arr[] in ascending order, using the last element as the pivot
+   Input arr[] = [2, 5, 6, 1, 4, 6, 2, 4, 7, -1, 8]
+   Output arr[] = [-1, 1, 2, 2, 4, 4, 5, 6, 6, 7, 8]
+$
+
+:: obj partition := (obj nums, obj l, obj h) {
+    obj i := l - 1
+    obj pivot := nums[h]
+    obj temp
+
+    for:: j := l ; h ; 1 {
+        if:: nums[j] <= pivot {
+            i := i + 1
+            temp := nums[i]
+            nums@i := nums[j]
+            nums@j := temp
+        }
+    }
+
+    temp := nums[i + 1]
+    nums@i + 1 := nums[h]
+    nums@h := temp
+
+    return:: i + 1
+}
+
+:: obj quickSort := (obj nums, obj l, obj h) {
+    if:: l < h {
+        obj p := partition:nums,l,h::
+        quickSort:nums,l,p-1::
+        quickSort:nums,p+1,h::  
+    }
+}
+
+obj example := [2, 5, 6, 1, 4, 6, 2, 4, 7, -1, 8]
+quickSort:example,0,len:example::-1::
+display:"result: " + getStr:example::::

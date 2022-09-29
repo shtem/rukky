@@ -490,7 +490,8 @@ class CallExprASTNode(ExprASTNode):
             self.callee.code_gen(context=context)  # generate builtin function
 
         symbol = self.callee.get_ident()
-        fEntry = context.get_func(symbol=symbol)
+        entry: FuncEntry = context.get_func(symbol=symbol)
+        fEntry = entry.copy() 
 
         if fEntry == None:
             raise ValueError(
@@ -535,11 +536,9 @@ class CallExprASTNode(ExprASTNode):
                 context=fEntry.context
             )  # execute function body using function context
             fEntry.context.funcReturnVal = funcReturn
-
-        funcContext: TheContext = fEntry.context
-
+        
         if fEntry.type_checker_return():
-            rVal = funcContext.funcReturnVal
+            rVal = fEntry.context.funcReturnVal
             fEntry.context.reset_flags_func()
             if context.is_real(value=rVal) and not context.is_bool(value=rVal):
                 return float(rVal)
@@ -666,33 +665,6 @@ class StmtBlockASTNode(StmtASTNode):
 
         return out
 
-    def handle_return_recursion(self, decl: StmtASTNode):
-        # return:: func: :: -> x := func: ::, return:: x when recursing
-        blockAST = decl
-        if isinstance(decl, ReturnStmtASTNode) and decl.returnBody:
-            if isinstance(decl.returnBody, CallExprASTNode):
-                identASTAssign = IdentifierASTNode(
-                    token=self.token,
-                    type=TokenType.OBJECT.value,
-                    ident="0",
-                    index=None,
-                    arrFlag=False,
-                )
-                identASTReturn = IdentifierASTNode(
-                    token=self.token, type=None, ident="0", index=None, arrFlag=False
-                )
-                assignAST = AssignASTNode(
-                    token=self.token, var=identASTAssign, value=decl.returnBody
-                )
-                returnAST = ReturnStmtASTNode(
-                    token=self.token, returnBody=identASTReturn
-                )
-                blockAST = StmtBlockASTNode(
-                    token=self.token, stmtList=[assignAST, returnAST]
-                )
-
-        return blockAST
-
     def code_gen(self, context: TheContext):
         context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
 
@@ -701,10 +673,9 @@ class StmtBlockASTNode(StmtASTNode):
 
         stmtVal = None
         for decl in self.stmtList:
-            decl = self.handle_return_recursion(decl=decl)
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_return() or context.should_continue():
+            if context.should_continue():
                 return stmtVal
 
         return stmtVal
@@ -795,24 +766,19 @@ class IfStmtASTNode(StmtASTNode):
                 )
             )
 
-        bVal = None
-
         if condVal:  # if condition true evaluate if body
-            bVal = self.ifBody.code_gen(context=context)
-            return bVal
+            return self.ifBody.code_gen(context=context)
 
         if self.elifStmts:
             for el in self.elifStmts:
                 elCond, elBody = el.code_gen(context=context)
                 if elCond:
-                    bVal = elBody.code_gen(context=context)
-                    return bVal
+                    return elBody.code_gen(context=context)
 
         if self.elseBody:
-            bVal = self.elseBody.code_gen(context=context)
-            return bVal
+            return self.elseBody.code_gen(context=context)
 
-        return bVal
+        return None
 
 
 class WhileStmtASTNode(StmtASTNode):

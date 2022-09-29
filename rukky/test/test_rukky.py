@@ -11,6 +11,7 @@ TEST_CORRECT_RESULTS = {
         [907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997],
         float,
     ),
+    "quickSort": ([-1, 1, 2, 2, 4, 4, 5, 6, 6, 7, 8], float),
     "rotateArray": ([3, 4, 5, 6, 7, 1, 2], float),
     "unary": (4, float),
 }  # each test and result corresponds to file in test folder
