@@ -1,4 +1,6 @@
 import copy
+
+
 class ArrayValue:
     def __init__(self, type: type, arr=[]):
         self.valType = type
@@ -67,13 +69,19 @@ class FuncEntry(Entry):
 
     def __str__(self):
         return f"FuncEntry(type={self.type}, params={repr(self.argSymbols)})"
-    
+
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
         newContext.inFunc = self.context.inFunc
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
         newContext.funcTable = copy.deepcopy(self.context.funcTable)
-        return FuncEntry(returnType=self.type, argSymbols=self.argSymbols, funcBody=self.funcBody, context=newContext, isReturnArr=self.isReturnArr)
+        return FuncEntry(
+            returnType=self.type,
+            argSymbols=self.argSymbols,
+            funcBody=self.funcBody,
+            context=newContext,
+            isReturnArr=self.isReturnArr,
+        )
 
     def type_checker_return(self):
         # check function type matches return type
@@ -314,7 +322,7 @@ class TheContext:
         sType = None
         try:
             sType = self.get_ident_type(symbol=symbol, getArr=True)
-        except Exception as e:
+        except Exception:
             return False
 
         return (

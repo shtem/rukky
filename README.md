@@ -49,7 +49,7 @@ Interpreter for the "rukky" programming language. Interprets code and outputs re
 
 options:
   -h, --help    show this help message and exit
-  -s, --shell   run interpreter in shell mode. Directly enter input into REPL to be interpreted
+  -s, --shell   run interpreter in shell mode. Directly enter input into the REPL to be interpreted
   -f FILE       run interpreter in file mode. Pass path to file to be interpreted
   -t, --tokens  outputs list of all tokens returned by lexer
   -a, --ast     outputs AST returned by parser

@@ -491,7 +491,7 @@ class CallExprASTNode(ExprASTNode):
 
         symbol = self.callee.get_ident()
         entry: FuncEntry = context.get_func(symbol=symbol)
-        fEntry = entry.copy() 
+        fEntry = entry.copy()
 
         if fEntry == None:
             raise ValueError(
@@ -536,7 +536,7 @@ class CallExprASTNode(ExprASTNode):
                 context=fEntry.context
             )  # execute function body using function context
             fEntry.context.funcReturnVal = funcReturn
-        
+
         if fEntry.type_checker_return():
             rVal = fEntry.context.funcReturnVal
             fEntry.context.reset_flags_func()
