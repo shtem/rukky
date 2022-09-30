@@ -119,6 +119,21 @@ class Lexer:
             columnNo=self.columnNo,
         )
 
+    def _make_minus_or_arrow(self):
+        tokType = TokenType.MINUS  # -
+        self.advance()
+
+        if self.currChar == ">":
+            self.advance()
+            tokType = TokenType.MAP_ASSIGN  # ->
+
+        return Token(
+            type=tokType,
+            lexVal=tokType.value,
+            lineNo=self.lineNo,
+            columnNo=self.columnNo,
+        )
+
     def _make_colon_or_assign(self):
         tokType = TokenType.COLON  # :
         self.advance()
@@ -216,13 +231,7 @@ class Lexer:
                     columnNo=self.columnNo,
                 )
             elif self.currChar == "-":
-                self.advance()
-                return Token(
-                    type=TokenType.MINUS,
-                    lexVal=TokenType.MINUS.value,
-                    lineNo=self.lineNo,
-                    columnNo=self.columnNo,
-                )
+                return self._make_minus_or_arrow()
             elif self.currChar == "*":
                 self.advance()
                 return Token(

@@ -32,6 +32,7 @@ class TokenType(Enum):
     COMMA = ","
     ASSIGN = ":="
     LIST_ASSIGN = "@"
+    MAP_ASSIGN = "->"
 
     EOL = "\n"
     EOF = None

@@ -83,15 +83,23 @@ elem -> "-" elem
         | "~" elem
         | "(" expr ")"
         | "[" args "]"
+        | "{" map "}"
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
+
 args -> arg_list
         | epsilon
 arg_list -> arg_list "," expr
         | expr
+
+map -> pair_list
+        | epsilon
+pair_list -> pair_list "," pair 
+        | pair 
+pair -> expr "->" expr
 
 epsilon -> 
