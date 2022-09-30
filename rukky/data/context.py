@@ -74,7 +74,6 @@ class FuncEntry(Entry):
         newContext = TheContext(parent=self.context.parent)
         newContext.inFunc = self.context.inFunc
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
-        newContext.funcTable = copy.deepcopy(self.context.funcTable)
         return FuncEntry(
             returnType=self.type,
             argSymbols=self.argSymbols,
