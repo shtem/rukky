@@ -276,7 +276,7 @@ class TheContext:
                             )
                         )
 
-                mapVal = MapValue(arr=value)
+                mapVal = MapValue(map=value)
                 sEntry = SymbolEntry(type=sMapType, value=mapVal)
                 self.symbolTable[symbol] = sEntry
         else:
@@ -299,7 +299,7 @@ class TheContext:
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)
             elif isinstance(value, dict):
-                mapVal = MapValue(arr=value)
+                mapVal = MapValue(map=value)
                 sEntry = SymbolEntry(type=sMapType, value=mapVal)
             else:
                 sEntry = SymbolEntry(type=sType, value=value)
@@ -460,7 +460,10 @@ class TheContext:
         else:
             raise ValueError(self.get_error_message("Argument(s) have invalid types"))
 
-    def _display_builtin_helper(self, strOut: str):
+    def _display_builtin_helper(self, strOut: str, isDict=False):
+        if isDict:
+            strOut = strOut.replace(":", " ->")
+
         return (
             strOut.replace("None", "null")
             .replace("True", "true")

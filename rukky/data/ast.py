@@ -492,7 +492,7 @@ class CallExprASTNode(ExprASTNode):
 
     def execute_builtin(self, fEntry: FuncEntry):
         # retrieve args values from context of reserved call and pass to inbuilt function
-        argVals = (
+        argVals = [
             fEntry.context.get_ident(
                 symbol=arg,
                 index=None,
@@ -502,11 +502,14 @@ class CallExprASTNode(ExprASTNode):
                 == dict,
             )
             for arg in fEntry.argSymbols
-        )
+        ]
 
-        if fEntry.funcBody == print:
+        if fEntry.funcBody in (print, str):
+            isDict = isinstance(argVals[0], dict)
             strArg = str(*argVals)
-            strArg = fEntry.context._display_builtin_helper(strOut=strArg)
+            strArg = fEntry.context._display_builtin_helper(
+                strOut=strArg, isDict=isDict
+            )
             argVals = (strArg,)
 
         try:
