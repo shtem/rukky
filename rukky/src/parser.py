@@ -63,6 +63,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -192,6 +193,7 @@ class Parser:
                         ident=ident,
                         index=None,
                         arrFlag=isReturnList,
+                        mapFlag=False,
                     )
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
@@ -290,7 +292,12 @@ class Parser:
                 ident = self.currTok.lexVal
                 self.eat()  # eat id
                 return IdentifierASTNode(
-                    token=tok, type=pType, ident=ident, index=None, arrFlag=isArr
+                    token=tok,
+                    type=pType,
+                    ident=ident,
+                    index=None,
+                    arrFlag=isArr,
+                    mapFlag=False,
                 )
             else:
                 self.error("identifier")
@@ -310,6 +317,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -408,6 +416,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -478,6 +487,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -572,7 +582,12 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, arrFlag=isArr
+                        token=tok,
+                        type=vType,
+                        ident=ident,
+                        index=None,
+                        arrFlag=isArr,
+                        mapFlag=False,
                     )
                     self.eat()  # eat \n
                     return identAST
@@ -580,7 +595,12 @@ class Parser:
                     ident = self.currTok.lexVal
                     self.eat()  # eat id
                     identAST = IdentifierASTNode(
-                        token=tok, type=vType, ident=ident, index=None, arrFlag=isArr
+                        token=tok,
+                        type=vType,
+                        ident=ident,
+                        index=None,
+                        arrFlag=isArr,
+                        mapFlag=False,
                     )
                     self.eat()  # eat :=
                     val = self.expr()
@@ -590,6 +610,8 @@ class Parser:
                     ):
                         self.eat()  # eat \n
                         if val:
+                            if isinstance(val, MapASTNode):
+                                identAST.set_map_flag(True)
                             return AssignASTNode(token=tok, var=identAST, value=val)
                     else:
                         self.error("newline")
@@ -635,6 +657,7 @@ class Parser:
                         ident=self.currTok.lexVal,
                         index=None,
                         arrFlag=False,
+                        mapFlag=False,
                     )
                     self.eat()  # eat id
                     if self.currTok.type == TokenType.ASSIGN:
@@ -739,6 +762,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -924,19 +948,31 @@ class Parser:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, arrFlag=False
+                    token=tok,
+                    type=None,
+                    ident=ident,
+                    index=None,
+                    arrFlag=False,
+                    mapFlag=False,
                 )
                 self.eat()  # eat :=
                 val = self.expr()
                 if val:
                     if isinstance(val, ArrayASTNode):
                         identAST.set_arr_flag(True)
+                    if isinstance(val, MapASTNode):
+                        identAST.set_map_flag(True)
                     return AssignASTNode(token=tok, var=identAST, value=val)
             elif self.peek().type == TokenType.APPEND:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, arrFlag=True
+                    token=tok,
+                    type=None,
+                    ident=ident,
+                    index=None,
+                    arrFlag=True,
+                    mapFlag=False,
                 )
                 op = self.currTok
                 self.eat()  # eat <<
@@ -947,7 +983,12 @@ class Parser:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
-                    token=tok, type=None, ident=ident, index=None, arrFlag=True
+                    token=tok,
+                    type=None,
+                    ident=ident,
+                    index=None,
+                    arrFlag=True,
+                    mapFlag=False,
                 )
                 self.eat()  # eat @
                 index = self.expr()
@@ -979,7 +1020,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1003,7 +1046,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1018,7 +1061,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1042,7 +1087,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1059,7 +1104,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1083,7 +1130,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1104,7 +1151,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1133,7 +1182,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1156,7 +1205,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1183,7 +1234,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1210,7 +1261,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1239,7 +1292,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1267,7 +1320,9 @@ class Parser:
             TokenType.EOF,
             TokenType.RPAREN,
             TokenType.RSQUARE,
+            TokenType.RBRACE,
             TokenType.ASSIGN,
+            TokenType.MAP_ASSIGN,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1291,7 +1346,7 @@ class Parser:
                 return lhs
             else:
                 self.error(
-                    'binary operator or ")" or "]" or "{" or ":=" or "," or ":" or "::" or newline'
+                    'binary operator or ")" or "]" or "{" or ":=" or "->" or "," or ":" or "::" or newline'
                 )
 
     """
@@ -1299,6 +1354,7 @@ class Parser:
         | "~" elem
         | "(" expr ")"
         | "[" args "]"
+        | "{" map "}"
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
@@ -1312,7 +1368,12 @@ class Parser:
             tok = self.currTok
             ident = self.currTok.lexVal
             identAST = IdentifierASTNode(
-                token=tok, type=None, ident=ident, index=None, arrFlag=False
+                token=tok,
+                type=None,
+                ident=ident,
+                index=None,
+                arrFlag=False,
+                mapFlag=False,
             )
             self.eat()  # eat id
             if self.currTok.type == TokenType.COLON:
@@ -1372,6 +1433,18 @@ class Parser:
                     return ArrayASTNode(token=arrTok, elems=[])
             else:
                 self.error('"]"')
+        elif self.currTok.type == TokenType.LBRACE:
+            mapTok = self.currTok
+            self.eat()  # eat {
+            elems = self.map()
+            if self.currTok.type == TokenType.RBRACE:
+                self.eat()  # eat }
+                if elems:
+                    return MapASTNode(token=mapTok, elems=elems)
+                else:
+                    return MapASTNode(token=mapTok, elems=[])
+            else:
+                self.error('"]"')
         elif self.currTok.type == TokenType.REAL_LIT:
             realNum = RealASTNode(token=self.currTok, value=self.currTok.lexVal)
             self.eat()  # eat real number
@@ -1400,6 +1473,7 @@ class Parser:
             TokenType.NOT,
             TokenType.LPAREN,
             TokenType.LSQUARE,
+            TokenType.LBRACE,
             TokenType.REAL_LIT,
             TokenType.BOOL_LIT,
             TokenType.STRING_LIT,
@@ -1429,7 +1503,7 @@ class Parser:
         elif (
             self.currTok.type == TokenType.RES_COLON
             or self.currTok.type == TokenType.RSQUARE
-        ):  # id: :: or id []
+        ):  # id: :: or id := []
             return []
         else:
             self.error('list of expressions as arguments or "::" or "]"')
@@ -1465,6 +1539,93 @@ class Parser:
         return []
 
     """
+    map -> pair_list
+        | epsilon
+    """
+
+    def map(self):
+        possibleStartToks = [
+            TokenType.ID,
+            TokenType.MINUS,
+            TokenType.NOT,
+            TokenType.LPAREN,
+            TokenType.LSQUARE,
+            TokenType.LBRACE,
+            TokenType.REAL_LIT,
+            TokenType.BOOL_LIT,
+            TokenType.STRING_LIT,
+            TokenType.NULL,
+            TokenType.LENGTH,
+            TokenType.TYPE,
+            TokenType.STRINGIFY,
+            TokenType.REALIFY,
+            TokenType.MAX,
+            TokenType.MIN,
+            TokenType.RANDOM,
+            TokenType.FLOOR,
+            TokenType.CEIL,
+            TokenType.SQRT,
+            TokenType.LOG,
+            TokenType.SIN,
+            TokenType.COS,
+            TokenType.TAN,
+            TokenType.PI,
+            TokenType.EULER,
+        ]
+
+        if self.currTok.type in possibleStartToks:  # id := {map}
+            pairList = self.pair_list()
+            if pairList:
+                return pairList
+        elif self.currTok.type == TokenType.RBRACE:  # id := {}
+            return []
+        else:
+            self.error('list of expression pairs or "}"')
+
+        return []
+
+    """
+    pair_list -> pair_list "," pair 
+        | pair 
+    """
+
+    def pair_list(self):
+        pairList = []
+
+        pair = self.pair()
+        if pair:
+            pairList.append(pair)
+
+            while True:
+                if self.currTok.type == TokenType.COMMA:
+                    self.eat()  # eat ,
+                    pair = self.pair()
+                    if pair:
+                        pairList.append(pair)
+                elif self.currTok.type == TokenType.RBRACE:
+                    return pairList
+                else:
+                    self.error('"," or "}"')
+
+        return []
+
+    """
+    pair -> expr "->" expr
+    """
+
+    def pair(self):
+        keyExpr = self.expr()
+
+        if keyExpr:
+            if self.currTok.type == TokenType.MAP_ASSIGN:
+                self.eat()  # eat ->
+                valExpr = self.expr()
+                if valExpr:
+                    return (keyExpr, valExpr)
+        else:
+            return self.epsilon()
+
+    """
     epsilon -> 
     """
 
@@ -1476,7 +1637,7 @@ class Parser:
     """
 
     def _reserved_keywords(self):
-        mulTypes = (str, float, int, bool, list)
+        mulTypes = (str, float, int, bool, list, dict)
         keyWordToFuncDict = {
             TokenType.DISPLAY: {
                 "value": print,

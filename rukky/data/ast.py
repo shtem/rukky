@@ -79,7 +79,13 @@ class StringASTNode(ExprASTNode):
 
 class IdentifierASTNode(ExprASTNode):
     def __init__(
-        self, token: Token, type: str, ident: str, index: ExprASTNode, arrFlag: bool
+        self,
+        token: Token,
+        type: str,
+        ident: str,
+        index: ExprASTNode,
+        arrFlag: bool,
+        mapFlag: bool,
     ):
         super().__init__()
         self.token = token
@@ -87,6 +93,7 @@ class IdentifierASTNode(ExprASTNode):
         self.ident = ident
         self.index = index
         self.arrFlag = arrFlag
+        self.mapFlag = mapFlag
 
     def __str__(self):
         out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.arrFlag else ''} "
@@ -111,6 +118,12 @@ class IdentifierASTNode(ExprASTNode):
 
     def is_arr(self):
         return self.arrFlag
+
+    def set_map_flag(self, flag):
+        self.mapFlag = flag
+
+    def is_map(self):
+        return self.mapFlag
 
     def determine_type_value(self):
         if self.type == "real":
@@ -137,6 +150,9 @@ class IdentifierASTNode(ExprASTNode):
 
             if self.arrFlag:
                 defaultValue = []
+
+            if self.mapFlag:
+                defaultValue = {}
 
             context.set_ident(
                 symbol=symbol,
@@ -578,6 +594,35 @@ class ArrayASTNode(ExprASTNode):
         arrVal = [elem.code_gen(context=context) for elem in self.elems]
 
         return arrVal
+
+
+class MapASTNode(ExprASTNode):
+    def __init__(self, token: Token, elems: list[tuple[ExprASTNode, ExprASTNode]]):
+        super().__init__()
+        self.token = token
+        self.elems = elems
+
+    def __str__(self):
+        out = f"-> MapASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        if self.elems:
+            for key, value in self.elems:
+                key.level = self.level
+                value.level = self.level + 3
+                out += f"\n{' ' * (self.level)}-{repr(key)}"
+                out += f"\n{' ' * (self.level)}:-¬"
+                out += f"\n{' ' * (self.level + 3)}-{repr(value)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        mapVal = {
+            k.code_gen(context=context): v.code_gen(context=context)
+            for k, v in self.elems
+        }
+
+        return mapVal
 
 
 class AssignASTNode(ExprASTNode):
