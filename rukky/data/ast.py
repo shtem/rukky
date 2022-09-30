@@ -127,15 +127,15 @@ class IdentifierASTNode(ExprASTNode):
 
     def determine_type_value(self):
         if self.type == "real":
-            return type(0.0), 0.0
+            return float, 0.0
         elif self.type == "bool":
-            return type(False), False
+            return bool, False
         elif self.type == "str":
-            return type(""), ""
-        elif self.type == "void":  # only applies to functions
-            return type(None), None
+            return str, ""
         elif self.type == "obj":
             return object, None
+        elif self.type == "void":  # only applies to functions
+            return type(None), None
         else:
             raise TypeError
 
@@ -161,11 +161,17 @@ class IdentifierASTNode(ExprASTNode):
                 index=None,
                 isAppend=False,
                 isArr=self.arrFlag,
+                isMap=self.mapFlag,
             )
 
             return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
-            valType = context.get_ident_type(symbol=symbol, getArr=False)
+            varValue = None
+            valType = context.get_ident_type(symbol=symbol, getArrMap=False)
+
+            isArr = valType == list if valType else False
+            isMap = valType == dict if valType else False
+
             if not valType:
                 raise ValueError(
                     context.get_error_message(
@@ -175,19 +181,16 @@ class IdentifierASTNode(ExprASTNode):
 
             if self.index:
                 indexVal = self.index.code_gen(context=context)
-                if context.is_real(indexVal):
+                if indexVal != None:
                     varValue = context.get_ident(
-                        symbol=symbol, index=int(indexVal), getArr=self.arrFlag
+                        symbol=symbol, index=indexVal, getArr=isArr, getMap=isMap
                     )
                 else:
-                    raise TypeError(
-                        context.get_error_message(
-                            "Invalid index type. Should be real value"
-                        )
-                    )
+                    raise TypeError(context.get_error_message("Invalid index"))
             else:
-                isArr = valType == list if valType else False
-                varValue = context.get_ident(symbol=symbol, index=None, getArr=isArr)
+                varValue = context.get_ident(
+                    symbol=symbol, index=None, getArr=isArr, getMap=isMap
+                )
 
             return varValue
 
@@ -203,7 +206,14 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         argNum=0,
         argType=None,
     ):
-        super().__init__(token=token, type=None, ident=ident, index=None, arrFlag=False)
+        super().__init__(
+            token=token,
+            type=None,
+            ident=ident,
+            index=None,
+            arrFlag=False,
+            mapFlag=False,
+        )
         self.value = value
         self.isFunc = isFunc
         self.returnType = returnType
@@ -391,7 +401,7 @@ class BinaryExprASTNode(ExprASTNode):
                         )
                 else:
                     raise TypeError(errorStr)
-            case TokenType.EXP:
+            case TokenType.POW:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
                     return float(lVal**rVal)
                 else:
@@ -441,8 +451,11 @@ class BinaryExprASTNode(ExprASTNode):
                             index=None,
                             isAppend=True,
                             isArr=True,
+                            isMap=False,
                         )
-                        return context.get_ident(symbol=ident, index=None, getArr=True)
+                        return context.get_ident(
+                            symbol=ident, index=None, getArr=True, getMap=False
+                        )
                     else:
                         raise TypeError(
                             context.get_error_message("Can only append to an array")
@@ -483,7 +496,10 @@ class CallExprASTNode(ExprASTNode):
             fEntry.context.get_ident(
                 symbol=arg,
                 index=None,
-                getArr=fEntry.context.get_ident_type(symbol=arg, getArr=False) == list,
+                getArr=fEntry.context.get_ident_type(symbol=arg, getArrMap=False)
+                == list,
+                getMap=fEntry.context.get_ident_type(symbol=arg, getArrMap=False)
+                == dict,
             )
             for arg in fEntry.argSymbols
         )
@@ -543,8 +559,10 @@ class CallExprASTNode(ExprASTNode):
                     value=val,
                     index=None,
                     isAppend=False,
-                    isArr=fEntry.context.get_ident_type(symbol=par, getArr=False)
+                    isArr=fEntry.context.get_ident_type(symbol=par, getArrMap=False)
                     == list,
+                    isMap=fEntry.context.get_ident_type(symbol=par, getArrMap=False)
+                    == dict,
                 )
             else:
                 raise TypeError(
@@ -658,23 +676,26 @@ class AssignASTNode(ExprASTNode):
         ):
             raise ValueError(context.get_error_message("Unexpected null value"))
 
+        assignType = context.get_ident_type(symbol=symbol, getArrMap=False)
+        isArr = assignType == list if assignType else False
+        isMap = assignType == dict if assignType else False
+
         if self.var.index:
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
                 indexVal = self.var.index.code_gen(context=context)
-                if not context.is_real(indexVal):
-                    raise TypeError(
-                        context.get_error_message(
-                            "Invalid index type. Should be real value"
-                        )
+                if indexVal != None:
+                    context.set_ident(
+                        symbol=symbol,
+                        valType=None,
+                        value=assignVal,
+                        index=indexVal,
+                        isAppend=False,
+                        isArr=isArr,
+                        isMap=isMap,
                     )
-                context.set_ident(
-                    symbol=symbol,
-                    valType=None,
-                    value=assignVal,
-                    index=int(indexVal),
-                    isAppend=False,
-                    isArr=self.var.arrFlag,
-                )
+                else:
+                    raise TypeError(context.get_error_message("Invalid index"))
+
             else:
                 raise TypeError(
                     context.get_error_message(
@@ -691,7 +712,8 @@ class AssignASTNode(ExprASTNode):
                     value=assignVal,
                     index=None,
                     isAppend=False,
-                    isArr=self.var.arrFlag,
+                    isArr=isArr,
+                    isMap=isMap,
                 )
             else:
                 raise TypeError(
@@ -979,6 +1001,7 @@ class ForStmtASTNode(StmtASTNode):
             index=None,
             isAppend=False,
             isArr=False,
+            isMap=False,
         )
 
         bVal = None
@@ -995,6 +1018,7 @@ class ForStmtASTNode(StmtASTNode):
                 index=None,
                 isAppend=False,
                 isArr=False,
+                isMap=False,
             )
 
             if context.should_return():

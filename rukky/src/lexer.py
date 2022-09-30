@@ -251,8 +251,8 @@ class Lexer:
             elif self.currChar == "^":
                 self.advance()
                 return Token(
-                    type=TokenType.EXP,
-                    lexVal=TokenType.EXP.value,
+                    type=TokenType.POW,
+                    lexVal=TokenType.POW.value,
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )

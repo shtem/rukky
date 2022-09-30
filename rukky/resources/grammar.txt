@@ -72,12 +72,12 @@ ineq -> ineq "<=" term
 term -> term "+" factor
         | term "-" factor
         | factor
-factor -> factor "*" expo
-        | factor "/" expo
-        | factor "//" expo
-        | factor "%" expo
-        | expo
-expo -> expo "^" elem 
+factor -> factor "*" pow
+        | factor "/" pow
+        | factor "//" pow
+        | factor "%" pow
+        | pow
+pow -> pow "^" elem 
         | elem
 elem -> "-" elem
         | "~" elem
@@ -87,7 +87,6 @@ elem -> "-" elem
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
-        | ID "{" expr "}"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT

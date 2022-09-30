@@ -8,7 +8,7 @@ class TokenType(Enum):
     FLOAT_DIV = "/"
     INT_DIV = "//"
     MOD = "%"
-    EXP = "^"
+    POW = "^"
     OR = "||"
     AND = "&&"
     NOT = "~"

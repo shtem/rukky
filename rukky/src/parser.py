@@ -994,7 +994,6 @@ class Parser:
                 index = self.expr()
                 if index:
                     identAST.set_index(index)
-                    identAST.set_arr_flag(True)
                     if self.currTok.type == TokenType.ASSIGN:
                         self.eat()  # eat :=
                         val = self.expr()
@@ -1238,11 +1237,11 @@ class Parser:
                 )
 
     """
-    factor -> factor "*" expo
-        | factor "/" expo
-        | factor "//" expo
-        | factor "%" expo
-        | expo
+    factor -> factor "*" pow
+        | factor "/" pow
+        | factor "//" pow
+        | factor "%" pow
+        | pow
     """
 
     def factor(self):
@@ -1271,7 +1270,7 @@ class Parser:
             TokenType.LBRACE,
         ]
 
-        lhs = self.expo()
+        lhs = self.pow()
 
         if not lhs:
             return self.epsilon()
@@ -1285,7 +1284,7 @@ class Parser:
             ]:
                 op = self.currTok
                 self.eat()  # eat * / // %
-                rhs = self.expo()
+                rhs = self.pow()
                 if rhs:
                     lhs = BinaryExprASTNode(op=op, lhs=lhs, rhs=rhs)
             elif self.currTok.type in possibleEndToks:
@@ -1296,11 +1295,11 @@ class Parser:
                 )
 
     """
-    expo -> expo "^" elem 
+    pow -> pow "^" elem 
         | elem
     """
 
-    def expo(self):
+    def pow(self):
         possibleEndToks = [
             TokenType.MOD,
             TokenType.INT_DIV,
@@ -1336,7 +1335,7 @@ class Parser:
             return self.epsilon()
 
         while True:
-            if self.currTok.type == TokenType.EXP:
+            if self.currTok.type == TokenType.POW:
                 op = self.currTok
                 self.eat()  # eat ^
                 rhs = self.elem()
@@ -1358,7 +1357,6 @@ class Parser:
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
-        | ID "{" expr "}"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
@@ -1399,25 +1397,11 @@ class Parser:
                     self.eat()  # eat ]
                     if index:
                         identAST.set_index(index)
-                        identAST.set_arr_flag(True)
                         return identAST  # id[expr]
                     else:
                         self.error("valid expression as index")
                 else:
                     self.error('"]"')
-            elif self.currTok.type == TokenType.LBRACE:
-                self.eat()  # eat {}
-                index = self.expr()
-                if self.currTok.type == TokenType.RBRACE:
-                    self.eat()  # eat }
-                    if index:
-                        identAST.set_index(index)
-                        identAST.set_map_flag(True)
-                        return identAST  # id{expr}
-                    else:
-                        self.error("valid expression as index")
-                else:
-                    self.error('"}"')
             else:
                 return identAST  # id
         elif self.currTok.type == TokenType.MINUS or self.currTok.type == TokenType.NOT:
