@@ -1358,6 +1358,7 @@ class Parser:
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
+        | ID "{" expr "}"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
@@ -1404,6 +1405,19 @@ class Parser:
                         self.error("valid expression as index")
                 else:
                     self.error('"]"')
+            elif self.currTok.type == TokenType.LBRACE:
+                self.eat()  # eat {}
+                index = self.expr()
+                if self.currTok.type == TokenType.RBRACE:
+                    self.eat()  # eat }
+                    if index:
+                        identAST.set_index(index)
+                        identAST.set_map_flag(True)
+                        return identAST  # id{expr}
+                    else:
+                        self.error("valid expression as index")
+                else:
+                    self.error('"}"')
             else:
                 return identAST  # id
         elif self.currTok.type == TokenType.MINUS or self.currTok.type == TokenType.NOT:

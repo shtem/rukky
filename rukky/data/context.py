@@ -156,6 +156,7 @@ class TheContext:
         index=None,
         isAppend=False,
         isArr=False,
+        isMap=False,
     ):
         sArrType = list
         if isArr:
@@ -362,9 +363,9 @@ class TheContext:
             right, (str, int, float, bool)
         ):
             return type(left) == type(right)
-        elif isinstance(left, list) and isinstance(right, list):
+        elif isinstance(left, (list, dict)) and isinstance(right, (list, dict)):
             raise ValueError(
-                self.get_error_message("type function does not compare arrays")
+                self.get_error_message("type function does not compare arrays or maps")
             )
         else:
             raise ValueError(self.get_error_message("Argument(s) have invalid types"))
