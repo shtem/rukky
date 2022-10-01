@@ -32,8 +32,8 @@ class TokenType(Enum):
     RES_COLON = "::"
     COMMA = ","
     ASSIGN = ":="
-    LIST_ASSIGN = "@"
-    MAP_ASSIGN = "->"
+    INDEX = "@"
+    MAP_LINK = "->"
 
     EOL = "\n"
     EOF = None
@@ -41,8 +41,8 @@ class TokenType(Enum):
     VOID = "void"
     REAL = "real"
     BOOL = "bool"
-    OBJECT = "obj"
     STRING = "str"
+    OBJECT = "obj"
     TRUE = "true"
     FALSE = "false"
     NULL = "null"

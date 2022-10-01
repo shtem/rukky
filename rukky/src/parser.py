@@ -1021,7 +1021,7 @@ class Parser:
 
             if self.prevTok:
                 if (
-                    self.prevTok.type == TokenType.LIST_ASSIGN
+                    self.prevTok.type == TokenType.INDEX
                     and self.peek().type == TokenType.ASSIGN
                 ):
                     return self.disjunc()  # catch case where id@id := expr
@@ -1062,7 +1062,7 @@ class Parser:
                 val = self.expr()
                 if val:
                     return BinaryExprASTNode(op=op, lhs=identAST, rhs=val)
-            elif self.peek().type == TokenType.LIST_ASSIGN:
+            elif self.peek().type == TokenType.INDEX:
                 ident = tok.lexVal
                 self.eat()  # eat id
                 identAST = IdentifierASTNode(
@@ -1104,7 +1104,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1145,7 +1145,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1189,7 +1189,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1237,7 +1237,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1292,7 +1292,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1349,7 +1349,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1409,7 +1409,7 @@ class Parser:
             TokenType.RSQUARE,
             TokenType.RBRACE,
             TokenType.ASSIGN,
-            TokenType.MAP_ASSIGN,
+            TokenType.MAP_LINK,
             TokenType.COMMA,
             TokenType.COLON,
             TokenType.SEM_COLON,
@@ -1719,7 +1719,7 @@ class Parser:
         keyExpr = self.expr()
 
         if keyExpr:
-            if self.currTok.type == TokenType.MAP_ASSIGN:
+            if self.currTok.type == TokenType.MAP_LINK:
                 self.eat()  # eat ->
                 valExpr = self.expr()
                 if valExpr:

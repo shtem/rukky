@@ -125,7 +125,7 @@ class Lexer:
 
         if self.currChar == ">":
             self.advance()
-            tokType = TokenType.MAP_ASSIGN  # ->
+            tokType = TokenType.MAP_LINK  # ->
 
         return Token(
             type=tokType,
@@ -355,8 +355,8 @@ class Lexer:
             elif self.currChar == "@":
                 self.advance()
                 return Token(
-                    type=TokenType.LIST_ASSIGN,
-                    lexVal=TokenType.LIST_ASSIGN.value,
+                    type=TokenType.INDEX,
+                    lexVal=TokenType.INDEX.value,
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
