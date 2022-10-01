@@ -1,10 +1,15 @@
 import copy
 
 
-class ArrayValue:
-    def __init__(self, type: type, arr=[]):
+class Value:
+    def __init__(self, type: type):
         self.valType = type
-        self.arr = arr
+
+
+class ArrayValue(Value):
+    def __init__(self, type: type, arr=[]):
+        super().__init__(type)
+        self.arr: list = arr
 
     def __repr__(self):
         return self.__str__()
@@ -35,6 +40,30 @@ class ArrayValue:
                 raise IndexError("Index out of range")
         else:
             return self.arr
+
+
+class MapValue(Value):
+    def __init__(self, map={}):
+        super().__init__(object)
+        self.map: dict = map
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"MapValue(type={self.valType}, elems={repr(self.map)})"
+
+    def add(self, value, index=None):
+        if index != None:
+            self.map[index] = value
+        else:
+            raise KeyError("Invalid index")
+
+    def get_map(self, index=None):
+        if index != None:
+            return self.map.get(index, None)
+        else:
+            return self.map
 
 
 class Entry:
@@ -129,19 +158,21 @@ class TheContext:
         self.inLoop = False
         self.funcReturnVal = None
 
-    def get_ident_type(self, symbol: str, getArr=False):
+    def get_ident_type(self, symbol: str, getArrMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
-            return self.parent.get_ident_type(symbol=symbol, getArr=getArr)
+            return self.parent.get_ident_type(symbol=symbol, getArrMap=getArrMap)
 
         if sEntry:
-            if getArr:
-                if isinstance(sEntry.value, ArrayValue):
-                    sArr: ArrayValue = sEntry.value
-                    return sArr.valType
+            if getArrMap:
+                if isinstance(sEntry.value, Value):
+                    sVal = sEntry.value
+                    return sVal.valType
                 else:
                     raise TypeError(
-                        self.get_error_message(f"Variable {symbol} is not an array")
+                        self.get_error_message(
+                            f"Variable {symbol} is not an array or map"
+                        )
                     )
             else:
                 return sEntry.type
@@ -156,18 +187,26 @@ class TheContext:
         index=None,
         isAppend=False,
         isArr=False,
+        isMap=False,
     ):
         sArrType = list
+        sMapType = dict
+
         if isArr:
             if index != None:
                 if not isinstance(self.get_ident(symbol=symbol), ArrayValue):
                     raise TypeError(
                         self.get_error_message(f"Variable {symbol} is not an array")
                     )
-
+                if not self.is_real(index):
+                    raise TypeError(
+                        self.get_error_message(
+                            "Invalid index type. Should be real value"
+                        )
+                    )
                 try:
                     sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
-                    sArr.add(value=value, index=index)  # add value at index
+                    sArr.add(value=value, index=int(index))  # add value at index
                     sEntryNew = SymbolEntry(type=sArrType, value=sArr)
                     self.symbolTable[symbol] = sEntryNew
                 except Exception as e:
@@ -180,7 +219,7 @@ class TheContext:
 
                 try:
                     sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
-                    sArr.add(value=value)  # append at index
+                    sArr.add(value=value)  # append
                     sEntryNew = SymbolEntry(type=sArrType, value=sArr)
                     self.symbolTable[symbol] = sEntryNew
                 except Exception as e:
@@ -192,7 +231,7 @@ class TheContext:
                     if self.type_checker_object(symbol=symbol):
                         sType = object
                     else:
-                        sType = self.get_ident_type(symbol=symbol, getArr=True)
+                        sType = self.get_ident_type(symbol=symbol, getArrMap=True)
                     if not sType:
                         raise ValueError(
                             self.get_error_message(
@@ -210,6 +249,36 @@ class TheContext:
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)
                 self.symbolTable[symbol] = sEntry
+        elif isMap:
+            if index != None:
+                if not isinstance(self.get_ident(symbol=symbol), MapValue):
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not a map")
+                    )
+
+                try:
+                    sMap: MapValue = self.get_ident(symbol=symbol)
+                    sMap.add(value=value, index=index)
+                    sEntryNew = SymbolEntry(type=sMapType, value=sMap)
+                    self.symbolTable[symbol] = sEntryNew
+                except Exception as e:
+                    raise ValueError(self.get_error_message(str(e)))
+            else:
+                if valType:  # new map declaration
+                    pass
+                else:  # map re assignment
+                    if self.get_ident_type(symbol=symbol, getArrMap=True):
+                        pass
+                    else:
+                        raise ValueError(
+                            self.get_error_message(
+                                f"Variable {symbol} doesn't exist/has not yet been defined"
+                            )
+                        )
+
+                mapVal = MapValue(map=value)
+                sEntry = SymbolEntry(type=sMapType, value=mapVal)
+                self.symbolTable[symbol] = sEntry
         else:
             if valType:  # new variable declaration
                 sType = valType
@@ -217,7 +286,7 @@ class TheContext:
                 if self.type_checker_object(symbol=symbol):
                     sType = object
                 else:
-                    sType = self.get_ident_type(symbol=symbol, getArr=False)
+                    sType = self.get_ident_type(symbol=symbol, getArrMap=False)
                 if not sType:
                     raise ValueError(
                         self.get_error_message(
@@ -229,12 +298,15 @@ class TheContext:
             if isinstance(value, list) and sType == object:
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)
+            elif isinstance(value, dict):
+                mapVal = MapValue(map=value)
+                sEntry = SymbolEntry(type=sMapType, value=mapVal)
             else:
                 sEntry = SymbolEntry(type=sType, value=value)
 
             self.symbolTable[symbol] = sEntry
 
-    def get_ident(self, symbol: str, index=None, getArr=False):
+    def get_ident(self, symbol: str, index=None, getArr=False, getMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
             return self.parent.get_ident(symbol=symbol, index=index, getArr=getArr)
@@ -247,9 +319,27 @@ class TheContext:
                     )
                 try:
                     if index != None:
-                        return sEntry.value.get_arr(index=index)
+                        if not self.is_real(index):
+                            raise TypeError(
+                                self.get_error_message(
+                                    "Invalid index type. Should be real value"
+                                )
+                            )
+                        return sEntry.value.get_arr(index=int(index))
                     else:
                         return sEntry.value.get_arr()
+                except Exception as e:
+                    raise ValueError(self.get_error_message(str(e)))
+            elif getMap:
+                if not isinstance(sEntry.value, MapValue):
+                    raise TypeError(
+                        self.get_error_message(f"Variable {symbol} is not a map")
+                    )
+                try:
+                    if index != None:
+                        return sEntry.value.get_map(index=index)
+                    else:
+                        return sEntry.value.get_map()
                 except Exception as e:
                     raise ValueError(self.get_error_message(str(e)))
             else:
@@ -294,7 +384,7 @@ class TheContext:
             return True
 
         if hasIndex:
-            varType = self.get_ident_type(symbol=left, getArr=True)
+            varType = self.get_ident_type(symbol=left, getArrMap=True)
             if varType:
                 return isinstance(right, varType)
             else:
@@ -307,7 +397,7 @@ class TheContext:
             if self.type_checker_object(symbol=left):
                 return True
             else:
-                varType = self.get_ident_type(symbol=left, getArr=False)
+                varType = self.get_ident_type(symbol=left, getArrMap=False)
                 if varType:
                     return isinstance(right, varType)
                 else:
@@ -320,13 +410,14 @@ class TheContext:
     def type_checker_object(self, symbol: str):
         sType = None
         try:
-            sType = self.get_ident_type(symbol=symbol, getArr=True)
+            sType = self.get_ident_type(symbol=symbol, getArrMap=True)
         except Exception:
             return False
 
         return (
-            self.get_ident_type(symbol=symbol, getArr=False) == list and sType == object
-        ) or self.get_ident_type(symbol=symbol, getArr=False) == object
+            self.get_ident_type(symbol=symbol, getArrMap=False) in [list, dict]
+            and sType == object
+        ) or self.get_ident_type(symbol=symbol, getArrMap=False) == object
 
     def type_checker(self, left, right):
         # check types of lhs and rhs values match in binary operation
@@ -362,14 +453,17 @@ class TheContext:
             right, (str, int, float, bool)
         ):
             return type(left) == type(right)
-        elif isinstance(left, list) and isinstance(right, list):
+        elif isinstance(left, (list, dict)) and isinstance(right, (list, dict)):
             raise ValueError(
-                self.get_error_message("type function does not compare arrays")
+                self.get_error_message("type function does not compare arrays or maps")
             )
         else:
             raise ValueError(self.get_error_message("Argument(s) have invalid types"))
 
-    def _display_builtin_helper(self, strOut: str):
+    def _display_builtin_helper(self, strOut: str, isDict=False):
+        if isDict:
+            strOut = strOut.replace(":", " ->")
+
         return (
             strOut.replace("None", "null")
             .replace("True", "true")

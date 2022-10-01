@@ -27,18 +27,22 @@ stmt -> decl_stmt
         | expr_stmt
         | for_stmt
         | while_stmt
+        | give_stmt
         | if_stmt
         | return_stmt
         | break_stmt
         | cont_stmt
+
 decl_type -> var_type
             | var_type "[]"
 decl_stmt -> decl_type ID EOL
             | decl_type ID ":=" expr EOL
 expr_stmt -> expr EOL
             | EOL
+
 for_stmt -> "for" "::" ID ":=" expr ";" expr ";" expr block
 while_stmt -> "while" "::" expr block
+give_stmt -> "give" "::" "(" ID "," ID ")" ";" ID block
 
 if_stmt -> "if" "::" expr block elif_stmt_list else_stmt
 elif_stmt_list -> elif_stmt_list elif_stmt
@@ -63,6 +67,7 @@ conjunc -> conjunc "&&" equiv
         | equiv
 equiv -> equiv "<>" ineq
         | equiv "<!" ineq
+        | equiv "?" ineq
         | ineq
 ineq -> ineq "<=" term
         | ineq "<" term
@@ -72,26 +77,35 @@ ineq -> ineq "<=" term
 term -> term "+" factor
         | term "-" factor
         | factor
-factor -> factor "*" expo
-        | factor "/" expo
-        | factor "//" expo
-        | factor "%" expo
-        | expo
-expo -> expo "^" elem 
+factor -> factor "*" pow
+        | factor "/" pow
+        | factor "//" pow
+        | factor "%" pow
+        | pow
+pow -> pow "^" elem 
         | elem
+        
 elem -> "-" elem
         | "~" elem
         | "(" expr ")"
         | "[" args "]"
+        | "{" map "}"
         | ID
         | ID ":" args "::"
         | ID "[" expr "]"
         | REAL_LIT
         | BOOL_LIT
         | STRING_LIT
+
 args -> arg_list
         | epsilon
 arg_list -> arg_list "," expr
         | expr
+
+map -> pair_list
+        | epsilon
+pair_list -> pair_list "," pair 
+        | pair 
+pair -> expr "->" expr
 
 epsilon -> 

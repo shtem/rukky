@@ -3,6 +3,7 @@ import re, os, subprocess
 TEST_CORRECT_RESULTS = {
     "addNum": (210, float),
     "binarySearch": (6, float),
+    "countFrequency": ({1: 5, 2: 4, 3: 3, 4: 3, 5: 2}, float),
     "factorial": (120, float),
     "fibonacci": ([0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55], float),
     "lcm": (216, float),
@@ -50,6 +51,12 @@ def test_sucess():
                 ","
             )  # remove "[" and "]" from string then split
             testResult = [resultType(x) for x in testResult]
+        elif isinstance(correctResult, dict):
+            testResult = testResult[1 : len(testResult) - 1].split(
+                ","
+            )  # remove "{" and "}" from string then split
+            testResult = [x.split("->") for x in testResult]
+            testResult = {resultType(x[0]): resultType(x[1]) for x in testResult}
         else:
             testResult = resultType(testResult)
 

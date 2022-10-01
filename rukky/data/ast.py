@@ -79,7 +79,13 @@ class StringASTNode(ExprASTNode):
 
 class IdentifierASTNode(ExprASTNode):
     def __init__(
-        self, token: Token, type: str, ident: str, index: ExprASTNode, arrFlag: bool
+        self,
+        token: Token,
+        type: str,
+        ident: str,
+        index: ExprASTNode,
+        arrFlag: bool,
+        mapFlag: bool,
     ):
         super().__init__()
         self.token = token
@@ -87,6 +93,7 @@ class IdentifierASTNode(ExprASTNode):
         self.ident = ident
         self.index = index
         self.arrFlag = arrFlag
+        self.mapFlag = mapFlag
 
     def __str__(self):
         out = f"-> IdentifierASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) {self.ident} {self.type if self.type else ''}{list() if self.arrFlag else ''} "
@@ -112,17 +119,23 @@ class IdentifierASTNode(ExprASTNode):
     def is_arr(self):
         return self.arrFlag
 
+    def set_map_flag(self, flag):
+        self.mapFlag = flag
+
+    def is_map(self):
+        return self.mapFlag
+
     def determine_type_value(self):
         if self.type == "real":
-            return type(0.0), 0.0
+            return float, 0.0
         elif self.type == "bool":
-            return type(False), False
+            return bool, False
         elif self.type == "str":
-            return type(""), ""
-        elif self.type == "void":  # only applies to functions
-            return type(None), None
+            return str, ""
         elif self.type == "obj":
             return object, None
+        elif self.type == "void":  # only applies to functions
+            return type(None), None
         else:
             raise TypeError
 
@@ -138,6 +151,9 @@ class IdentifierASTNode(ExprASTNode):
             if self.arrFlag:
                 defaultValue = []
 
+            if self.mapFlag:
+                defaultValue = {}
+
             context.set_ident(
                 symbol=symbol,
                 valType=type,
@@ -145,11 +161,17 @@ class IdentifierASTNode(ExprASTNode):
                 index=None,
                 isAppend=False,
                 isArr=self.arrFlag,
+                isMap=self.mapFlag,
             )
 
             return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
-            valType = context.get_ident_type(symbol=symbol, getArr=False)
+            varValue = None
+            valType = context.get_ident_type(symbol=symbol, getArrMap=False)
+
+            isArr = valType == list if valType else False
+            isMap = valType == dict if valType else False
+
             if not valType:
                 raise ValueError(
                     context.get_error_message(
@@ -159,19 +181,16 @@ class IdentifierASTNode(ExprASTNode):
 
             if self.index:
                 indexVal = self.index.code_gen(context=context)
-                if context.is_real(indexVal):
+                if indexVal != None:
                     varValue = context.get_ident(
-                        symbol=symbol, index=int(indexVal), getArr=self.arrFlag
+                        symbol=symbol, index=indexVal, getArr=isArr, getMap=isMap
                     )
                 else:
-                    raise TypeError(
-                        context.get_error_message(
-                            "Invalid index type. Should be real value"
-                        )
-                    )
+                    raise TypeError(context.get_error_message("Invalid index"))
             else:
-                isArr = valType == list if valType else False
-                varValue = context.get_ident(symbol=symbol, index=None, getArr=isArr)
+                varValue = context.get_ident(
+                    symbol=symbol, index=None, getArr=isArr, getMap=isMap
+                )
 
             return varValue
 
@@ -187,7 +206,14 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
         argNum=0,
         argType=None,
     ):
-        super().__init__(token=token, type=None, ident=ident, index=None, arrFlag=False)
+        super().__init__(
+            token=token,
+            type=None,
+            ident=ident,
+            index=None,
+            arrFlag=False,
+            mapFlag=False,
+        )
         self.value = value
         self.isFunc = isFunc
         self.returnType = returnType
@@ -375,7 +401,7 @@ class BinaryExprASTNode(ExprASTNode):
                         )
                 else:
                     raise TypeError(errorStr)
-            case TokenType.EXP:
+            case TokenType.POW:
                 if context.is_real(value=lVal) and context.is_real(value=rVal):
                     return float(lVal**rVal)
                 else:
@@ -414,6 +440,15 @@ class BinaryExprASTNode(ExprASTNode):
                 return bool(lVal == rVal)
             case TokenType.NE:
                 return bool(lVal != rVal)
+            case TokenType.IN:
+                if isinstance(rVal, (list, dict)):
+                    return bool(lVal in rVal)
+                else:
+                    raise TypeError(
+                        context.get_error_message(
+                            "Can only perform this operation on arrays or maps"
+                        )
+                    )
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_arr():
@@ -425,8 +460,11 @@ class BinaryExprASTNode(ExprASTNode):
                             index=None,
                             isAppend=True,
                             isArr=True,
+                            isMap=False,
                         )
-                        return context.get_ident(symbol=ident, index=None, getArr=True)
+                        return context.get_ident(
+                            symbol=ident, index=None, getArr=True, getMap=False
+                        )
                     else:
                         raise TypeError(
                             context.get_error_message("Can only append to an array")
@@ -463,18 +501,24 @@ class CallExprASTNode(ExprASTNode):
 
     def execute_builtin(self, fEntry: FuncEntry):
         # retrieve args values from context of reserved call and pass to inbuilt function
-        argVals = (
+        argVals = [
             fEntry.context.get_ident(
                 symbol=arg,
                 index=None,
-                getArr=fEntry.context.get_ident_type(symbol=arg, getArr=False) == list,
+                getArr=fEntry.context.get_ident_type(symbol=arg, getArrMap=False)
+                == list,
+                getMap=fEntry.context.get_ident_type(symbol=arg, getArrMap=False)
+                == dict,
             )
             for arg in fEntry.argSymbols
-        )
+        ]
 
-        if fEntry.funcBody == print:
+        if fEntry.funcBody in (print, str):
+            isDict = isinstance(argVals[0], dict)
             strArg = str(*argVals)
-            strArg = fEntry.context._display_builtin_helper(strOut=strArg)
+            strArg = fEntry.context._display_builtin_helper(
+                strOut=strArg, isDict=isDict
+            )
             argVals = (strArg,)
 
         try:
@@ -527,8 +571,10 @@ class CallExprASTNode(ExprASTNode):
                     value=val,
                     index=None,
                     isAppend=False,
-                    isArr=fEntry.context.get_ident_type(symbol=par, getArr=False)
+                    isArr=fEntry.context.get_ident_type(symbol=par, getArrMap=False)
                     == list,
+                    isMap=fEntry.context.get_ident_type(symbol=par, getArrMap=False)
+                    == dict,
                 )
             else:
                 raise TypeError(
@@ -580,6 +626,35 @@ class ArrayASTNode(ExprASTNode):
         return arrVal
 
 
+class MapASTNode(ExprASTNode):
+    def __init__(self, token: Token, elems: list[tuple[ExprASTNode, ExprASTNode]]):
+        super().__init__()
+        self.token = token
+        self.elems = elems
+
+    def __str__(self):
+        out = f"-> MapASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        if self.elems:
+            for key, value in self.elems:
+                key.level = self.level
+                value.level = self.level + 3
+                out += f"\n{' ' * (self.level)}-{repr(key)}"
+                out += f"\n{' ' * (self.level)}:-¬"
+                out += f"\n{' ' * (self.level + 3)}-{repr(value)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        mapVal = {
+            k.code_gen(context=context): v.code_gen(context=context)
+            for k, v in self.elems
+        }
+
+        return mapVal
+
+
 class AssignASTNode(ExprASTNode):
     def __init__(self, token: Token, var: IdentifierASTNode, value: ExprASTNode):
         super().__init__()
@@ -613,23 +688,26 @@ class AssignASTNode(ExprASTNode):
         ):
             raise ValueError(context.get_error_message("Unexpected null value"))
 
+        assignType = context.get_ident_type(symbol=symbol, getArrMap=False)
+        isArr = assignType == list if assignType else False
+        isMap = assignType == dict if assignType else False
+
         if self.var.index:
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
                 indexVal = self.var.index.code_gen(context=context)
-                if not context.is_real(indexVal):
-                    raise TypeError(
-                        context.get_error_message(
-                            "Invalid index type. Should be real value"
-                        )
+                if indexVal != None:
+                    context.set_ident(
+                        symbol=symbol,
+                        valType=None,
+                        value=assignVal,
+                        index=indexVal,
+                        isAppend=False,
+                        isArr=isArr,
+                        isMap=isMap,
                     )
-                context.set_ident(
-                    symbol=symbol,
-                    valType=None,
-                    value=assignVal,
-                    index=int(indexVal),
-                    isAppend=False,
-                    isArr=self.var.arrFlag,
-                )
+                else:
+                    raise TypeError(context.get_error_message("Invalid index"))
+
             else:
                 raise TypeError(
                     context.get_error_message(
@@ -646,7 +724,8 @@ class AssignASTNode(ExprASTNode):
                     value=assignVal,
                     index=None,
                     isAppend=False,
-                    isArr=self.var.arrFlag,
+                    isArr=isArr,
+                    isMap=isMap,
                 )
             else:
                 raise TypeError(
@@ -788,67 +867,6 @@ class IfStmtASTNode(StmtASTNode):
         return None
 
 
-class WhileStmtASTNode(StmtASTNode):
-    def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
-        super().__init__()
-        self.token = token
-        self.cond = cond
-        self.whileBody = whileBody
-
-    def __str__(self):
-        self.cond.level = self.level + 3
-        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
-        out += f"\n{' ' * (self.level)}?-¬"
-        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
-        if self.whileBody:
-            self.whileBody.level = self.level
-            out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
-
-        return out
-
-    def code_gen(self, context: TheContext):
-        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
-
-        if self.cond == None or self.whileBody == None:
-            raise ValueError(
-                context.get_error_message("Invalid condition or while body")
-            )
-
-        context.inLoop = True
-
-        bVal = None
-
-        while True:
-            condVal = self.cond.code_gen(context=context)
-            if not context.is_bool(value=condVal):
-                raise TypeError(
-                    context.get_error_message(
-                        "Invalid condition type. Should be boolean value"
-                    )
-                )
-
-            if not condVal:
-                break
-
-            bVal = self.whileBody.code_gen(context=context)
-            context.inLoop = True
-
-            if context.should_return():
-                return bVal
-
-            if context.should_continue():
-                context.continueFlag = False
-                continue
-
-            if context.should_break():
-                context.breakFlag = False
-                break
-
-        context.inLoop = False
-
-        return bVal
-
-
 class ForStmtASTNode(StmtASTNode):
     def __init__(
         self,
@@ -934,6 +952,7 @@ class ForStmtASTNode(StmtASTNode):
             index=None,
             isAppend=False,
             isArr=False,
+            isMap=False,
         )
 
         bVal = None
@@ -950,7 +969,175 @@ class ForStmtASTNode(StmtASTNode):
                 index=None,
                 isAppend=False,
                 isArr=False,
+                isMap=False,
             )
+
+            if context.should_return():
+                return bVal
+
+            if context.should_continue():
+                context.continueFlag = False
+                continue
+
+            if context.should_break():
+                context.breakFlag = False
+                break
+
+        context.inLoop = False
+
+        return bVal
+
+
+class WhileStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
+        super().__init__()
+        self.token = token
+        self.cond = cond
+        self.whileBody = whileBody
+
+    def __str__(self):
+        self.cond.level = self.level + 3
+        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out += f"\n{' ' * (self.level)}?-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
+        if self.whileBody:
+            self.whileBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.cond == None or self.whileBody == None:
+            raise ValueError(
+                context.get_error_message("Invalid condition or while body")
+            )
+
+        context.inLoop = True
+
+        bVal = None
+
+        while True:
+            condVal = self.cond.code_gen(context=context)
+            if not context.is_bool(value=condVal):
+                raise TypeError(
+                    context.get_error_message(
+                        "Invalid condition type. Should be boolean value"
+                    )
+                )
+
+            if not condVal:
+                break
+
+            bVal = self.whileBody.code_gen(context=context)
+            context.inLoop = True
+
+            if context.should_return():
+                return bVal
+
+            if context.should_continue():
+                context.continueFlag = False
+                continue
+
+            if context.should_break():
+                context.breakFlag = False
+                break
+
+        context.inLoop = False
+
+        return bVal
+
+
+class GiveStmtASTNode(StmtASTNode):
+    def __init__(
+        self,
+        token: Token,
+        keyIdent: IdentifierASTNode,
+        valueIdent: IdentifierASTNode,
+        arrMapIdent: IdentifierASTNode,
+        inBody: StmtBlockASTNode,
+    ):
+        super().__init__()
+        self.token = token
+        self.keyIdent = keyIdent
+        self.valueIdent = valueIdent
+        self.arrMapIdent = arrMapIdent
+        self.inBody = inBody
+
+    def __str__(self):
+        self.keyIdent.level = self.level + 3
+        self.valueIdent.level = self.level + 3
+        out = f"-> GiveStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.arrMapIdent)} "
+        out += f"\n{' ' * (self.level)}#-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.keyIdent)}"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.valueIdent)}"
+        if self.inBody:
+            self.inBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.inBody)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if (
+            self.keyIdent == None
+            or self.valueIdent == None
+            or self.arrMapIdent == None
+            or self.inBody == None
+        ):
+            raise ValueError(
+                context.get_error_message("Invalid condition or give body")
+            )
+
+        context.inLoop = True
+
+        self.keyIdent.code_gen(context=context)
+        self.valueIdent.code_gen(context=context)
+        keySymbol = self.keyIdent.get_ident()
+        valSymbol = self.valueIdent.get_ident()
+
+        arrMapValue = self.arrMapIdent.code_gen(context=context)
+
+        if not isinstance(arrMapValue, (list, dict)):
+            raise ValueError(
+                context.get_error_message(
+                    f"Invalid value in identifier, {self.arrMapIdent.get_ident()}. Must be an array or map"
+                )
+            )
+
+        inCollection = (
+            enumerate(arrMapValue)
+            if isinstance(arrMapValue, list)
+            else arrMapValue.items()
+        )
+
+        bVal = None
+
+        for k, v in inCollection:
+            context.set_ident(
+                symbol=keySymbol,
+                valType=None,
+                value=float(k) if isinstance(k, int) else k,
+                index=None,
+                isAppend=False,
+                isArr=False,
+                isMap=False,
+            )
+
+            context.set_ident(
+                symbol=valSymbol,
+                valType=None,
+                value=float(v) if isinstance(v, int) else v,
+                index=None,
+                isAppend=False,
+                isArr=False,
+                isMap=False,
+            )
+
+            bVal = self.inBody.code_gen(context=context)
+            context.inLoop = True
 
             if context.should_return():
                 return bVal

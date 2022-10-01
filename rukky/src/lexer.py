@@ -119,6 +119,21 @@ class Lexer:
             columnNo=self.columnNo,
         )
 
+    def _make_minus_or_arrow(self):
+        tokType = TokenType.MINUS  # -
+        self.advance()
+
+        if self.currChar == ">":
+            self.advance()
+            tokType = TokenType.MAP_ASSIGN  # ->
+
+        return Token(
+            type=tokType,
+            lexVal=tokType.value,
+            lineNo=self.lineNo,
+            columnNo=self.columnNo,
+        )
+
     def _make_colon_or_assign(self):
         tokType = TokenType.COLON  # :
         self.advance()
@@ -216,13 +231,7 @@ class Lexer:
                     columnNo=self.columnNo,
                 )
             elif self.currChar == "-":
-                self.advance()
-                return Token(
-                    type=TokenType.MINUS,
-                    lexVal=TokenType.MINUS.value,
-                    lineNo=self.lineNo,
-                    columnNo=self.columnNo,
-                )
+                return self._make_minus_or_arrow()
             elif self.currChar == "*":
                 self.advance()
                 return Token(
@@ -242,8 +251,8 @@ class Lexer:
             elif self.currChar == "^":
                 self.advance()
                 return Token(
-                    type=TokenType.EXP,
-                    lexVal=TokenType.EXP.value,
+                    type=TokenType.POW,
+                    lexVal=TokenType.POW.value,
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
@@ -272,6 +281,14 @@ class Lexer:
                 return Token(
                     type=TokenType.AND,
                     lexVal=TokenType.AND.value,
+                    lineNo=self.lineNo,
+                    columnNo=self.columnNo,
+                )
+            elif self.currChar == "?":
+                self.advance()
+                return Token(
+                    type=TokenType.IN,
+                    lexVal=TokenType.IN.value,
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )

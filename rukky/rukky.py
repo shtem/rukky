@@ -70,7 +70,12 @@ def execute(args, text):
     result, programAST = interp.interpret()
 
     if result != None and programAST and args.shell:
-        print(programAST.globalContext._display_builtin_helper(strOut=str(result)))
+        isDict = isinstance(result, dict)
+        print(
+            programAST.globalContext._display_builtin_helper(
+                strOut=str(result), isDict=isDict
+            )
+        )
 
     if args.table and programAST:
         print("\nGlobal Tables\n-------------")

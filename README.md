@@ -12,7 +12,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Comments ``$ ... $``
 - [x] Real, Boolean and String Literals
 - [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
-- [x] Comparison Operations ``<>, <!, >, >=, <, <=``
+- [x] Comparison Operations ``?, <>, <!, >, >=, <, <=``
 - [x] Logical Operations ``~, &&, ||``
 - [x] Types ``real, bool, str, void, obj``
 - [x] Variables ``x := 10``
@@ -22,13 +22,13 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
         - Update ``lst@0 := x``
     - Appending ``lst << x``
 - [x] If Statement ``if:: elif:: else::``
-- [x] Loop Statements ``for:: while::``
+- [x] Loop Statements ``for:: while:: give::``
 - [x] Reserved Keywords ``null, pi, eul``
 - [x] Functions
 - [x] Function Calls ``func:x::``
 - [x] Branching Statements ``return:: break:: continue::``
 - [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
-- [ ] Maps
+- [x] Maps
 - [ ] Classes
 
 ---

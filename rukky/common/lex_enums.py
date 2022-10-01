@@ -8,10 +8,11 @@ class TokenType(Enum):
     FLOAT_DIV = "/"
     INT_DIV = "//"
     MOD = "%"
-    EXP = "^"
+    POW = "^"
     OR = "||"
     AND = "&&"
     NOT = "~"
+    IN = "?"
     GT = ">"
     GE = ">="
     LT = "<"
@@ -32,6 +33,7 @@ class TokenType(Enum):
     COMMA = ","
     ASSIGN = ":="
     LIST_ASSIGN = "@"
+    MAP_ASSIGN = "->"
 
     EOL = "\n"
     EOF = None
@@ -46,6 +48,7 @@ class TokenType(Enum):
     NULL = "null"
     FOR = "for"
     WHILE = "while"
+    GIVE = "give"
     IF = "if"
     ELIF = "elif"
     ELSE = "else"
