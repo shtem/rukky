@@ -67,6 +67,7 @@ conjunc -> conjunc "&&" equiv
         | equiv
 equiv -> equiv "<>" ineq
         | equiv "<!" ineq
+        | equiv "?" ineq
         | ineq
 ineq -> ineq "<=" term
         | ineq "<" term
@@ -83,6 +84,7 @@ factor -> factor "*" pow
         | pow
 pow -> pow "^" elem 
         | elem
+        
 elem -> "-" elem
         | "~" elem
         | "(" expr ")"

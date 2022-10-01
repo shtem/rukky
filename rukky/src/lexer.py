@@ -284,6 +284,14 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
+            elif self.currChar == "?":
+                self.advance()
+                return Token(
+                    type=TokenType.IN,
+                    lexVal=TokenType.IN.value,
+                    lineNo=self.lineNo,
+                    columnNo=self.columnNo,
+                )
             elif self.currChar == ">":
                 return self._make_greater_than()
             elif self.currChar == "<":

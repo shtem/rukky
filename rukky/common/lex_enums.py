@@ -12,6 +12,7 @@ class TokenType(Enum):
     OR = "||"
     AND = "&&"
     NOT = "~"
+    IN = "?"
     GT = ">"
     GE = ">="
     LT = "<"

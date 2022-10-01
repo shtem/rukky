@@ -1175,6 +1175,7 @@ class Parser:
     """
     equiv -> equiv "<>" ineq
         | equiv "<!" ineq
+        | equiv "?" ineq
         | ineq
     """
 
@@ -1202,9 +1203,9 @@ class Parser:
             return self.epsilon()
 
         while True:
-            if self.currTok.type == TokenType.NE or self.currTok.type == TokenType.EQ:
+            if self.currTok.type in [TokenType.NE, TokenType.EQ, TokenType.IN]:
                 op = self.currTok
-                self.eat()  # eat <> <!
+                self.eat()  # eat <> <! ?
                 rhs = self.ineq()
                 if rhs:
                     lhs = BinaryExprASTNode(op=op, lhs=lhs, rhs=rhs)
@@ -1227,6 +1228,7 @@ class Parser:
         possibleEndToks = [
             TokenType.EQ,
             TokenType.NE,
+            TokenType.IN,
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
@@ -1281,6 +1283,7 @@ class Parser:
             TokenType.LE,
             TokenType.EQ,
             TokenType.NE,
+            TokenType.IN,
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
@@ -1337,6 +1340,7 @@ class Parser:
             TokenType.LE,
             TokenType.EQ,
             TokenType.NE,
+            TokenType.IN,
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,
@@ -1396,6 +1400,7 @@ class Parser:
             TokenType.LE,
             TokenType.EQ,
             TokenType.NE,
+            TokenType.IN,
             TokenType.AND,
             TokenType.OR,
             TokenType.EOL,

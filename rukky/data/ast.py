@@ -440,6 +440,15 @@ class BinaryExprASTNode(ExprASTNode):
                 return bool(lVal == rVal)
             case TokenType.NE:
                 return bool(lVal != rVal)
+            case TokenType.IN:
+                if isinstance(rVal, (list, dict)):
+                    return bool(lVal in rVal)
+                else:
+                    raise TypeError(
+                        context.get_error_message(
+                            "Can only perform this operation on arrays or maps"
+                        )
+                    )
             case TokenType.APPEND:
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_arr():

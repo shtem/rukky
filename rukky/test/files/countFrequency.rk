@@ -8,7 +8,7 @@ $
    obj freq := {}
 
    give:: (k, item) ; nums {
-      if:: freq[item] <! null {
+      if:: item ? freq {
          freq@item := freq[item] + 1
       }
       else:: {

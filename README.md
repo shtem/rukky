@@ -12,7 +12,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Comments ``$ ... $``
 - [x] Real, Boolean and String Literals
 - [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
-- [x] Comparison Operations ``<>, <!, >, >=, <, <=``
+- [x] Comparison Operations ``?, <>, <!, >, >=, <, <=``
 - [x] Logical Operations ``~, &&, ||``
 - [x] Types ``real, bool, str, void, obj``
 - [x] Variables ``x := 10``
