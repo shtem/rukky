@@ -71,6 +71,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
+            TokenType.IN,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -325,6 +326,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
+            TokenType.IN,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -424,6 +426,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
+            TokenType.IN,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -474,6 +477,7 @@ class Parser:
         | expr_stmt
         | for_stmt
         | while_stmt
+        | in_stmt
         | if_stmt
         | return_stmt
         | break_stmt
@@ -516,6 +520,8 @@ class Parser:
             return self.for_stmt()
         elif self.currTok.type == TokenType.WHILE:
             return self.while_stmt()
+        elif self.currTok.type == TokenType.IN:
+            return self.in_stmt()
         elif self.currTok.type == TokenType.IF:
             return self.if_stmt()
         elif self.currTok.type == TokenType.RETURN:
@@ -720,6 +726,76 @@ class Parser:
             return self.epsilon()
 
     """
+    in_stmt -> "in" "::" "(" ID "," ID ")" ";" ID block
+    """
+
+    def in_stmt(self):
+        if self.currTok.type == TokenType.IN:
+            tok = self.currTok
+            self.eat()  # eat 'in'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                if self.currTok.type == TokenType.LPAREN:
+                    self.eat()  # eat (
+                    if self.currTok.type == TokenType.ID:
+                        identOneAST = IdentifierASTNode(
+                            token=self.currTok,
+                            type="obj",
+                            ident=self.currTok.lexVal,
+                            index=None,
+                            arrFlag=False,
+                            mapFlag=False,
+                        )
+                        self.eat()  # eat id
+                        if self.currTok.type == TokenType.COMMA:
+                            self.eat()  # eat ,
+                            if self.currTok.type == TokenType.ID:
+                                identTwoAST = IdentifierASTNode(
+                                    token=self.currTok,
+                                    type="obj",
+                                    ident=self.currTok.lexVal,
+                                    index=None,
+                                    arrFlag=False,
+                                    mapFlag=False,
+                                )
+                                self.eat()  # eat id
+                                if self.currTok.type == TokenType.RPAREN:
+                                    self.eat()  # eat )
+                                    if self.currTok.type == TokenType.SEM_COLON:
+                                        self.eat()  # eat ;
+                                        if self.currTok.type == TokenType.ID:
+                                            arrMapAST = IdentifierASTNode(
+                                                token=self.currTok,
+                                                type=None,
+                                                ident=self.currTok.lexVal,
+                                                index=None,
+                                                arrFlag=False,
+                                                mapFlag=False,
+                                            )
+                                            self.eat()  # eat id
+                                            body = self.block()
+                                            if body:
+                                                return InStmtASTNode(token=tok, keyIdent=identOneAST, valueIdent=identTwoAST, arrMapIdent=arrMapAST, inBody=body)
+                                        else:
+                                            self.error("identifier")
+                                    else:
+                                        self.error('";"')
+                                else:
+                                    self.error('")"')
+                            else:
+                                self.error("identifier")
+                        else:
+                            self.error('","')
+                    else:
+                        self.error("identifier")
+                else:
+                    self.error('"("')
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
     if_stmt -> "if" "::" expr block elif_stmt_list else_stmt
     """
 
@@ -772,6 +848,7 @@ class Parser:
             TokenType.ELSE,
             TokenType.FOR,
             TokenType.WHILE,
+            TokenType.IN,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,

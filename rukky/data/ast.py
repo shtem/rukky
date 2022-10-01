@@ -858,67 +858,6 @@ class IfStmtASTNode(StmtASTNode):
         return None
 
 
-class WhileStmtASTNode(StmtASTNode):
-    def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
-        super().__init__()
-        self.token = token
-        self.cond = cond
-        self.whileBody = whileBody
-
-    def __str__(self):
-        self.cond.level = self.level + 3
-        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
-        out += f"\n{' ' * (self.level)}?-¬"
-        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
-        if self.whileBody:
-            self.whileBody.level = self.level
-            out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
-
-        return out
-
-    def code_gen(self, context: TheContext):
-        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
-
-        if self.cond == None or self.whileBody == None:
-            raise ValueError(
-                context.get_error_message("Invalid condition or while body")
-            )
-
-        context.inLoop = True
-
-        bVal = None
-
-        while True:
-            condVal = self.cond.code_gen(context=context)
-            if not context.is_bool(value=condVal):
-                raise TypeError(
-                    context.get_error_message(
-                        "Invalid condition type. Should be boolean value"
-                    )
-                )
-
-            if not condVal:
-                break
-
-            bVal = self.whileBody.code_gen(context=context)
-            context.inLoop = True
-
-            if context.should_return():
-                return bVal
-
-            if context.should_continue():
-                context.continueFlag = False
-                continue
-
-            if context.should_break():
-                context.breakFlag = False
-                break
-
-        context.inLoop = False
-
-        return bVal
-
-
 class ForStmtASTNode(StmtASTNode):
     def __init__(
         self,
@@ -1034,6 +973,132 @@ class ForStmtASTNode(StmtASTNode):
             if context.should_break():
                 context.breakFlag = False
                 break
+
+        context.inLoop = False
+
+        return bVal
+
+
+class WhileStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, cond: ExprASTNode, whileBody: StmtBlockASTNode):
+        super().__init__()
+        self.token = token
+        self.cond = cond
+        self.whileBody = whileBody
+
+    def __str__(self):
+        self.cond.level = self.level + 3
+        out = f"-> WhileStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        out += f"\n{' ' * (self.level)}?-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.cond)}"
+        if self.whileBody:
+            self.whileBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.whileBody)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.cond == None or self.whileBody == None:
+            raise ValueError(
+                context.get_error_message("Invalid condition or while body")
+            )
+
+        context.inLoop = True
+
+        bVal = None
+
+        while True:
+            condVal = self.cond.code_gen(context=context)
+            if not context.is_bool(value=condVal):
+                raise TypeError(
+                    context.get_error_message(
+                        "Invalid condition type. Should be boolean value"
+                    )
+                )
+
+            if not condVal:
+                break
+
+            bVal = self.whileBody.code_gen(context=context)
+            context.inLoop = True
+
+            if context.should_return():
+                return bVal
+
+            if context.should_continue():
+                context.continueFlag = False
+                continue
+
+            if context.should_break():
+                context.breakFlag = False
+                break
+
+        context.inLoop = False
+
+        return bVal
+
+
+class InStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, keyIdent: IdentifierASTNode, valueIdent: IdentifierASTNode, arrMapIdent: IdentifierASTNode, inBody: StmtBlockASTNode):
+        super().__init__()
+        self.token = token
+        self.keyIdent = keyIdent
+        self.valueIdent = valueIdent
+        self.arrMapIdent = arrMapIdent
+        self.inBody = inBody
+
+    def __str__(self):
+        self.keyIdent.level = self.level + 3
+        self.valueIdent.level = self.level + 3
+        out = f"-> InStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.arrMapIdent)} "
+        out += f"\n{' ' * (self.level)}#-¬"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.keyIdent)}"
+        out += f"\n{' ' * (self.level + 3)}-{repr(self.valueIdent)}"
+        if self.inBody:
+            self.inBody.level = self.level
+            out += f"\n{' ' * (self.level)}-{repr(self.inBody)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.keyIdent == None or self.valueIdent == None or self.arrMapIdent == None or self.inBody == None:
+            raise ValueError(
+                context.get_error_message("Invalid condition or in body")
+            )
+
+        context.inLoop = True
+
+        bVal = None
+
+        # while True:
+        #     condVal = self.cond.code_gen(context=context)
+        #     if not context.is_bool(value=condVal):
+        #         raise TypeError(
+        #             context.get_error_message(
+        #                 "Invalid condition type. Should be boolean value"
+        #             )
+        #         )
+
+        #     if not condVal:
+        #         break
+
+        #     bVal = self.whileBody.code_gen(context=context)
+        #     context.inLoop = True
+
+        #     if context.should_return():
+        #         return bVal
+
+        #     if context.should_continue():
+        #         context.continueFlag = False
+        #         continue
+
+        #     if context.should_break():
+        #         context.breakFlag = False
+        #         break
 
         context.inLoop = False
 

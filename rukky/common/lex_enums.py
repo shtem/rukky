@@ -47,6 +47,7 @@ class TokenType(Enum):
     NULL = "null"
     FOR = "for"
     WHILE = "while"
+    IN = "in"
     IF = "if"
     ELIF = "elif"
     ELSE = "else"
