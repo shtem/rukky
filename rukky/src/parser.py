@@ -71,7 +71,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
-            TokenType.IN,
+            TokenType.GIVE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -326,7 +326,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
-            TokenType.IN,
+            TokenType.GIVE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -426,7 +426,7 @@ class Parser:
             TokenType.IF,
             TokenType.FOR,
             TokenType.WHILE,
-            TokenType.IN,
+            TokenType.GIVE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -477,7 +477,7 @@ class Parser:
         | expr_stmt
         | for_stmt
         | while_stmt
-        | in_stmt
+        | give_stmt
         | if_stmt
         | return_stmt
         | break_stmt
@@ -520,8 +520,8 @@ class Parser:
             return self.for_stmt()
         elif self.currTok.type == TokenType.WHILE:
             return self.while_stmt()
-        elif self.currTok.type == TokenType.IN:
-            return self.in_stmt()
+        elif self.currTok.type == TokenType.GIVE:
+            return self.give_stmt()
         elif self.currTok.type == TokenType.IF:
             return self.if_stmt()
         elif self.currTok.type == TokenType.RETURN:
@@ -726,13 +726,13 @@ class Parser:
             return self.epsilon()
 
     """
-    in_stmt -> "in" "::" "(" ID "," ID ")" ";" ID block
+    give_stmt -> "in" "::" "(" ID "," ID ")" ";" ID block
     """
 
-    def in_stmt(self):
-        if self.currTok.type == TokenType.IN:
+    def give_stmt(self):
+        if self.currTok.type == TokenType.GIVE:
             tok = self.currTok
-            self.eat()  # eat 'in'
+            self.eat()  # eat 'give'
             if self.currTok.type == TokenType.RES_COLON:
                 self.eat()  # eat ::
                 if self.currTok.type == TokenType.LPAREN:
@@ -775,7 +775,7 @@ class Parser:
                                             self.eat()  # eat id
                                             body = self.block()
                                             if body:
-                                                return InStmtASTNode(
+                                                return GiveStmtASTNode(
                                                     token=tok,
                                                     keyIdent=identOneAST,
                                                     valueIdent=identTwoAST,
@@ -854,7 +854,7 @@ class Parser:
             TokenType.ELSE,
             TokenType.FOR,
             TokenType.WHILE,
-            TokenType.IN,
+            TokenType.GIVE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,

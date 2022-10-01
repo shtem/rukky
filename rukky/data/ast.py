@@ -1040,7 +1040,7 @@ class WhileStmtASTNode(StmtASTNode):
         return bVal
 
 
-class InStmtASTNode(StmtASTNode):
+class GiveStmtASTNode(StmtASTNode):
     def __init__(
         self,
         token: Token,
@@ -1059,7 +1059,7 @@ class InStmtASTNode(StmtASTNode):
     def __str__(self):
         self.keyIdent.level = self.level + 3
         self.valueIdent.level = self.level + 3
-        out = f"-> InStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.arrMapIdent)} "
+        out = f"-> GiveStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.arrMapIdent)} "
         out += f"\n{' ' * (self.level)}#-¬"
         out += f"\n{' ' * (self.level + 3)}-{repr(self.keyIdent)}"
         out += f"\n{' ' * (self.level + 3)}-{repr(self.valueIdent)}"
@@ -1078,7 +1078,9 @@ class InStmtASTNode(StmtASTNode):
             or self.arrMapIdent == None
             or self.inBody == None
         ):
-            raise ValueError(context.get_error_message("Invalid condition or in body"))
+            raise ValueError(
+                context.get_error_message("Invalid condition or give body")
+            )
 
         context.inLoop = True
 
