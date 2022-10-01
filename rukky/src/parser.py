@@ -1582,6 +1582,9 @@ class Parser:
             TokenType.EULER,
         ]
 
+        while self.currTok.type == TokenType.EOL:
+            self.eat()
+
         if self.currTok.type in possibleStartToks:  # id: args: or id := [args]
             argList = self.args_list()
             if argList:
@@ -1611,6 +1614,9 @@ class Parser:
             while True:
                 if self.currTok.type == TokenType.COMMA:
                     self.eat()  # eat ,
+
+                    while self.currTok.type == TokenType.EOL:
+                        self.eat()
                     expr = self.expr()
                     if expr:
                         argList.append(expr)
@@ -1619,6 +1625,8 @@ class Parser:
                     or self.currTok.type == TokenType.RSQUARE
                 ):
                     return argList
+                elif self.currTok.type == TokenType.EOL:
+                    self.eat()
                 else:
                     self.error('"," or "]" or "::"')
 
@@ -1659,6 +1667,9 @@ class Parser:
             TokenType.EULER,
         ]
 
+        while self.currTok.type == TokenType.EOL:
+            self.eat()
+
         if self.currTok.type in possibleStartToks:  # id := {map}
             pairList = self.pair_list()
             if pairList:
@@ -1685,11 +1696,16 @@ class Parser:
             while True:
                 if self.currTok.type == TokenType.COMMA:
                     self.eat()  # eat ,
+
+                    while self.currTok.type == TokenType.EOL:
+                        self.eat()
                     pair = self.pair()
                     if pair:
                         pairList.append(pair)
                 elif self.currTok.type == TokenType.RBRACE:
                     return pairList
+                elif self.currTok.type == TokenType.EOL:
+                    self.eat()
                 else:
                     self.error('"," or "}"')
 
