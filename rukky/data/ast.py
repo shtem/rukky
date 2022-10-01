@@ -1041,7 +1041,14 @@ class WhileStmtASTNode(StmtASTNode):
 
 
 class InStmtASTNode(StmtASTNode):
-    def __init__(self, token: Token, keyIdent: IdentifierASTNode, valueIdent: IdentifierASTNode, arrMapIdent: IdentifierASTNode, inBody: StmtBlockASTNode):
+    def __init__(
+        self,
+        token: Token,
+        keyIdent: IdentifierASTNode,
+        valueIdent: IdentifierASTNode,
+        arrMapIdent: IdentifierASTNode,
+        inBody: StmtBlockASTNode,
+    ):
         super().__init__()
         self.token = token
         self.keyIdent = keyIdent
@@ -1065,40 +1072,72 @@ class InStmtASTNode(StmtASTNode):
     def code_gen(self, context: TheContext):
         context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
 
-        if self.keyIdent == None or self.valueIdent == None or self.arrMapIdent == None or self.inBody == None:
-            raise ValueError(
-                context.get_error_message("Invalid condition or in body")
-            )
+        if (
+            self.keyIdent == None
+            or self.valueIdent == None
+            or self.arrMapIdent == None
+            or self.inBody == None
+        ):
+            raise ValueError(context.get_error_message("Invalid condition or in body"))
 
         context.inLoop = True
 
+        self.keyIdent.code_gen(context=context)
+        self.valueIdent.code_gen(context=context)
+        keySymbol = self.keyIdent.get_ident()
+        valSymbol = self.valueIdent.get_ident()
+
+        arrMapValue = self.arrMapIdent.code_gen(context=context)
+
+        if not isinstance(arrMapValue, (list, dict)):
+            raise ValueError(
+                context.get_error_message(
+                    f"Invalid value in identifier, {self.arrMapIdent.get_ident()}. Must be an array or map"
+                )
+            )
+
+        inCollection = (
+            enumerate(arrMapValue)
+            if isinstance(arrMapValue, list)
+            else arrMapValue.items()
+        )
+
         bVal = None
 
-        # while True:
-        #     condVal = self.cond.code_gen(context=context)
-        #     if not context.is_bool(value=condVal):
-        #         raise TypeError(
-        #             context.get_error_message(
-        #                 "Invalid condition type. Should be boolean value"
-        #             )
-        #         )
+        for k, v in inCollection:
+            context.set_ident(
+                symbol=keySymbol,
+                valType=None,
+                value=float(k) if isinstance(k, int) else k,
+                index=None,
+                isAppend=False,
+                isArr=False,
+                isMap=False,
+            )
 
-        #     if not condVal:
-        #         break
+            context.set_ident(
+                symbol=valSymbol,
+                valType=None,
+                value=float(v) if isinstance(v, int) else v,
+                index=None,
+                isAppend=False,
+                isArr=False,
+                isMap=False,
+            )
 
-        #     bVal = self.whileBody.code_gen(context=context)
-        #     context.inLoop = True
+            bVal = self.inBody.code_gen(context=context)
+            context.inLoop = True
 
-        #     if context.should_return():
-        #         return bVal
+            if context.should_return():
+                return bVal
 
-        #     if context.should_continue():
-        #         context.continueFlag = False
-        #         continue
+            if context.should_continue():
+                context.continueFlag = False
+                continue
 
-        #     if context.should_break():
-        #         context.breakFlag = False
-        #         break
+            if context.should_break():
+                context.breakFlag = False
+                break
 
         context.inLoop = False
 

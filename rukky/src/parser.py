@@ -775,7 +775,13 @@ class Parser:
                                             self.eat()  # eat id
                                             body = self.block()
                                             if body:
-                                                return InStmtASTNode(token=tok, keyIdent=identOneAST, valueIdent=identTwoAST, arrMapIdent=arrMapAST, inBody=body)
+                                                return InStmtASTNode(
+                                                    token=tok,
+                                                    keyIdent=identOneAST,
+                                                    valueIdent=identTwoAST,
+                                                    arrMapIdent=arrMapAST,
+                                                    inBody=body,
+                                                )
                                         else:
                                             self.error("identifier")
                                     else:
