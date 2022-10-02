@@ -4,10 +4,6 @@ decl_list -> decl_list decl
 decl -> stmt 
         | func_decl
 
-var_type -> "real"
-            | "bool"
-            | "str"
-            | "obj"
 func_type -> "void"
             | decl_type
 func_decl -> "::" func_type ID ":=" "(" params ")" block 
@@ -34,6 +30,10 @@ stmt -> decl_stmt
         | break_stmt
         | continue_stmt
 
+var_type -> "real"
+            | "bool"
+            | "str"
+            | "obj"
 decl_type -> var_type
             | var_type "[]"
 decl_stmt -> decl_type ID EOL

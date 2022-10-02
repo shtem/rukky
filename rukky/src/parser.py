@@ -134,29 +134,6 @@ class Parser:
             return self.stmt()
 
     """
-    var_type -> "real"
-            | "bool"
-            | "str"
-            | "obj"
-    """
-
-    def var_type(self):
-        if self.currTok.type == TokenType.REAL:
-            self.eat()  # eat 'real'
-            return "real"
-        elif self.currTok.type == TokenType.BOOL:
-            self.eat()  # eat 'bool'
-            return "bool"
-        elif self.currTok.type == TokenType.STRING:
-            self.eat()  # eat 'str'
-            return "str"
-        elif self.currTok.type == TokenType.OBJECT:
-            self.eat()  # eat 'obj'
-            return "obj"
-        else:
-            self.error('"real" or "bool" or "str" or "obj"')
-
-    """
     func_type -> "void"
                 | decl_type
     """
@@ -391,7 +368,7 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error(
-                        'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "}"'
+                        'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "}"'
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
@@ -472,7 +449,7 @@ class Parser:
                 return stmtList
             else:
                 self.error(
-                    'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj" or "}"'
+                    'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj" or "}"'
                 )
 
     """
@@ -549,8 +526,31 @@ class Parser:
             return self.epsilon()
         else:
             return self.error(
-                'expression or "if", "while", "for", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj"'
+                'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj"'
             )
+
+    """
+    var_type -> "real"
+            | "bool"
+            | "str"
+            | "obj"
+    """
+
+    def var_type(self):
+        if self.currTok.type == TokenType.REAL:
+            self.eat()  # eat 'real'
+            return "real"
+        elif self.currTok.type == TokenType.BOOL:
+            self.eat()  # eat 'bool'
+            return "bool"
+        elif self.currTok.type == TokenType.STRING:
+            self.eat()  # eat 'str'
+            return "str"
+        elif self.currTok.type == TokenType.OBJECT:
+            self.eat()  # eat 'obj'
+            return "obj"
+        else:
+            self.error('"real" or "bool" or "str" or "obj"')
 
     """
     decl_type -> var_type
