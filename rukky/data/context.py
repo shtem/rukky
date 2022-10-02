@@ -204,6 +204,7 @@ class TheContext:
                             "Invalid index type. Should be real value"
                         )
                     )
+
                 try:
                     sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
                     sArr.add(value=value, index=int(index))  # add value at index
@@ -294,7 +295,7 @@ class TheContext:
                         )
                     )
 
-            # allows for obj y := [..]
+            # allows for obj y := [..] or obj y := {..}
             if isinstance(value, list) and sType == object:
                 arrVal = ArrayValue(type=sType, arr=value)
                 sEntry = SymbolEntry(type=sArrType, value=arrVal)

@@ -1739,7 +1739,7 @@ class Parser:
     """
 
     def _reserved_keywords(self):
-        mulTypes = (str, float, int, bool, list, dict)
+        mulTypes = (str, int, float, bool, list, dict)
         keyWordToFuncDict = {
             TokenType.DISPLAY: {
                 "value": print,
@@ -1751,7 +1751,7 @@ class Parser:
                 "value": len,
                 "argNum": 1,
                 "returnType": (int, float),
-                "argType": (str, list),
+                "argType": (str, list, dict),
             },
             TokenType.TYPE: {
                 "value": type,
@@ -1774,14 +1774,14 @@ class Parser:
             TokenType.MAX: {
                 "value": max,
                 "argNum": 1,
-                "returnType": float,
-                "argType": list,
+                "returnType": mulTypes[:3],
+                "argType": (str, list, dict),
             },
             TokenType.MIN: {
                 "value": min,
                 "argNum": 1,
-                "returnType": float,
-                "argType": list,
+                "returnType": mulTypes[:3],
+                "argType": (str, list, dict),
             },
             TokenType.RANDOM: {
                 "value": random.random,
@@ -1892,5 +1892,5 @@ class Parser:
             return eulVal
         else:
             self.error(
-                'identifier or unary expression or "(" or "[" real, bool or string literal'
+                'identifier or unary expression or "(" or "[" or "{" or real, bool or string literal'
             )

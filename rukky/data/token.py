@@ -6,10 +6,10 @@ class Token:
         self.type = type
         self.lexVal = lexVal
         self.lineNo = lineNo
-        if not lexVal:
+        if not self.lexVal:
             self.columnNo = columnNo - 1
         else:
-            self.columnNo = columnNo - len(lexVal)
+            self.columnNo = columnNo - len(self.lexVal)
 
     def __str__(self):
         # Token(TokenType.ID, 'y', lineNo=5, columnNo=10)

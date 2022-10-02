@@ -1107,7 +1107,7 @@ class GiveStmtASTNode(StmtASTNode):
                 )
             )
 
-        inCollection = (
+        giveCollection = (
             enumerate(arrMapValue)
             if isinstance(arrMapValue, list)
             else arrMapValue.items()
@@ -1115,7 +1115,7 @@ class GiveStmtASTNode(StmtASTNode):
 
         bVal = None
 
-        for k, v in inCollection:
+        for k, v in giveCollection:
             context.set_ident(
                 symbol=keySymbol,
                 valType=None,
