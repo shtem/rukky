@@ -1173,6 +1173,9 @@ class DeleteStmtASTNode(StmtASTNode):
         if self.delBody == None or not isinstance(self.delBody, IdentifierASTNode):
             raise ValueError(context.get_error_message("Invalid delete body"))
 
+        if isinstance(self.delBody, ReservedKeyWordASTNode):
+            raise ValueError(context.get_error_message("Invalid delete body"))
+
         symbol = self.delBody.get_ident()
         index = self.delBody.get_index()
         indexVal = index.code_gen(context=context) if index != None else None

@@ -16,6 +16,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Logical Operations ``~, &&, ||``
 - [x] Types ``real, bool, str, void, obj``
 - [x] Variables ``x := 10``
+- [x] Maps
 - [x] Arrays
     - Indexing
         - Retrieve ``lst[0]``
@@ -29,7 +30,6 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Function Calls ``func:x::``
 - [x] Branching Statements ``return:: break:: continue::``
 - [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
-- [x] Maps
 - [ ] Classes
 
 ---
