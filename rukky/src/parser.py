@@ -72,6 +72,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -327,6 +328,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -427,6 +429,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -479,9 +482,10 @@ class Parser:
         | while_stmt
         | give_stmt
         | if_stmt
+        | delete_stmt
         | return_stmt
         | break_stmt
-        | cont_stmt
+        | continue_stmt
     """
 
     def stmt(self):
@@ -524,12 +528,14 @@ class Parser:
             return self.give_stmt()
         elif self.currTok.type == TokenType.IF:
             return self.if_stmt()
+        elif self.currTok.type == TokenType.DELETE:
+            return self.delete_stmt()
         elif self.currTok.type == TokenType.RETURN:
             return self.return_stmt()
         elif self.currTok.type == TokenType.BREAK:
             return self.break_stmt()
         elif self.currTok.type == TokenType.CONTINUE:
-            return self.cont_stmt()
+            return self.continue_stmt()
         elif self.currTok.type in [
             TokenType.REAL,
             TokenType.BOOL,
@@ -855,6 +861,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
             TokenType.CONTINUE,
@@ -943,6 +950,31 @@ class Parser:
             return self.epsilon()
 
     """
+    delete_stmt -> "del" "::" expr EOL
+    """
+
+    def delete_stmt(self):
+        if self.currTok.type == TokenType.DELETE:
+            tok = self.currTok
+            self.eat()  # eat 'del'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                body = self.expr()
+                if (
+                    self.currTok.type == TokenType.EOL
+                    or self.currTok.type == TokenType.EOF
+                ):
+                    self.eat()  # eat \n
+                    if body:
+                        return DeleteStmtASTNode(token=tok, delBody=body)
+                else:
+                    self.error("newline")
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
     return_stmt -> "return" "::" EOL
                 | "return" "::" expr EOL
     """
@@ -990,10 +1022,10 @@ class Parser:
             return self.epsilon()
 
     """
-    cont_stmt -> "continue" "::" EOL
+    continue_stmt -> "continue" "::" EOL
     """
 
-    def cont_stmt(self):
+    def continue_stmt(self):
         if self.currTok.type == TokenType.CONTINUE:
             tok = self.currTok
             self.eat()  # eat 'continue'

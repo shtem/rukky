@@ -32,6 +32,15 @@ class ArrayValue(Value):
         else:
             raise TypeError("Element type does not match array type")
 
+    def remove(self, index=None):
+        if index != None:
+            if index < len(self.arr):
+                del self.arr[index]
+            else:
+                raise IndexError("Index out of range")
+        else:
+            raise TypeError("Invalid index")
+
     def get_arr(self, index=None):
         if index != None:
             if index < len(self.arr):
@@ -58,6 +67,15 @@ class MapValue(Value):
             self.map[index] = value
         else:
             raise KeyError("Invalid index")
+
+    def remove(self, index=None):
+        if index != None:
+            if index in self.map:
+                del self.map[index]
+            else:
+                raise KeyError(f"Key, {index}, doesn't exist in map")
+        else:
+            raise TypeError("Invalid index")
 
     def get_map(self, index=None):
         if index != None:
@@ -208,8 +226,6 @@ class TheContext:
                 try:
                     sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
                     sArr.add(value=value, index=int(index))  # add value at index
-                    sEntryNew = SymbolEntry(type=sArrType, value=sArr)
-                    self.symbolTable[symbol] = sEntryNew
                 except Exception as e:
                     raise ValueError(self.get_error_message(str(e)))
             elif isAppend:
@@ -221,8 +237,6 @@ class TheContext:
                 try:
                     sArr: ArrayValue = self.get_ident(symbol=symbol)  # get arr object
                     sArr.add(value=value)  # append
-                    sEntryNew = SymbolEntry(type=sArrType, value=sArr)
-                    self.symbolTable[symbol] = sEntryNew
                 except Exception as e:
                     raise ValueError(self.get_error_message(str(e)))
             else:
@@ -260,8 +274,6 @@ class TheContext:
                 try:
                     sMap: MapValue = self.get_ident(symbol=symbol)
                     sMap.add(value=value, index=index)
-                    sEntryNew = SymbolEntry(type=sMapType, value=sMap)
-                    self.symbolTable[symbol] = sEntryNew
                 except Exception as e:
                     raise ValueError(self.get_error_message(str(e)))
             else:
@@ -348,8 +360,35 @@ class TheContext:
 
         return None
 
-    def remove_ident(self, symbol: str):
-        del self.symbolTable[symbol]
+    def remove_ident(self, symbol: str, index=None):
+        sType = self.get_ident_type(symbol=symbol, getArrMap=False)
+        if not sType:
+            raise ValueError(
+                self.get_error_message(
+                    f"Variable {symbol} doesn't exist/has not yet been defined"
+                )
+            )
+
+        if index != None:
+            if sType == list:
+                if not self.is_real(index):
+                    raise TypeError(
+                        self.get_error_message(
+                            "Invalid index type. Should be real value"
+                        )
+                    )
+
+                sArr: ArrayValue = self.get_ident(symbol=symbol)
+                sArr.remove(index=int(index))
+            elif sType == dict:
+                sMap: MapValue = self.get_ident(symbol=symbol)
+                sMap.remove(index=index)
+            else:
+                raise TypeError(
+                    self.get_error_message(f"Variable {symbol} is not an array or map")
+                )
+        else:
+            del self.symbolTable[symbol]
 
     def set_func(
         self,

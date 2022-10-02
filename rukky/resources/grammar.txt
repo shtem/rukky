@@ -29,9 +29,10 @@ stmt -> decl_stmt
         | while_stmt
         | give_stmt
         | if_stmt
+        | delete_stmt
         | return_stmt
         | break_stmt
-        | cont_stmt
+        | continue_stmt
 
 decl_type -> var_type
             | var_type "[]"
@@ -52,10 +53,11 @@ elif_stmt -> "elif" "::" expr block
 else_stmt -> "else" "::" block
             | epsilon
 
+delete_stmt -> "del" "::" expr EOL
 return_stmt -> "return" "::" EOL
             | "return" "::" expr EOL
 break_stmt -> "break" "::" EOL
-cont_stmt -> "continue" "::" EOL
+continue_stmt -> "continue" "::" EOL
 
 expr -> ID ":=" expr
         | ID "@" expr ":=" expr

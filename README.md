@@ -22,6 +22,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
         - Update ``lst@0 := x``
     - Appending ``lst << x``
 - [x] If Statement ``if:: elif:: else::``
+- [x] Delete Statement ``del::``
 - [x] Loop Statements ``for:: while:: give::``
 - [x] Reserved Keywords ``null, pi, eul``
 - [x] Functions

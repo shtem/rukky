@@ -71,6 +71,7 @@ class TokenType(Enum):
     PI = "pi"
     EULER = "eul"
 
+    DELETE = "del"
     RETURN = "return"
     BREAK = "break"
     CONTINUE = "continue"

@@ -113,6 +113,9 @@ class IdentifierASTNode(ExprASTNode):
     def set_index(self, i):
         self.index = i
 
+    def get_index(self):
+        return self.index
+
     def set_arr_flag(self, flag):
         self.arrFlag = flag
 
@@ -692,9 +695,9 @@ class AssignASTNode(ExprASTNode):
         isArr = assignType == list if assignType else False
         isMap = assignType == dict if assignType else False
 
-        if self.var.index:
+        if self.var.get_index():
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
-                indexVal = self.var.index.code_gen(context=context)
+                indexVal = self.var.get_index().code_gen(context=context)
                 if indexVal != None:
                     context.set_ident(
                         symbol=symbol,
@@ -1153,6 +1156,30 @@ class GiveStmtASTNode(StmtASTNode):
         context.inLoop = False
 
         return bVal
+
+
+class DeleteStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, delBody: ExprASTNode):
+        super().__init__()
+        self.token = token
+        self.delBody = delBody
+
+    def __str__(self):
+        return f"-> DeleteStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.delBody)} "
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.delBody == None or not isinstance(self.delBody, IdentifierASTNode):
+            raise ValueError(context.get_error_message("Invalid delete body"))
+
+        symbol = self.delBody.get_ident()
+        index = self.delBody.get_index()
+        indexVal = index.code_gen(context=context) if index != None else None
+
+        context.remove_ident(symbol=symbol, index=indexVal)
+
+        return None
 
 
 class ReturnStmtASTNode(StmtASTNode):
