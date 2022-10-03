@@ -1,7 +1,7 @@
 from src.interpreter import Interpreter
 from src.parser import Parser
 from src.lexer import Lexer
-import sys, os, argparse
+import os, sys, time, argparse
 
 rukkyArgParser = argparse.ArgumentParser(
     description='Interpreter for the "rukky" programming language. Interprets code and outputs result.'
@@ -26,7 +26,7 @@ myOutputTypes = rukkyArgParser.add_mutually_exclusive_group(required=False)
 myOutputTypes.add_argument(
     "-t",
     "--tokens",
-    dest="token",
+    dest="tokens",
     action="store_true",
     help="outputs list of all tokens returned by lexer",
 )
@@ -42,7 +42,14 @@ myOutputTypes.add_argument(
     "--global",
     dest="table",
     action="store_true",
-    help="outputs global symbol and function tables returned by interpreter, along with the result",
+    help="outputs global symbol tables returned by interpreter, along with the result",
+)
+myOutputTypes.add_argument(
+    "-d",
+    "--duration",
+    dest="duration",
+    action="store_true",
+    help="outputs time it takes to interpret inputted program, along with the result",
 )
 
 
@@ -51,7 +58,7 @@ def execute(args, text):
     parser = Parser(lexer=lex)
     interp = Interpreter(parser=parser)
 
-    if args.token:
+    if args.tokens:
         lex.reset()
         print("\nTokens\n-------")
         while lex.currChar:
@@ -66,6 +73,9 @@ def execute(args, text):
         print(repr(programAST), "\n")
         return
 
+    if args.duration:
+        startTime = time.time()
+
     interp.reset()
     result, programAST = interp.interpret()
 
@@ -76,6 +86,12 @@ def execute(args, text):
                 strOut=str(result), isDict=isDict
             )
         )
+
+    if args.duration:
+        duration = time.time() - startTime
+        print("\nDuration\n---------")
+        print(f"{duration} seconds\n")
+        return
 
     if args.table and programAST:
         print("\nGlobal Tables\n-------------")
@@ -108,7 +124,7 @@ def runner():
 
     if args.shell:
         helpOne = 'rukky v1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL, "tokens" to enable/disable token output, '
-        helpTwo = '"ast" to enable/disable AST output, "global" to enable/disable global symbol and function table output and "help" to display this message again.'
+        helpTwo = '"ast" to enable/disable AST output, "global" to enable/disable global symbol table output, "duration" to enable/disable duration time output and "help" to display this message again.'
         shellHelp = helpOne + helpTwo
 
         print(shellHelp)
@@ -121,21 +137,31 @@ def runner():
                     continue
 
                 if text.strip() == "tokens":
-                    args.token = not args.token
+                    args.tokens = not args.tokens
                     args.ast = False
                     args.table = False
+                    args.duration = False
                     continue
 
                 if text.strip() == "ast":
                     args.ast = not args.ast
-                    args.token = False
+                    args.tokens = False
                     args.table = False
+                    args.duration = False
                     continue
 
                 if text.strip() == "global":
                     args.table = not args.table
                     args.ast = False
-                    args.token = False
+                    args.tokens = False
+                    args.duration = False
+                    continue
+
+                if text.strip() == "duration":
+                    args.duration = not args.duration
+                    args.ast = False
+                    args.tokens = False
+                    args.table = False
                     continue
 
                 if text.strip() == "bye":

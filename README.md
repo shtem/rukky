@@ -44,17 +44,18 @@ result: 120.0
 ##### Usage
 ```
 > python rukky --help                                                  
-usage: rukky [-h] (-s | -f FILE) [-t | -a | -g]
+usage: rukky [-h] (-s | -f FILE) [-t | -a | -g | -d]
 
 Interpreter for the "rukky" programming language. Interprets code and outputs result.
 
 options:
-  -h, --help    show this help message and exit
-  -s, --shell   run interpreter in shell mode. Directly enter input into the REPL to be interpreted
-  -f FILE       run interpreter in file mode. Pass path to file to be interpreted
-  -t, --tokens  outputs list of all tokens returned by lexer
-  -a, --ast     outputs AST returned by parser
-  -g, --global  outputs global symbol and function tables returned by interpreter, along with the result
+  -h, --help      show this help message and exit
+  -s, --shell     run interpreter in shell mode. Directly enter input into the REPL to be interpreted
+  -f FILE         run interpreter in file mode. Pass path to file to be interpreted
+  -t, --tokens    outputs list of all tokens returned by lexer
+  -a, --ast       outputs AST returned by parser
+  -g, --global    outputs global symbol tables returned by interpreter, along with the result
+  -d, --duration  outputs time it takes to interpret inputted program, along with the result
 ```
 
 ##### factorial.rk
