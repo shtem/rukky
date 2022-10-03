@@ -4,7 +4,6 @@ $
    Output 4
 $
 
-
 :: real unary := (real n, real m) {
     real result
     real sum

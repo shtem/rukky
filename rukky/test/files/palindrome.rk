@@ -4,7 +4,6 @@ $
    Output true
 $
 
-
 :: bool palindrome := (real number) {
     real t
     real rev

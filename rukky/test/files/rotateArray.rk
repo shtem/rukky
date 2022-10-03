@@ -4,7 +4,6 @@ $
    Output arr[] = [3, 4, 5, 6, 7, 1, 2]
 $
 
-
 :: real[] slice := (real[] arr, real start, real end) {
     real[] subset := []
     real sliceLength := end - start

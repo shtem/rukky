@@ -1,4 +1,4 @@
-import re, os, subprocess
+import os, re, subprocess
 
 TEST_CORRECT_RESULTS = {
     "addNum": (210, float),

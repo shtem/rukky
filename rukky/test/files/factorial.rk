@@ -4,7 +4,6 @@ $
    Output 120
 $
 
-
 :: real factorial := (real n) {
     real i
     real factorial
