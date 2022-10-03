@@ -1,9 +1,7 @@
 from common.errors import ParserError
 from src.lexer import Lexer
 from data.ast import *
-import random
-import math
-import sys
+import random, math, sys
 
 
 class Parser:
