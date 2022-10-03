@@ -58,6 +58,11 @@ options:
   -d, --duration  outputs time it takes to interpret inputted program, along with the result
 ```
 
+##### Requirements
+```
+python_version >= '3.10'
+```
+
 ##### factorial.rk
 ```
 :: real factorial := (real n) {
