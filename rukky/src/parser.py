@@ -115,7 +115,7 @@ class Parser:
                 return declList
             else:
                 self.error(
-                    'expression or "if", "while" or "for" statement or newline or "real", "bool", "str" or "obj" or "::"'
+                    'expression or "if", "while", "for", "give" or "del" statement or newline or "real", "bool", "str" or "obj" or "::"'
                 )
 
     """
