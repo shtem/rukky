@@ -49,7 +49,7 @@ class Lexer:
     def _make_identifier(self):
         idValue = ""
 
-        while self.currChar and (self.currChar.isalnum() or self.currChar == "_"):
+        while self.currChar and (self.currChar.isalnum() or self.currChar == "_" or self.currChar == "."):
             idValue += self.currChar
             self.advance()
 

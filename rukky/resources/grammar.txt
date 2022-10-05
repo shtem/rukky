@@ -3,6 +3,17 @@ decl_list -> decl_list decl
             | decl
 decl -> stmt 
         | func_decl
+        | class_decl
+
+local_decls -> local_decls decl_stmt
+                | decl_stmt
+local_funcs -> local_funcs func_decl
+                | func_decl
+class_block ->  "{" EOL local_decls local_funcs "}" EOL
+        | "{" EOL "}" EOL
+        | "{}" EOL
+class_name -> ID | ID ":" ID
+class_decl -> "class" "::" class_name class_block
 
 func_type -> "void"
             | decl_type
