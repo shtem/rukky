@@ -595,7 +595,6 @@ class CallExprASTNode(ExprASTNode):
 
         if fEntry.type_checker_return():
             rVal = fEntry.context.funcReturnVal
-            fEntry.context.reset_flags_func()
             if context.is_real(value=rVal) and not context.is_bool(value=rVal):
                 return float(rVal)
             else:

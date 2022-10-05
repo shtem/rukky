@@ -103,7 +103,7 @@ class SymbolEntry(Entry):
 
 class FuncEntry(Entry):
     def __init__(
-        self, returnType: type, argSymbols: list, funcBody, context, isReturnArr=False
+        self, returnType: type, argSymbols: list, funcBody, context, isReturnArr
     ):
         super().__init__(returnType)
         self.argSymbols = argSymbols
@@ -144,11 +144,40 @@ class FuncEntry(Entry):
         )
 
 
+class ClassEntry(Entry):
+    def __init__(self, constructor: FuncEntry, parentSymbol: str, context):
+        super().__init__(object)
+        self.constructor = constructor
+        self.parentSymbol = parentSymbol
+        self.context = context
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"ClassEntry(type={self.type}, constructor=<{repr(self.constructor)}>)"
+
+    def copy(self):
+        newContext = TheContext(
+            parent=self.context.parent
+        )  # parent context = parent class
+        newContext.inClass = self.context.inClass
+        newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
+        newContext.funcTable = copy.deepcopy(self.context.funcTable)
+        newContext.classTable = copy.deepcopy(self.context.classTable)
+        return ClassEntry(
+            constructor=self.constructor.copy(),
+            parentSymbol=self.parentSymbol,
+            context=newContext,
+        )
+
+
 class TheContext:
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self.parent = parent
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
+        self.classTable: dict[str, ClassEntry] = {}
 
         self.lineNo = 1
         self.columnNo = 1
@@ -158,6 +187,7 @@ class TheContext:
         self.continueFlag = False
         self.inLoop = False
         self.inFunc = False
+        self.inClass = False
         self.funcReturnVal = None
 
         self.should_return = (
@@ -168,13 +198,6 @@ class TheContext:
         )
         self.should_break = lambda: self.inLoop and self.breakFlag
         self.should_continue = lambda: self.inLoop and self.continueFlag
-
-    def reset_flags_func(self):
-        self.returnFlag = False
-        self.continueFlag = False
-        self.breakFlag = False
-        self.inLoop = False
-        self.funcReturnVal = None
 
     def get_ident_type(self, symbol: str, getArrMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
@@ -417,6 +440,26 @@ class TheContext:
 
     def remove_func(self, symbol: str):
         del self.funcTable[symbol]
+
+    def set_class(
+        self, symbol: str, constructor: FuncEntry, context, parentSymbol=None
+    ):
+        cEntry = ClassEntry(
+            constructor=constructor,
+            parentSymbol=parentSymbol,
+            context=context,
+        )
+        self.classTable[symbol] = cEntry
+
+    def get_class(self, symbol: str):
+        cEntry: ClassEntry = self.classTable.get(symbol, None)
+        if not cEntry and self.parent:
+            return self.parent.get_class(symbol=symbol)
+        else:
+            return cEntry
+
+    def remove_class(self, symbol: str):
+        del self.classTable[symbol]
 
     def type_checker_assign(self, left: str, right, hasIndex=False):
         # check variable type matches assigned value type

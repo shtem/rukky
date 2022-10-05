@@ -43,7 +43,7 @@ class TokenType(Enum):
     BOOL = "bool"
     STRING = "str"
     OBJECT = "obj"
-    
+
     TRUE = "true"
     FALSE = "false"
     NULL = "null"
