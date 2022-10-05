@@ -8,6 +8,7 @@ class Lexer:
     def __init__(self, text: str):
         self.text = text
         self.idx = 0
+        self.prevChar = ""
         self.currChar = self.text[self.idx]
         self.lineNo = 1
         self.columnNo = 1
@@ -15,13 +16,14 @@ class Lexer:
     def error(self):
         print(
             LexerError(
-                message=f'Illegal or Missing Character "{str() if not self.currChar else self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
+                message=f'Illegal or Missing Character "{self.prevChar if not self.currChar else self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
             )
         )
         sys.exit(0)
 
     def reset(self):
         self.idx = 0
+        self.prevChar = ""
         self.currChar = self.text[self.idx]
         self.lineNo = 1
         self.columnNo = 1
@@ -33,9 +35,11 @@ class Lexer:
 
         self.idx += 1
         if self.idx > len(self.text) - 1:
+            self.prevChar = self.currChar
             self.currChar = None
             self.columnNo += 1
         else:
+            self.prevChar = self.currChar
             self.currChar = self.text[self.idx]
             self.columnNo += 1
 
@@ -54,6 +58,9 @@ class Lexer:
         ):
             idValue += self.currChar
             self.advance()
+
+        if all(c == "_" or c == "." for c in idValue):
+            self.error() # don't want '_'* or '.'* as ids
 
         matchType = RESERVED_KEYWORDS.get(idValue)
         tokType = matchType if matchType else TokenType.ID
@@ -218,7 +225,7 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
-            elif self.currChar.isalpha():
+            elif self.currChar.isalpha() or self.currChar == "_" or self.currChar == ".":
                 return self._make_identifier()
             elif self.currChar.isdigit():
                 return self._make_real()

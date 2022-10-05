@@ -1324,15 +1324,15 @@ class ClassASTNode(ASTNode):
     def __init__(
         self,
         token: Token,
-        parentName: IdentifierASTNode,
         className: IdentifierASTNode,
+        parentName: IdentifierASTNode,
         localDecls: list[IdentifierASTNode],
         localFuncs: list[FunctionASTNode],
     ):
         super().__init__()
         self.token = token
-        self.parentName = parentName
         self.className = className
+        self.parentName = parentName
         self.localDecls = localDecls
         self.localFuncs = localFuncs
 
@@ -1374,7 +1374,7 @@ class ClassASTNode(ASTNode):
             parentEntry = context.get_class(symbol=parentSymbol)
 
             if parentEntry == None and parentSymbol != None:
-                raise ValueError(context.get_error_message("Parent class not found"))
+                raise ValueError(context.get_error_message(f"Parent class, {parentSymbol}, not found"))
 
             parentClassContext = parentEntry.copy().context
 

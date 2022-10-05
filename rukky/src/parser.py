@@ -97,6 +97,7 @@ class Parser:
             TokenType.PI,
             TokenType.EULER,
             TokenType.RES_COLON,
+            TokenType.CLASS,
             TokenType.EOL,
         ]
 
@@ -115,21 +116,222 @@ class Parser:
                 return declList
             else:
                 self.error(
-                    'expression or "if", "while", "for", "give" or "del" statement or newline or "real", "bool", "str" or "obj" or "::"'
+                    'expression or "class", "if", "while", "for", "give" or "del" statement or newline or "real", "bool", "str" or "obj" or "::"'
                 )
 
     """
     decl -> stmt 
         | func_decl
+        | class_decl
     """
 
     def decl(self):
         if self.currTok.type == TokenType.RES_COLON:
             return self.func_decl()
+        elif self.currTok.type == TokenType.CLASS:
+            return self.class_decl()
         elif self.currTok.type == TokenType.EOF:
             return self.epsilon()
         else:
             return self.stmt()
+
+    """
+    local_decls -> local_decls decl_stmt
+                | decl_stmt
+    """
+
+    def local_decls(self):
+        localDecls = []
+
+        decl = self.decl_stmt()
+        if decl:
+            localDecls.append(decl)
+
+        while True:
+            if self.currTok.type in [
+                TokenType.REAL,
+                TokenType.BOOL,
+                TokenType.STRING,
+                TokenType.OBJECT,
+            ]:
+                decl = self.decl_stmt()
+                if decl:
+                    localDecls.append(decl)
+            elif self.currTok.type == TokenType.EOL:
+                self.eat()
+            elif (
+                self.currTok.type == TokenType.RES_COLON
+                or self.currTok.type == TokenType.RBRACE
+            ):
+                return localDecls
+            else:
+                self.error('"real", "bool", "str" or "obj"')
+
+    """
+    local_funcs -> local_funcs func_decl
+                | func_decl
+    """
+
+    def local_funcs(self):
+        localFuncs = []
+
+        func = self.func_decl()
+        if func:
+            localFuncs.append(func)
+
+        while True:
+            if self.currTok.type == TokenType.RES_COLON:
+                func = self.func_decl()
+                if func:
+                    localFuncs.append(func)
+            elif self.currTok.type == TokenType.EOL:
+                self.eat()
+            elif self.currTok.type == TokenType.RBRACE:
+                return localFuncs
+            else:
+                self.error('"::"')
+
+    """
+    class_block ->  "{" EOL local_decls local_funcs "}" EOL
+        | "{" EOL "}" EOL
+        | "{}" EOL
+    """
+
+    def class_block(self):
+        localDecls = []
+        localFuncs = []
+
+        if self.currTok.type == TokenType.LBRACE:
+            self.eat()  # eat {
+            if self.currTok.type == TokenType.EOL or self.currTok.type == TokenType.EOF:
+                if self.peek().type in [
+                    TokenType.REAL,
+                    TokenType.BOOL,
+                    TokenType.STRING,
+                    TokenType.OBJECT,
+                    TokenType.RES_COLON,
+                    TokenType.EOL,
+                ]:
+                    self.eat()  # eat \n
+
+                    while self.currTok.type == TokenType.EOL:
+                        self.eat()
+
+                    if self.currTok.type in [
+                        TokenType.REAL,
+                        TokenType.BOOL,
+                        TokenType.STRING,
+                        TokenType.OBJECT,
+                    ]:
+                        localDecls = self.local_decls()
+                    
+                    while self.currTok.type == TokenType.EOL:
+                        self.eat()
+
+                    if self.currTok.type == TokenType.RES_COLON:
+                        localFuncs = self.local_funcs()
+
+                    if self.currTok.type == TokenType.RBRACE:
+                        self.eat()  # eat }
+                        if (
+                            self.currTok.type == TokenType.EOL
+                            or self.currTok.type == TokenType.EOF
+                        ):
+                            self.eat()  # eat \n
+                            return localDecls, localFuncs
+                        else:
+                            self.error("newline")
+                    else:
+                        self.error('"}"')
+                elif self.peek().type == TokenType.RBRACE:
+                    self.eat()  # eat \n
+                    self.eat()  # eat }
+                    if (
+                        self.currTok.type == TokenType.EOL
+                        or self.currTok.type == TokenType.EOF
+                    ):
+                        self.eat()  # eat \n
+                        return [], []  # {\n} empty block
+                    else:
+                        self.error("newline")
+                else:
+                    self.error(
+                        '"real", "bool", "str" or "obj" or "::" or newline or "}"'
+                    )
+            elif self.currTok.type == TokenType.RBRACE:
+                self.eat()  # eat }
+                if (
+                    self.currTok.type == TokenType.EOL
+                    or self.currTok.type == TokenType.EOF
+                ):
+                    self.eat()  # eat \n
+                    return [], []  # {} empty block
+                else:
+                    self.error("newline")
+            else:
+                self.error('newline or "}"')
+        else:
+            self.error('"{"')
+
+    """
+    class_name -> ID | ID ":" ID
+    """
+
+    def class_name(self):
+        if self.currTok.type == TokenType.ID:
+            classIdent = IdentifierASTNode(
+                token=self.currTok,
+                type="obj",
+                ident=self.currTok.lexVal,
+                index=None,
+                arrFlag=False,
+                mapFlag=False,
+            )
+            self.eat()  # eat id
+            if self.currTok.type == TokenType.COLON:
+                if self.peek().type == TokenType.ID:
+                    self.eat()  # eat :
+                    parentIdent = IdentifierASTNode(
+                        token=self.currTok,
+                        type=None,
+                        ident=self.currTok.lexVal,
+                        index=None,
+                        arrFlag=False,
+                        mapFlag=False,
+                    )
+                    self.eat()  # eat id
+                    return classIdent, parentIdent
+                else:
+                    self.error("identifier")
+            else:
+                return classIdent, None
+        else:
+            return None, None
+
+    """
+    class_decl -> "class" "::" class_name class_block
+    """
+
+    def class_decl(self):
+        if self.currTok.type == TokenType.CLASS:
+            tok = self.currTok
+            self.eat()  # eat 'class'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                classIdent, parentIdent = self.class_name()
+                if classIdent:
+                    localDecls, localFuncs = self.class_block()
+                    return ClassASTNode(
+                        token=tok,
+                        className=classIdent,
+                        parentName=parentIdent,
+                        localDecls=localDecls,
+                        localFuncs=localFuncs,
+                    )
+            else:
+                self.error('"::"')
+        else:
+            self.error('"class"')
 
     """
     func_type -> "void"

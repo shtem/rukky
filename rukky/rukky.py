@@ -96,7 +96,7 @@ def execute(args, text):
     if args.table and programAST:
         print("\nGlobal Tables\n-------------")
         print(
-            f"Symbol Table: {programAST.globalContext.symbolTable}\nFunction Table: {programAST.globalContext.funcTable}\n"
+            f"Symbol Table: {programAST.globalContext.symbolTable}\nFunction Table: {programAST.globalContext.funcTable}\nClass Table: {programAST.globalContext.classTable}\n"
         )
         return
 
