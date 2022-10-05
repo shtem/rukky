@@ -1,3 +1,4 @@
+from urllib.error import ContentTooShortError
 from common.lex_enums import TokenType
 from data.context import TheContext, FuncEntry
 from data.token import Token
@@ -1287,7 +1288,7 @@ class FunctionASTNode(ASTNode):
     def code_gen(self, context: TheContext):
         context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
 
-        if self.funcName == None and self.funcBody == None:
+        if self.funcName == None or self.funcBody == None:
             raise ValueError(
                 context.get_error_message("Invalid function name or function body")
             )
@@ -1314,6 +1315,88 @@ class FunctionASTNode(ASTNode):
             funcBody=self.funcBody,
             context=funcContext,
             isReturnArr=isReturnArr,
+        )
+
+        return None
+
+
+class ClassASTNode(ASTNode):
+    def __init__(
+        self,
+        token: Token,
+        parentName: IdentifierASTNode,
+        className: IdentifierASTNode,
+        localDecls: list[IdentifierASTNode],
+        localFuncs: list[FunctionASTNode],
+    ):
+        super().__init__()
+        self.token = token
+        self.parentName = parentName
+        self.className = className
+        self.localDecls = localDecls
+        self.localFuncs = localFuncs
+
+    def __str__(self):
+        self.className.level = self.level
+        out = f"-> ClassASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.className)} "
+        if self.parentName:
+            self.parentName.level = self.level + 3
+            out += f"\n{' ' * (self.level)}:-¬"
+            out += f"\n{' ' * (self.level + 3)}-{repr(self.parentName)}"
+        if self.localDecls:
+            out += f"\n{' ' * (self.level)}\-¬"
+            for decl in self.localDecls:
+                decl.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(decl)}"
+        if self.localFuncs:
+            out += f"\n{' ' * (self.level)}\-¬"
+            for func in self.localFuncs:
+                func.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(func)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.className == None and (not self.localDecls or not self.localFuncs):
+            raise ValueError(
+                context.get_error_message("Invalid class name or class body")
+            )
+
+        symbol = self.className.get_ident()
+
+        parentSymbol = None
+        parentEntry = None
+        parentClassContext = None
+        if self.parentName != None:
+            parentSymbol = self.parentName.get_ident()
+            parentEntry = context.get_class(symbol=parentSymbol)
+
+            if parentEntry == None and parentSymbol != None:
+                raise ValueError(context.get_error_message("Parent class not found"))
+
+            parentClassContext = parentEntry.copy().context
+
+        classContext = TheContext(parent=parentClassContext)
+        classContext.inClass = True
+        classContext.classTable = context.classTable
+
+        for decl in self.localDecls:  # add attributes to class context
+            decl.code_gen(context=classContext)
+
+        for func in self.localFuncs:  # add methods to class context
+            func.code_gen(context=classContext)
+
+        constructorEntry = classContext.get_func(symbol=symbol)
+        if constructorEntry == None:
+            raise ValueError(context.get_error_message("Class has no constructor"))
+
+        context.set_class(
+            symbol=symbol,
+            constructor=constructorEntry.copy(),
+            context=classContext,
+            parentSymbol=parentSymbol,
         )
 
         return None
