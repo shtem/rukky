@@ -600,7 +600,7 @@ class CallExprASTNode(ExprASTNode):
 
         symbol = self.callee.get_ident()
 
-        # if deal with object instantiation
+        # deal with object instantiation
         entry: ClassEntry = context.get_class(symbol=symbol)
         if entry:
             cEntry = entry.copy()
