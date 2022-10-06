@@ -2015,7 +2015,7 @@ class Parser:
                 "value": print,
                 "argNum": 1,
                 "returnType": type(None),
-                "argType": mulTypes,
+                "argType": object,
             },
             TokenType.LENGTH: {
                 "value": len,

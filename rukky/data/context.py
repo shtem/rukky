@@ -120,6 +120,8 @@ class FuncEntry(Entry):
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
         newContext.inFunc = self.context.inFunc
+        newContext.inClass = self.context.inClass
+        newContext.classVal = self.context.classVal
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
         return FuncEntry(
             returnType=self.type,
@@ -160,6 +162,7 @@ class ClassEntry(Entry):
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
         newContext.inClass = self.context.inClass
+        newContext.classVal = self.context.classVal
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
         newContext.funcTable = copy.deepcopy(self.context.funcTable)
         newContext.classTable = copy.deepcopy(self.context.classTable)
@@ -341,6 +344,18 @@ class TheContext:
 
             self.symbolTable[symbol] = sEntry
 
+        if self.inClass and self.parent:
+            if symbol in self.parent.symbolTable:
+                self.parent.set_ident(
+                    symbol=symbol,
+                    valType=valType,
+                    value=value,
+                    index=index,
+                    isAppend=isAppend,
+                    isArr=isArr,
+                    isMap=isMap,
+                )
+
     def get_ident(self, symbol: str, index=None, getArr=False, getMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
@@ -459,6 +474,42 @@ class TheContext:
 
     def remove_class(self, symbol: str):
         del self.classTable[symbol]
+
+    def get_var_context(self, symbol: str):
+        # when trying to retrieve class attribute object.var1.var2
+        head, tail = symbol.split(".")
+
+        if head == "":  # .var
+            if self.inClass:
+                return self, tail
+            else:
+                raise ValueError(
+                    self.get_error_message(
+                        "Connot retrieve class attribute outside class"
+                    )
+                )
+
+        if isinstance(head, str):
+            head = [head]
+
+        context = self
+        for symb in head:
+            cEntry = context.get_ident(symbol=symb)
+            if not cEntry:
+                raise ValueError(
+                    self.get_error_message(
+                        f"Variable {symb} doesn't exist/has not yet been defined"
+                    )
+                )
+
+            if not isinstance(cEntry, ClassEntry):
+                raise ValueError(
+                    self.get_error_message(f"Variable {symb} is not a class object")
+                )
+
+            context = cEntry.context
+
+        return context, tail
 
     def type_checker_assign(self, left: str, right, hasIndex=False):
         # check variable type matches assigned value type
