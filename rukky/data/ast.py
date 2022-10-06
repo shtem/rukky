@@ -505,7 +505,7 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
-    def handle_class(self, cEntry: ClassEntry):
+    def handle_class(self, cEntry: ClassEntry, context: TheContext):
         if not cEntry.constructor:
             raise ValueError(
                 cEntry.context.get_error_message("Class has no constructor")
@@ -519,9 +519,7 @@ class CallExprASTNode(ExprASTNode):
                 )
             )
 
-        argValues = [
-            arg.code_gen(context=cEntry.constructor.context) for arg in self.args
-        ]
+        argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(cEntry.constructor.argSymbols, argValues)
 
         for (
@@ -606,7 +604,7 @@ class CallExprASTNode(ExprASTNode):
         entry: ClassEntry = context.get_class(symbol=symbol)
         if entry:
             cEntry = entry.copy()
-            return self.handle_class(cEntry=cEntry)
+            return self.handle_class(cEntry=cEntry, context=context)
 
         if "." in symbol:
             context, symbol = context.get_var_context(symbol=symbol)
@@ -1344,7 +1342,6 @@ class SuperStmtASTNode(StmtASTNode):
     def code_gen(self, context: TheContext):
         context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
 
-
         if not context.inClass or not context.classVal:
             raise ValueError(
                 context.get_error_message("Cannot call super outside a class")
@@ -1356,14 +1353,10 @@ class SuperStmtASTNode(StmtASTNode):
                 context.get_error_message(f"Class, {context.classVal}, doesn't exist")
             )
 
-        if context.inFunc:
-            context = context.parent
-
-        if not cEntry.parentSymbol or not context.parent:
+        if not cEntry.parentSymbol:
             raise ValueError(context.get_error_message("Class doesn't have parent"))
 
-        # use parent constructor to update parent attributes in parent class context
-        # MAKE SUPER COPY OVER PARENT CLASS ATTRIBUTES AND FUNCTIONS INSTEAD
+        # use parent constructor to update parent attributes and then copy over values to class context
         pConstructorName = IdentifierASTNode(
             token=self.token,
             type=None,
@@ -1377,11 +1370,10 @@ class SuperStmtASTNode(StmtASTNode):
             token=self.token, callee=pConstructorName, args=self.args
         )
 
-        context.symbolTable.update(context.parent.symbolTable)
-        context.funcTable.update(context.parent.funcTable)
-        pConstructorCall.code_gen(context=context)
+        parentCEntry = pConstructorCall.code_gen(context=context)
+        cEntry.context.symbolTable.update(parentCEntry.context.symbolTable)
+        cEntry.context.funcTable.update(parentCEntry.context.funcTable)
 
-        print(context.symbolTable)
         return None
 
 
