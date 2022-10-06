@@ -224,7 +224,7 @@ class Parser:
                         TokenType.OBJECT,
                     ]:
                         localDecls = self.local_decls()
-                    
+
                     while self.currTok.type == TokenType.EOL:
                         self.eat()
 

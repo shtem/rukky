@@ -60,7 +60,7 @@ class Lexer:
             self.advance()
 
         if all(c == "_" or c == "." for c in idValue):
-            self.error() # don't want '_'* or '.'* as ids
+            self.error()  # don't want '_'* or '.'* as ids
 
         matchType = RESERVED_KEYWORDS.get(idValue)
         tokType = matchType if matchType else TokenType.ID
@@ -225,7 +225,9 @@ class Lexer:
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )
-            elif self.currChar.isalpha() or self.currChar == "_" or self.currChar == ".":
+            elif (
+                self.currChar.isalpha() or self.currChar == "_" or self.currChar == "."
+            ):
                 return self._make_identifier()
             elif self.currChar.isdigit():
                 return self._make_real()

@@ -1,3 +1,4 @@
+from copyreg import constructor
 from urllib.error import ContentTooShortError
 from common.lex_enums import TokenType
 from data.context import TheContext, FuncEntry
@@ -1257,6 +1258,56 @@ class ContinueStmtASTNode(StmtASTNode):
         return None
 
 
+class SuperStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, args: list[ExprASTNode]):
+        super().__init__()
+        self.token = token
+        self.args = args
+
+    def __str__(self):
+        out = f"-> SuperStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        if self.args:
+            out += f"\n{' ' * (self.level)}()-¬"
+            for arg in self.args:
+                arg.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(arg)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if not context.inClass and not context.classVal:
+            raise ValueError(
+                context.get_error_message("Cannot call super outside a class")
+            )
+
+        cEntry = context.get_class(symbol=context.classVal)
+        if not cEntry:
+            raise ValueError(context.get_error_message("Class doesn't exist"))
+
+        if not cEntry.parentSymbol and not context.parent:
+            raise ValueError(context.get_error_message("Class doesn't have parent"))
+
+        # use parent constructor to update parent attributes in parent class context
+        pConstructorName = IdentifierASTNode(
+            token=self.token,
+            type=None,
+            ident=cEntry.parentSymbol,
+            index=None,
+            arrFlag=False,
+            mapFlag=False,
+        )
+
+        pConstructorCall = CallExprASTNode(
+            roken=self.token, callee=pConstructorName, args=self.args
+        )
+
+        pConstructorCall.code_gen(context=context.parent)
+
+        return None
+
+
 class FunctionASTNode(ASTNode):
     def __init__(
         self,
@@ -1374,12 +1425,19 @@ class ClassASTNode(ASTNode):
             parentEntry = context.get_class(symbol=parentSymbol)
 
             if parentEntry == None and parentSymbol != None:
-                raise ValueError(context.get_error_message(f"Parent class, {parentSymbol}, not found"))
+                raise ValueError(
+                    context.get_error_message(
+                        f"Parent class, {parentSymbol}, not found"
+                    )
+                )
 
             parentClassContext = parentEntry.copy().context
 
-        classContext = TheContext(parent=parentClassContext)
+        classContext = TheContext(
+            parent=parentClassContext
+        )  # parent context = parent class
         classContext.inClass = True
+        classContext.classVal = symbol
         classContext.classTable = context.classTable
 
         for decl in self.localDecls:  # add attributes to class context

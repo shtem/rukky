@@ -158,9 +158,7 @@ class ClassEntry(Entry):
         return f"ClassEntry(type={self.type}, constructor=<{repr(self.constructor)}>)"
 
     def copy(self):
-        newContext = TheContext(
-            parent=self.context.parent
-        )  # parent context = parent class
+        newContext = TheContext(parent=self.context.parent)
         newContext.inClass = self.context.inClass
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
         newContext.funcTable = copy.deepcopy(self.context.funcTable)
@@ -188,7 +186,8 @@ class TheContext:
         self.inLoop = False
         self.inFunc = False
         self.inClass = False
-        self.funcReturnVal = None
+        self.funcReturnVal = None  # return value of function
+        self.classVal = None  # class name
 
         self.should_return = (
             lambda: self.inFunc

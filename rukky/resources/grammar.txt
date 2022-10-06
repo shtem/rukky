@@ -36,6 +36,7 @@ stmt -> decl_stmt
         | while_stmt
         | give_stmt
         | if_stmt
+        | super_stmt
         | delete_stmt
         | return_stmt
         | break_stmt
@@ -64,6 +65,7 @@ elif_stmt -> "elif" "::" expr block
 else_stmt -> "else" "::" block
             | epsilon
 
+super_stmt -> "super" "::" args "::" EOL
 delete_stmt -> "del" "::" expr EOL
 return_stmt -> "return" "::" EOL
             | "return" "::" expr EOL

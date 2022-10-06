@@ -74,6 +74,7 @@ class TokenType(Enum):
     EULER = "eul"
 
     CLASS = "class"
+    SUPER = "super"
     DELETE = "del"
 
     RETURN = "return"
