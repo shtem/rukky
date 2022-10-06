@@ -70,6 +70,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.SUPER,
             TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
@@ -116,7 +117,7 @@ class Parser:
                 return declList
             else:
                 self.error(
-                    'expression or "class", "if", "while", "for", "give" or "del" statement or newline or "real", "bool", "str" or "obj" or "::"'
+                    'expression or "class", "if", "while", "for", "give", "super" or "del" statement or newline or "real", "bool", "str" or "obj" or "::"'
                 )
 
     """
@@ -505,6 +506,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.SUPER,
             TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
@@ -568,7 +570,7 @@ class Parser:
                         self.error("newline")
                 else:
                     self.error(
-                        'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "}"'
+                        'expression or "if", "while", "for", "give", "super", "del", "return", "break" or "continue" statement or newline or "}"'
                     )
             elif self.currTok.type == TokenType.RBRACE:
                 self.eat()  # eat }
@@ -606,6 +608,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.SUPER,
             TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
@@ -649,7 +652,7 @@ class Parser:
                 return stmtList
             else:
                 self.error(
-                    'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj" or "}"'
+                    'expression or "if", "while", "for", "give", "super", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj" or "}"'
                 )
 
     """
@@ -659,6 +662,7 @@ class Parser:
         | while_stmt
         | give_stmt
         | if_stmt
+        | super_stmt
         | delete_stmt
         | return_stmt
         | break_stmt
@@ -705,6 +709,8 @@ class Parser:
             return self.give_stmt()
         elif self.currTok.type == TokenType.IF:
             return self.if_stmt()
+        elif self.currTok.type == TokenType.SUPER:
+            return self.super_stmt()
         elif self.currTok.type == TokenType.DELETE:
             return self.delete_stmt()
         elif self.currTok.type == TokenType.RETURN:
@@ -726,7 +732,7 @@ class Parser:
             return self.epsilon()
         else:
             return self.error(
-                'expression or "if", "while", "for", "give", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj"'
+                'expression or "if", "while", "for", "give", "super", "del", "return", "break" or "continue" statement or newline or "real", "bool", "str" or "obj"'
             )
 
     """
@@ -1061,6 +1067,7 @@ class Parser:
             TokenType.FOR,
             TokenType.WHILE,
             TokenType.GIVE,
+            TokenType.SUPER,
             TokenType.DELETE,
             TokenType.RETURN,
             TokenType.BREAK,
@@ -1144,6 +1151,37 @@ class Parser:
                 body = self.block()
                 if body:
                     return body
+            else:
+                self.error('"::"')
+        else:
+            return self.epsilon()
+
+    """
+    super_stmt -> "super" "::" args "::" EOL
+    """
+
+    def super_stmt(self):
+        if self.currTok.type == TokenType.SUPER:
+            tok = self.currTok
+            self.eat()  # eat 'super'
+            if self.currTok.type == TokenType.RES_COLON:
+                self.eat()  # eat ::
+                args = self.args()
+                if self.currTok.type == TokenType.RES_COLON:
+                    self.eat()  # eat ::
+                    if (
+                        self.currTok.type == TokenType.EOL
+                        or self.currTok.type == TokenType.EOF
+                    ):
+                        self.eat()  # eat \n
+                        if args:
+                            return SuperStmtASTNode(token=tok, args=args)
+                        else:
+                            return SuperStmtASTNode(token=tok, args=[])
+                    else:
+                        self.error("newline")
+                else:
+                    self.error('"::"')
             else:
                 self.error('"::"')
         else:
