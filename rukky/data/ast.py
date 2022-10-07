@@ -149,6 +149,13 @@ class IdentifierASTNode(ExprASTNode):
         if (
             self.type
         ):  # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
+            if "." in symbol:
+                raise ValueError(
+                    context.get_error_message(
+                        "Cannot define class attribute outside class"
+                    )
+                )
+
             type, defaultValue = self.determine_type_value()
 
             if self.arrFlag:
@@ -459,6 +466,8 @@ class BinaryExprASTNode(ExprASTNode):
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_arr():
                         ident = self.lhs.get_ident()
+                        if "." in ident:
+                            context, ident = context.get_var_context(symbol=ident)
                         context.set_ident(
                             symbol=ident,
                             valType=None,
@@ -754,12 +763,12 @@ class AssignASTNode(ExprASTNode):
         ):
             raise ValueError(context.get_error_message("Unexpected null value"))
 
+        if "." in symbol:
+            context, symbol = context.get_var_context(symbol=symbol)
+
         assignType = context.get_ident_type(symbol=symbol, getArrMap=False)
         isArr = assignType == list if assignType else False
         isMap = assignType == dict if assignType else False
-
-        if "." in symbol:
-            context, symbol = context.get_var_context(symbol=symbol)
 
         if self.var.get_index():
             if context.type_checker_assign(left=symbol, right=assignVal, hasIndex=True):
@@ -1244,6 +1253,10 @@ class DeleteStmtASTNode(StmtASTNode):
 
         symbol = self.delBody.get_ident()
         index = self.delBody.get_index()
+
+        if "." in symbol:
+            raise ValueError(context.get_error_message("Cannot delete class attribute"))
+
         indexVal = index.code_gen(context=context) if index != None else None
 
         context.remove_ident(symbol=symbol, index=indexVal)

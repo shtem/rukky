@@ -477,23 +477,22 @@ class TheContext:
 
     def get_var_context(self, symbol: str):
         # when trying to retrieve class attribute object.var1.var2
-        head, tail = symbol.split(".")
+        *head, tail = symbol.split(".")
 
-        if head == "":  # .var
+        if len(head) == 1 and head[0] == "":  # .var
             if self.inClass:
                 return self, tail
             else:
                 raise ValueError(
                     self.get_error_message(
-                        "Connot retrieve class attribute outside class"
+                        "Cannot retrieve class attribute outside class"
                     )
                 )
 
-        if isinstance(head, str):
-            head = [head]
-
         context = self
         for symb in head:
+            if symb == "":
+                continue
             cEntry = context.get_ident(symbol=symb)
             if not cEntry:
                 raise ValueError(

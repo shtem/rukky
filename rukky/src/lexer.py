@@ -13,10 +13,10 @@ class Lexer:
         self.lineNo = 1
         self.columnNo = 1
 
-    def error(self):
+    def error(self, illegChar=None):
         print(
             LexerError(
-                message=f'Illegal or Missing Character "{self.prevChar if not self.currChar else self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
+                message=f'Illegal or Missing Character "{illegChar if illegChar else self.currChar}" on line: {self.lineNo} column: {self.columnNo}'
             )
         )
         sys.exit(0)
@@ -59,8 +59,18 @@ class Lexer:
             idValue += self.currChar
             self.advance()
 
-        if all(c == "_" or c == "." for c in idValue):
-            self.error()  # don't want '_'* or '.'* as ids
+        # don't want '_'* or '.'* or var..v as ids
+
+        if all(c == "_" for c in idValue):
+            self.error(illegChar="_")
+
+        if all(c == "." for c in idValue):
+            self.error(illegChar=".")
+
+        if any(
+            c1 == c2 and c1 == "." and c2 == "." for c1, c2 in zip(idValue, idValue[1:])
+        ):
+            self.error(illegChar="..*")
 
         matchType = RESERVED_KEYWORDS.get(idValue)
         tokType = matchType if matchType else TokenType.ID
