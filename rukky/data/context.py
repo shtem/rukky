@@ -164,8 +164,8 @@ class ClassEntry(Entry):
         newContext.inClass = self.context.inClass
         newContext.classVal = self.context.classVal
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
-        newContext.funcTable = copy.deepcopy(self.context.funcTable)
-        newContext.classTable = copy.deepcopy(self.context.classTable)
+        newContext.funcTable = self.context.funcTable
+        newContext.classTable = self.context.classTable
         return ClassEntry(
             constructor=self.constructor.copy(),
             parentSymbol=self.parentSymbol,

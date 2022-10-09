@@ -561,7 +561,9 @@ class CallExprASTNode(ExprASTNode):
                 )
 
         cEntry.constructor.funcBody.code_gen(context=cEntry.constructor.context)
-        cEntry.context.symbolTable.update(cEntry.constructor.context.symbolTable)
+        cEntry.context.symbolTable.update(
+            cEntry.constructor.context.symbolTable
+        )  # update class symbol table
 
         return cEntry
 
@@ -839,7 +841,11 @@ class StmtBlockASTNode(StmtASTNode):
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_continue() or context.should_break() or context.should_return():
+            if (
+                context.should_continue()
+                or context.should_break()
+                or context.should_return()
+            ):
                 return stmtVal
 
         return stmtVal
@@ -1385,8 +1391,18 @@ class SuperStmtASTNode(StmtASTNode):
 
         parentCEntry = pConstructorCall.code_gen(context=context)
         cEntry.context.parent = parentCEntry.context
-        cEntry.context.symbolTable.update(parentCEntry.context.symbolTable)
-        cEntry.context.funcTable.update(parentCEntry.context.funcTable) # CHECK FOR METHOD OVERRIDING
+        cEntry.context.symbolTable.update(
+            parentCEntry.context.symbolTable
+        )  # updates symbols
+        for (
+            symb,
+            func,
+        ) in (
+            parentCEntry.context.funcTable.items()
+        ):  # updates methods and deals with method overriding
+            if symb not in cEntry.context.funcTable:
+                func.context.parent = parentCEntry.context
+                cEntry.context.funcTable[symb] = func
 
         return None
 
