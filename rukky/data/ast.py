@@ -561,7 +561,7 @@ class CallExprASTNode(ExprASTNode):
                 )
 
         cEntry.constructor.funcBody.code_gen(context=cEntry.constructor.context)
-        cEntry.context = cEntry.constructor.context.parent  # update class context
+        cEntry.context.symbolTable.update(cEntry.constructor.context.symbolTable)
 
         return cEntry
 
@@ -839,7 +839,7 @@ class StmtBlockASTNode(StmtASTNode):
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_continue():
+            if context.should_continue() or context.should_break():
                 return stmtVal
 
         return stmtVal
@@ -1384,8 +1384,9 @@ class SuperStmtASTNode(StmtASTNode):
         )
 
         parentCEntry = pConstructorCall.code_gen(context=context)
+        cEntry.context.parent = parentCEntry.context
         cEntry.context.symbolTable.update(parentCEntry.context.symbolTable)
-        cEntry.context.funcTable.update(parentCEntry.context.funcTable)
+        cEntry.context.funcTable.update(parentCEntry.context.funcTable) # CHECK FOR METHOD OVERRIDING
 
         return None
 

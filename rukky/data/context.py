@@ -157,7 +157,7 @@ class ClassEntry(Entry):
         return self.__str__()
 
     def __str__(self):
-        return f"ClassEntry(type={self.type}, constructor=<{repr(self.constructor)}>)"
+        return f"ClassEntry(type={self.type}, name=<{repr(self.context.classVal)}>)"
 
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
