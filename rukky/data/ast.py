@@ -764,7 +764,7 @@ class StmtBlockASTNode(StmtASTNode):
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_continue():
+            if context.should_continue() or context.should_break():
                 return stmtVal
 
         return stmtVal
