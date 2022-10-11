@@ -858,7 +858,7 @@ class StmtBlockASTNode(StmtASTNode):
                 context.should_continue()
                 or context.should_break()
                 or context.should_return()
-               )
+            ):
                 return stmtVal
 
         return stmtVal
