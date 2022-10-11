@@ -59,7 +59,7 @@ class Lexer:
             idValue += self.currChar
             self.advance()
 
-        # don't want '_'* or '.'* or var..v as ids
+        # don't want _* or .* or var..*v as ids
 
         if all(c == "_" for c in idValue):
             self.error(illegChar="_")
