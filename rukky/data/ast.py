@@ -617,6 +617,8 @@ class CallExprASTNode(ExprASTNode):
             cEntry = entry.copy()
             return self.handle_class(cEntry=cEntry, context=context)
 
+        argValues = [arg.code_gen(context=context) for arg in self.args]
+
         if "." in symbol:
             context, symbol = context.get_var_context(symbol=symbol)
 
@@ -629,11 +631,10 @@ class CallExprASTNode(ExprASTNode):
                     f"Function or class, {symbol}, doesn't exist/has not yet been defined"
                 )
             )
-
+            
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError(context.get_error_message("Incorrect number of arguments"))
 
-        argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(fEntry.argSymbols, argValues)
 
         for (
