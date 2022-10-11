@@ -1,6 +1,6 @@
 from common.errors import SemanticError
 from src.parser import Parser
-from data.ast import *
+from data.ast import ProgramASTNode
 import sys
 
 
