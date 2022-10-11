@@ -3,6 +3,7 @@ import os, re, subprocess
 TEST_CORRECT_RESULTS = {
     "addNum": (210, float),
     "binarySearch": (6, float),
+    "binaryTree": ("false", str),
     "countFrequency": ({1: 5, 2: 4, 3: 3, 4: 3, 5: 2}, float),
     "factorial": (120, float),
     "fibonacci": ([0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55], float),
@@ -70,6 +71,8 @@ def test_sucess():
             )
 
         assert correctResult == testResult
+
+    print("-------------\nAll tests: PASSED")
 
 
 if __name__ == "__main__":

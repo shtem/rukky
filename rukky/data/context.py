@@ -117,6 +117,22 @@ class FuncEntry(Entry):
     def __str__(self):
         return f"FuncEntry(type={self.type}, params={repr(self.argSymbols)})"
 
+    def type_checker_return(self):
+        # check function type matches return type
+        return (
+            (isinstance(self.context.funcReturnVal, self.type))
+            or (
+                isinstance(self.context.funcReturnVal, list)
+                and (
+                    not self.context.funcReturnVal
+                    or self.context.verify_arr_type(
+                        arr=self.context.funcReturnVal, arrType=self.type
+                    )
+                )
+            )
+            or (self.context.funcReturnVal == None and not self.isReturnArr)
+        )
+
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
         newContext.inFunc = self.context.inFunc
@@ -131,20 +147,6 @@ class FuncEntry(Entry):
             isReturnArr=self.isReturnArr,
         )
 
-    def type_checker_return(self):
-        # check function type matches return type
-        return (
-            (isinstance(self.context.funcReturnVal, self.type))
-            or (
-                isinstance(self.context.funcReturnVal, list)
-                and (
-                    not self.context.funcReturnVal
-                    or isinstance(self.context.funcReturnVal[0], self.type)
-                )
-            )
-            or (self.context.funcReturnVal == None and not self.isReturnArr)
-        )
-
 
 class ClassEntry(Entry):
     def __init__(self, constructor: FuncEntry, parentSymbol: str, context):
@@ -157,7 +159,7 @@ class ClassEntry(Entry):
         return self.__str__()
 
     def __str__(self):
-        return f"ClassEntry(type={self.type}, name=<{repr(self.context.classVal)}>)"
+        return f"ClassEntry(name=<{repr(self.context.classVal)}>)"
 
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
@@ -175,7 +177,7 @@ class ClassEntry(Entry):
 
 class TheContext:
     def __init__(self, parent=None):
-        self.parent = parent
+        self.parent = parent  # parent context
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
         self.classTable: dict[str, ClassEntry] = {}

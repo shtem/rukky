@@ -31,6 +31,8 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Branching Statements ``return:: break:: continue::``
 - [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
 - [x] Classes ``class::``
+    - Inheritance ``Child : Parent``
+        - Super Keyword ``super:: ::``
 
 ---
 
