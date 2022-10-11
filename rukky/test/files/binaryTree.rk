@@ -1,0 +1,154 @@
+$ 
+   function BinaryTree.nodeExists(Node node, key) checks if a given key matches the key of a node in a Binary Search Tree
+   Input node = tree.root, key = 3
+   Output false
+$
+
+class:: Node {
+    real key
+    obj left
+    obj right
+
+    :: void Node := (real key) {
+        .key := key
+        .left := null
+        .right := null
+    }
+}
+
+class:: Tree {
+    obj root
+
+    :: void Tree := () {
+        .root := null
+    }
+}
+
+class:: BinaryTree : Tree {
+    
+    :: void BinaryTree := () {
+        super:: ::    
+    }
+
+    :: obj insertRecursive := (obj node, real key) {
+        if:: node <> null {
+            return:: Node:key::
+        }
+
+        if:: key < node.key {
+            node.left := insertRecursive:node.left, key::
+        }
+        else:: {
+            node.right := insertRecursive:node.right, key::
+        }
+
+        return:: node
+    }
+
+    :: void insert := (real key) {
+        .root := insertRecursive:.root, key::
+    }
+
+    :: obj minValueNode := (obj node) {
+        obj node := node
+
+        while:: node.left <! null {
+            node := node.left
+        }
+
+        return:: node 
+    }
+
+    :: obj deleteRecursive := (obj node, real key) {
+        if:: node <> null {
+            return:: node
+        }
+
+        if:: key < node.key {
+            node.left := deleteRecursive:node.left, key::
+        }
+        elif:: key > node.key {
+            node.right := deleteRecursive:node.right, key::
+        }
+        else:: {
+            if:: node.left <> null {
+                obj temp := node.right
+                node := null
+                return:: temp
+            }
+
+            if:: node.right <> null {
+                obj temp := node.left
+                node := null
+                return:: temp
+            }
+
+            obj temp := minValueNode:root.right::
+            node.key := temp.key
+            node.right := deleteRecursive:node.right, temp.key::
+        }
+
+        return:: node
+    }
+
+    :: void delete := (real key) {
+        .root := deleteRecursive:.root, key::
+    }
+
+    :: bool nodeExists := (obj node, real key) {
+        if:: node <> null {
+            return:: false
+        }
+
+        if:: node.key <> key {
+            return:: true
+        }
+
+        if:: nodeExists:node.left, key:: {
+            return:: true
+        }
+
+        return:: nodeExists:node.right, key::
+    }
+
+    :: void inOrderTraversal := (obj node) {
+        if:: node <! null {
+            inOrderTraversal:node.left::
+            display:node.key::
+            inOrderTraversal:node.right::
+       }
+    }
+
+    :: void preOrderTraversal := (obj node) {
+        if:: node <! null {
+            display:node.key::
+            preOrderTraversal:node.left::
+            preOrderTraversal:node.right::
+       }
+    }
+
+    :: void postOrderTraversal := (obj node) {
+         if:: node <! null {
+            postOrderTraversal:node.left::
+            postOrderTraversal:node.right::
+            display:node.key::
+       }
+    }
+}
+
+obj tree := BinaryTree: ::
+
+tree.insert:1::
+tree.insert:-7::
+tree.insert:12::
+tree.insert:50::
+tree.insert:3::
+tree.insert:4::
+tree.insert:23::
+tree.insert:pi::
+tree.inOrderTraversal:tree.root::
+tree.delete:3::
+
+bool result := tree.nodeExists:tree.root, 3::
+display:" "::
+display:"result: " + getStr:result::::

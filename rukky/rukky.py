@@ -96,7 +96,7 @@ def execute(args, text):
     if args.table and programAST:
         print("\nGlobal Tables\n-------------")
         print(
-            f"Symbol Table: {programAST.globalContext.symbolTable}\nFunction Table: {programAST.globalContext.funcTable}\n"
+            f"Symbol Table: {programAST.globalContext.symbolTable}\nFunction Table: {programAST.globalContext.funcTable}\nClass Table: {programAST.globalContext.classTable}\n"
         )
         return
 
@@ -123,9 +123,10 @@ def runner():
         return
 
     if args.shell:
-        helpOne = 'rukky v1.0.0 REPL\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL, "tokens" to enable/disable token output, '
-        helpTwo = '"ast" to enable/disable AST output, "global" to enable/disable global symbol table output, "duration" to enable/disable duration time output and "help" to display this message again.'
-        shellHelp = helpOne + helpTwo
+        version = "rukky v1.0.0 REPL"
+        helpOne = '\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL \nType "tokens" for token output, "ast" for AST output,'
+        helpTwo = '"global" for global symbol table output, "duration" for duration time output\nType output option name again to disable the output and "help" to display this message again.'
+        shellHelp = version + helpOne + helpTwo
 
         print(shellHelp)
         try:

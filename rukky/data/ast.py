@@ -1,5 +1,5 @@
 from common.lex_enums import TokenType
-from data.context import TheContext, FuncEntry
+from data.context import TheContext, FuncEntry, ClassEntry
 from data.token import Token
 from abc import ABC, abstractmethod
 
@@ -149,6 +149,13 @@ class IdentifierASTNode(ExprASTNode):
         if (
             self.type
         ):  # variable declaration: type != None e.g. var_type ID .. or var_type[] ID ..
+            if "." in symbol:
+                raise ValueError(
+                    context.get_error_message(
+                        "Cannot define class attribute outside class"
+                    )
+                )
+
             type, defaultValue = self.determine_type_value()
 
             if self.arrFlag:
@@ -169,6 +176,9 @@ class IdentifierASTNode(ExprASTNode):
 
             return defaultValue
         else:  # variable retrieval: type = None e.g. ID or ID[expr]
+            if "." in symbol:
+                context, symbol = context.get_var_context(symbol=symbol)
+
             varValue = None
             valType = context.get_ident_type(symbol=symbol, getArrMap=False)
 
@@ -456,6 +466,8 @@ class BinaryExprASTNode(ExprASTNode):
                 if isinstance(self.lhs, IdentifierASTNode):
                     if self.lhs.is_arr():
                         ident = self.lhs.get_ident()
+                        if "." in ident:
+                            context, ident = context.get_var_context(symbol=ident)
                         context.set_ident(
                             symbol=ident,
                             valType=None,
@@ -502,6 +514,59 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
+    def execute_instantiation(self, cEntry: ClassEntry, context: TheContext):
+        if not cEntry.constructor:
+            raise ValueError(
+                cEntry.context.get_error_message("Class has no constructor")
+            )
+
+        # instantiate class by calling its constructor method on the values passed
+        if len(self.args) != len(cEntry.constructor.argSymbols):
+            raise ValueError(
+                cEntry.constructor.context.get_error_message(
+                    "Incorrect number of arguments"
+                )
+            )
+
+        argValues = [arg.code_gen(context=context) for arg in self.args]
+        argValSymb = zip(cEntry.constructor.argSymbols, argValues)
+
+        for (
+            par,
+            val,
+        ) in argValSymb:
+            if cEntry.constructor.context.type_checker_assign(
+                left=par, right=val, hasIndex=False
+            ):
+                cEntry.constructor.context.set_ident(
+                    symbol=par,
+                    valType=None,
+                    value=val,
+                    index=None,
+                    isAppend=False,
+                    isArr=cEntry.constructor.context.get_ident_type(
+                        symbol=par, getArrMap=False
+                    )
+                    == list,
+                    isMap=cEntry.constructor.context.get_ident_type(
+                        symbol=par, getArrMap=False
+                    )
+                    == dict,
+                )
+            else:
+                raise TypeError(
+                    cEntry.constructor.context.get_error_message(
+                        f"Type of argument {val} does not match type of positional function parameter"
+                    )
+                )
+
+        cEntry.constructor.funcBody.code_gen(context=cEntry.constructor.context)
+        cEntry.context.symbolTable.update(
+            cEntry.constructor.context.symbolTable
+        )  # update class symbol table
+
+        return cEntry
+
     def execute_builtin(self, fEntry: FuncEntry):
         # retrieve args values from context of reserved call and pass to inbuilt function
         argVals = [
@@ -545,20 +610,31 @@ class CallExprASTNode(ExprASTNode):
             self.callee.code_gen(context=context)  # generate builtin function
 
         symbol = self.callee.get_ident()
-        entry: FuncEntry = context.get_func(symbol=symbol)
-        fEntry = entry.copy()
 
-        if fEntry == None:
+        # deal with object instantiation
+        entry: ClassEntry = context.get_class(symbol=symbol)
+        if entry:
+            cEntry = entry.copy()
+            return self.execute_instantiation(cEntry=cEntry, context=context)
+
+        argValues = [arg.code_gen(context=context) for arg in self.args]
+
+        if "." in symbol:
+            context, symbol = context.get_var_context(symbol=symbol)
+
+        entry: FuncEntry = context.get_func(symbol=symbol)
+        if not entry:
             raise ValueError(
                 context.get_error_message(
-                    f"Function {symbol} doesn't exist/has not yet been defined"
+                    f"Function or class, {symbol}, doesn't exist/has not yet been defined"
                 )
             )
+
+        fEntry = entry.copy()
 
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError(context.get_error_message("Incorrect number of arguments"))
 
-        argValues = [arg.code_gen(context=context) for arg in self.args]
         argValSymb = zip(fEntry.argSymbols, argValues)
 
         for (
@@ -593,9 +669,20 @@ class CallExprASTNode(ExprASTNode):
                 context=fEntry.context
             )  # execute function body using function context
 
+        if fEntry.context.parent.inClass and not fEntry.context.parent.inFunc:
+            for (
+                symb,
+                val,
+            ) in (
+                fEntry.context.symbolTable.items()
+            ):  # updates class attributes in func's parent class instance context
+                if symb in fEntry.context.parent.symbolTable:
+                    fEntry.context.parent.symbolTable[symb] = val
+
+            context.symbolTable.update(fEntry.context.parent.symbolTable)
+
         if fEntry.type_checker_return():
             rVal = fEntry.context.funcReturnVal
-            fEntry.context.reset_flags_func()
             if context.is_real(value=rVal) and not context.is_bool(value=rVal):
                 return float(rVal)
             else:
@@ -691,6 +778,9 @@ class AssignASTNode(ExprASTNode):
         ):
             raise ValueError(context.get_error_message("Unexpected null value"))
 
+        if "." in symbol:
+            context, symbol = context.get_var_context(symbol=symbol)
+
         assignType = context.get_ident_type(symbol=symbol, getArrMap=False)
         isArr = assignType == list if assignType else False
         isMap = assignType == dict if assignType else False
@@ -764,7 +854,11 @@ class StmtBlockASTNode(StmtASTNode):
         for decl in self.stmtList:
             stmtVal = decl.code_gen(context=context)
 
-            if context.should_continue() or context.should_break() or context.should_return():
+            if (
+                context.should_continue()
+                or context.should_break()
+                or context.should_return()
+               )
                 return stmtVal
 
         return stmtVal
@@ -1178,6 +1272,10 @@ class DeleteStmtASTNode(StmtASTNode):
 
         symbol = self.delBody.get_ident()
         index = self.delBody.get_index()
+
+        if "." in symbol:
+            raise ValueError(context.get_error_message("Cannot delete class attribute"))
+
         indexVal = index.code_gen(context=context) if index != None else None
 
         context.remove_ident(symbol=symbol, index=indexVal)
@@ -1257,6 +1355,74 @@ class ContinueStmtASTNode(StmtASTNode):
         return None
 
 
+class SuperStmtASTNode(StmtASTNode):
+    def __init__(self, token: Token, args: list[ExprASTNode]):
+        super().__init__()
+        self.token = token
+        self.args = args
+
+    def __str__(self):
+        out = f"-> SuperStmtASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo}) "
+        if self.args:
+            out += f"\n{' ' * (self.level)}()-¬"
+            for arg in self.args:
+                arg.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(arg)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if not context.inClass or not context.classVal:
+            raise ValueError(
+                context.get_error_message("Cannot call super outside a class")
+            )
+
+        cEntry = context.get_class(symbol=context.classVal)
+        if not cEntry:
+            raise ValueError(
+                context.get_error_message(f"Class, {context.classVal}, doesn't exist")
+            )
+
+        if not cEntry.parentSymbol:
+            raise ValueError(context.get_error_message("Class doesn't have parent"))
+
+        # use parent constructor to update parent attributes and then copy over values to class instance context
+        pConstructorName = IdentifierASTNode(
+            token=self.token,
+            type=None,
+            ident=cEntry.parentSymbol,
+            index=None,
+            arrFlag=False,
+            mapFlag=False,
+        )
+
+        pConstructorCall = CallExprASTNode(
+            token=self.token, callee=pConstructorName, args=self.args
+        )
+
+        # super called inside constructor func, parent context of func should be class instance
+        if context.parent.inClass and not context.parent.inFunc:
+            parentCEntry = pConstructorCall.code_gen(context=context)
+            context.parent.parent = parentCEntry.context
+            context.parent.symbolTable.update(
+                parentCEntry.context.symbolTable
+            )  # updates symbols
+            for (
+                symb,
+                func,
+            ) in (
+                parentCEntry.context.funcTable.items()
+            ):  # updates methods and deals with method overriding
+                if symb not in context.parent.funcTable:
+                    func = func.copy()
+                    func.context.parent.parent = parentCEntry.context
+                    context.parent.funcTable[symb] = func
+
+        return None
+
+
 class FunctionASTNode(ASTNode):
     def __init__(
         self,
@@ -1288,7 +1454,7 @@ class FunctionASTNode(ASTNode):
     def code_gen(self, context: TheContext):
         context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
 
-        if self.funcName == None and self.funcBody == None:
+        if self.funcName == None or self.funcBody == None:
             raise ValueError(
                 context.get_error_message("Invalid function name or function body")
             )
@@ -1301,6 +1467,8 @@ class FunctionASTNode(ASTNode):
 
         funcContext = TheContext(parent=context)
         funcContext.inFunc = True
+        funcContext.inClass = context.inClass
+        funcContext.classVal = context.classVal
 
         for par in self.params:
             argSymbols.append(par.get_ident())  # store parameter names
@@ -1315,6 +1483,102 @@ class FunctionASTNode(ASTNode):
             funcBody=self.funcBody,
             context=funcContext,
             isReturnArr=isReturnArr,
+        )
+
+        return None
+
+
+class ClassASTNode(ASTNode):
+    def __init__(
+        self,
+        token: Token,
+        className: IdentifierASTNode,
+        parentName: IdentifierASTNode,
+        localDecls: list[IdentifierASTNode],
+        localFuncs: list[FunctionASTNode],
+    ):
+        super().__init__()
+        self.token = token
+        self.className = className
+        self.parentName = parentName
+        self.localDecls = localDecls
+        self.localFuncs = localFuncs
+
+    def __str__(self):
+        self.className.level = self.level
+        out = f"-> ClassASTNode (lineNo={self.token.lineNo}, columnNo={self.token.columnNo})\n{' ' * (self.level)}-{repr(self.className)} "
+        if self.parentName:
+            self.parentName.level = self.level + 3
+            out += f"\n{' ' * (self.level)}:-¬"
+            out += f"\n{' ' * (self.level + 3)}-{repr(self.parentName)}"
+        if self.localDecls:
+            out += f"\n{' ' * (self.level)}\-¬"
+            for decl in self.localDecls:
+                decl.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(decl)}"
+        if self.localFuncs:
+            out += f"\n{' ' * (self.level)}\-¬"
+            for func in self.localFuncs:
+                func.level = self.level + 3
+                out += f"\n{' ' * (self.level + 3)}-{repr(func)}"
+
+        return out
+
+    def code_gen(self, context: TheContext):
+        context.update_line_col(lineNo=self.token.lineNo, columnNo=self.token.columnNo)
+
+        if self.className == None and (not self.localDecls or not self.localFuncs):
+            raise ValueError(
+                context.get_error_message("Invalid class name or class body")
+            )
+
+        symbol = self.className.get_ident()
+
+        parentSymbol = None
+        parentEntry = None
+        parentClassContext = None
+        if self.parentName != None:
+            parentSymbol = self.parentName.get_ident()
+            parentEntry = context.get_class(symbol=parentSymbol)
+
+            if parentEntry == None and parentSymbol != None:
+                raise ValueError(
+                    context.get_error_message(
+                        f"Parent class, {parentSymbol}, not found"
+                    )
+                )
+
+            parentClassContext = parentEntry.copy().context
+
+        classContext = TheContext(
+            parent=parentClassContext
+        )  # parent context = parent class
+        classContext.inClass = True
+        classContext.classVal = symbol
+        classContext.classTable = context.classTable
+
+        for decl in self.localDecls:  # add attributes to class context
+            decl.code_gen(context=classContext)
+
+        for func in self.localFuncs:  # add methods to class context
+            func.code_gen(context=classContext)
+
+        constructorEntry = classContext.get_func(symbol=symbol)
+        if constructorEntry == None:
+            raise ValueError(context.get_error_message("Class has no constructor"))
+
+        if constructorEntry.type != type(None):
+            raise ValueError(
+                constructorEntry.context.get_error_message(
+                    "Class constructor method has to be void type"
+                )
+            )
+
+        context.set_class(
+            symbol=symbol,
+            constructor=constructorEntry.copy(),
+            context=classContext,
+            parentSymbol=parentSymbol,
         )
 
         return None

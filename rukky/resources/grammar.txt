@@ -3,6 +3,17 @@ decl_list -> decl_list decl
             | decl
 decl -> stmt 
         | func_decl
+        | class_decl
+
+local_decls -> local_decls decl_stmt
+                | decl_stmt
+local_funcs -> local_funcs func_decl
+                | func_decl
+class_block ->  "{" EOL local_decls local_funcs "}" EOL
+        | "{" EOL "}" EOL
+        | "{}" EOL
+class_name -> ID | ID ":" ID
+class_decl -> "class" "::" class_name class_block
 
 func_type -> "void"
             | decl_type
@@ -25,6 +36,7 @@ stmt -> decl_stmt
         | while_stmt
         | give_stmt
         | if_stmt
+        | super_stmt
         | delete_stmt
         | return_stmt
         | break_stmt
@@ -53,6 +65,7 @@ elif_stmt -> "elif" "::" expr block
 else_stmt -> "else" "::" block
             | epsilon
 
+super_stmt -> "super" "::" args "::" EOL
 delete_stmt -> "del" "::" expr EOL
 return_stmt -> "return" "::" EOL
             | "return" "::" expr EOL

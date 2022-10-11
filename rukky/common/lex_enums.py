@@ -43,9 +43,11 @@ class TokenType(Enum):
     BOOL = "bool"
     STRING = "str"
     OBJECT = "obj"
+
     TRUE = "true"
     FALSE = "false"
     NULL = "null"
+
     FOR = "for"
     WHILE = "while"
     GIVE = "give"
@@ -71,7 +73,10 @@ class TokenType(Enum):
     PI = "pi"
     EULER = "eul"
 
+    CLASS = "class"
+    SUPER = "super"
     DELETE = "del"
+
     RETURN = "return"
     BREAK = "break"
     CONTINUE = "continue"

@@ -103,7 +103,7 @@ class SymbolEntry(Entry):
 
 class FuncEntry(Entry):
     def __init__(
-        self, returnType: type, argSymbols: list, funcBody, context, isReturnArr=False
+        self, returnType: type, argSymbols: list, funcBody, context, isReturnArr
     ):
         super().__init__(returnType)
         self.argSymbols = argSymbols
@@ -117,9 +117,27 @@ class FuncEntry(Entry):
     def __str__(self):
         return f"FuncEntry(type={self.type}, params={repr(self.argSymbols)})"
 
+    def type_checker_return(self):
+        # check function type matches return type
+        return (
+            (isinstance(self.context.funcReturnVal, self.type))
+            or (
+                isinstance(self.context.funcReturnVal, list)
+                and (
+                    not self.context.funcReturnVal
+                    or self.context.verify_arr_type(
+                        arr=self.context.funcReturnVal, arrType=self.type
+                    )
+                )
+            )
+            or (self.context.funcReturnVal == None and not self.isReturnArr)
+        )
+
     def copy(self):
         newContext = TheContext(parent=self.context.parent)
         newContext.inFunc = self.context.inFunc
+        newContext.inClass = self.context.inClass
+        newContext.classVal = self.context.classVal
         newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
         return FuncEntry(
             returnType=self.type,
@@ -129,26 +147,40 @@ class FuncEntry(Entry):
             isReturnArr=self.isReturnArr,
         )
 
-    def type_checker_return(self):
-        # check function type matches return type
-        return (
-            (isinstance(self.context.funcReturnVal, self.type))
-            or (
-                isinstance(self.context.funcReturnVal, list)
-                and (
-                    not self.context.funcReturnVal
-                    or isinstance(self.context.funcReturnVal[0], self.type)
-                )
-            )
-            or (self.context.funcReturnVal == None and not self.isReturnArr)
+
+class ClassEntry(Entry):
+    def __init__(self, constructor: FuncEntry, parentSymbol: str, context):
+        super().__init__(object)
+        self.constructor = constructor
+        self.parentSymbol = parentSymbol
+        self.context = context
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"ClassEntry(name=<{repr(self.context.classVal)}>)"
+
+    def copy(self):
+        newContext = TheContext(parent=self.context.parent)
+        newContext.inClass = self.context.inClass
+        newContext.classVal = self.context.classVal
+        newContext.symbolTable = copy.deepcopy(self.context.symbolTable)
+        newContext.funcTable = self.context.funcTable
+        newContext.classTable = self.context.classTable
+        return ClassEntry(
+            constructor=self.constructor.copy(),
+            parentSymbol=self.parentSymbol,
+            context=newContext,
         )
 
 
 class TheContext:
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, parent=None):
+        self.parent = parent  # parent context
         self.symbolTable: dict[str, SymbolEntry] = {}
         self.funcTable: dict[str, FuncEntry] = {}
+        self.classTable: dict[str, ClassEntry] = {}
 
         self.lineNo = 1
         self.columnNo = 1
@@ -158,7 +190,9 @@ class TheContext:
         self.continueFlag = False
         self.inLoop = False
         self.inFunc = False
-        self.funcReturnVal = None
+        self.inClass = False
+        self.funcReturnVal = None  # return value of function
+        self.classVal = None  # class name
 
         self.should_return = (
             lambda: self.inFunc
@@ -168,13 +202,6 @@ class TheContext:
         )
         self.should_break = lambda: self.inLoop and self.breakFlag
         self.should_continue = lambda: self.inLoop and self.continueFlag
-
-    def reset_flags_func(self):
-        self.returnFlag = False
-        self.continueFlag = False
-        self.breakFlag = False
-        self.inLoop = False
-        self.funcReturnVal = None
 
     def get_ident_type(self, symbol: str, getArrMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
@@ -319,6 +346,18 @@ class TheContext:
 
             self.symbolTable[symbol] = sEntry
 
+        if self.inClass and self.parent:
+            if symbol in self.parent.symbolTable:
+                self.parent.set_ident(
+                    symbol=symbol,
+                    valType=valType,
+                    value=value,
+                    index=index,
+                    isAppend=isAppend,
+                    isArr=isArr,
+                    isMap=isMap,
+                )
+
     def get_ident(self, symbol: str, index=None, getArr=False, getMap=False):
         sEntry: SymbolEntry = self.symbolTable.get(symbol, None)
         if not sEntry and self.parent:
@@ -417,6 +456,61 @@ class TheContext:
 
     def remove_func(self, symbol: str):
         del self.funcTable[symbol]
+
+    def set_class(
+        self, symbol: str, constructor: FuncEntry, context, parentSymbol=None
+    ):
+        cEntry = ClassEntry(
+            constructor=constructor,
+            parentSymbol=parentSymbol,
+            context=context,
+        )
+        self.classTable[symbol] = cEntry
+
+    def get_class(self, symbol: str):
+        cEntry: ClassEntry = self.classTable.get(symbol, None)
+        if not cEntry and self.parent:
+            return self.parent.get_class(symbol=symbol)
+        else:
+            return cEntry
+
+    def remove_class(self, symbol: str):
+        del self.classTable[symbol]
+
+    def get_var_context(self, symbol: str):
+        # when trying to retrieve class attribute object.var1.var2
+        *head, tail = symbol.split(".")
+
+        if len(head) == 1 and head[0] == "":  # .var
+            if self.inClass:
+                return self, tail
+            else:
+                raise ValueError(
+                    self.get_error_message(
+                        "Cannot retrieve class attribute outside class"
+                    )
+                )
+
+        context = self
+        for symb in head:
+            if symb == "":
+                continue
+            cEntry = context.get_ident(symbol=symb)
+            if not cEntry:
+                raise ValueError(
+                    self.get_error_message(
+                        f"Variable {symb} doesn't exist/has not yet been defined"
+                    )
+                )
+
+            if not isinstance(cEntry, ClassEntry):
+                raise ValueError(
+                    self.get_error_message(f"Variable {symb} is not a class object")
+                )
+
+            context = cEntry.context
+
+        return context, tail
 
     def type_checker_assign(self, left: str, right, hasIndex=False):
         # check variable type matches assigned value type
