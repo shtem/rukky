@@ -631,7 +631,7 @@ class CallExprASTNode(ExprASTNode):
                     f"Function or class, {symbol}, doesn't exist/has not yet been defined"
                 )
             )
-            
+
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError(context.get_error_message("Incorrect number of arguments"))
 
@@ -668,6 +668,18 @@ class CallExprASTNode(ExprASTNode):
             fEntry.funcBody.code_gen(
                 context=fEntry.context
             )  # execute function body using function context
+
+        if fEntry.context.parent.inClass and not fEntry.context.parent.inFunc:
+            for (
+                symb,
+                val,
+            ) in (
+                fEntry.context.symbolTable.items()
+            ):  # updates class attributes in func's parent class instance context
+                if symb in fEntry.context.parent.symbolTable:
+                    fEntry.context.parent.symbolTable[symb] = val
+
+            context.symbolTable.update(fEntry.context.parent.symbolTable)
 
         if fEntry.type_checker_return():
             rVal = fEntry.context.funcReturnVal
@@ -1376,7 +1388,7 @@ class SuperStmtASTNode(StmtASTNode):
         if not cEntry.parentSymbol:
             raise ValueError(context.get_error_message("Class doesn't have parent"))
 
-        # use parent constructor to update parent attributes and then copy over values to class context
+        # use parent constructor to update parent attributes and then copy over values to class instance context
         pConstructorName = IdentifierASTNode(
             token=self.token,
             type=None,
@@ -1390,20 +1402,23 @@ class SuperStmtASTNode(StmtASTNode):
             token=self.token, callee=pConstructorName, args=self.args
         )
 
-        parentCEntry = pConstructorCall.code_gen(context=context)
-        cEntry.context.parent = parentCEntry.context
-        cEntry.context.symbolTable.update(
-            parentCEntry.context.symbolTable
-        )  # updates symbols
-        for (
-            symb,
-            func,
-        ) in (
-            parentCEntry.context.funcTable.items()
-        ):  # updates methods and deals with method overriding
-            if symb not in cEntry.context.funcTable:
-                func.context.parent = parentCEntry.context
-                cEntry.context.funcTable[symb] = func
+        # super called inside constructor func, parent context of func should be class instance
+        if context.parent.inClass and not context.parent.inFunc:
+            parentCEntry = pConstructorCall.code_gen(context=context)
+            context.parent.parent = parentCEntry.context
+            context.parent.symbolTable.update(
+                parentCEntry.context.symbolTable
+            )  # updates symbols
+            for (
+                symb,
+                func,
+            ) in (
+                parentCEntry.context.funcTable.items()
+            ):  # updates methods and deals with method overriding
+                if symb not in context.parent.funcTable:
+                    func = func.copy()
+                    func.context.parent.parent = parentCEntry.context
+                    context.parent.funcTable[symb] = func
 
         return None
 
