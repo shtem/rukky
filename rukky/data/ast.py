@@ -514,7 +514,7 @@ class CallExprASTNode(ExprASTNode):
 
         return out
 
-    def handle_class(self, cEntry: ClassEntry, context: TheContext):
+    def execute_instantiation(self, cEntry: ClassEntry, context: TheContext):
         if not cEntry.constructor:
             raise ValueError(
                 cEntry.context.get_error_message("Class has no constructor")
@@ -615,7 +615,7 @@ class CallExprASTNode(ExprASTNode):
         entry: ClassEntry = context.get_class(symbol=symbol)
         if entry:
             cEntry = entry.copy()
-            return self.handle_class(cEntry=cEntry, context=context)
+            return self.execute_instantiation(cEntry=cEntry, context=context)
 
         argValues = [arg.code_gen(context=context) for arg in self.args]
 
@@ -623,14 +623,14 @@ class CallExprASTNode(ExprASTNode):
             context, symbol = context.get_var_context(symbol=symbol)
 
         entry: FuncEntry = context.get_func(symbol=symbol)
-        fEntry = entry.copy()
-
-        if fEntry == None:
+        if not entry:
             raise ValueError(
                 context.get_error_message(
                     f"Function or class, {symbol}, doesn't exist/has not yet been defined"
                 )
             )
+
+        fEntry = entry.copy()
 
         if len(self.args) != len(fEntry.argSymbols):
             raise ValueError(context.get_error_message("Incorrect number of arguments"))
