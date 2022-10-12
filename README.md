@@ -44,7 +44,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 result: 120.0
 ```
 
-### Usage
+#### Usage
 
 ```text
 > python rukky --help                                                  
@@ -62,13 +62,13 @@ options:
   -d, --duration  outputs time it takes to interpret inputted program, along with the result
 ```
 
-### Requirements
+#### Requirements
 
 ```text
 python_version >= '3.10'
 ```
 
-### factorial.rk
+#### factorial.rk
 
 ```text
 :: real factorial := (real n) {
