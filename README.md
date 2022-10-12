@@ -1,13 +1,14 @@
 # rukky
 
-### An interpreter for a simple programming language, written in Python
+## An interpreter for a simple programming language, written in Python
+
 I began by writing a [grammar](https://github.com/shtem/rukky/blob/main/rukky/resources/grammar.txt) for the *rukky* procedural programming language which I then developed an interpreter for. This invented language is quite simple and borrows features and concepts from multiple programming languages, with a few syntactical tweaks here and there. I didn't create the language or the interpreter with speed, efficiency or novelty in mind, just as a fun mini-project.
 
 The interpreter utilises a predictive top-down parsing technique called a recursive descent parser. The parser  is LL(1) in most cases, but not all.
 
 ---
 
-#### Features
+### Features
 
 - [x] Comments ``$ ... $``
 - [x] Real, Boolean and String Literals
@@ -18,10 +19,10 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Variables ``x := 10``
 - [x] Maps
 - [x] Arrays
-    - Indexing
-        - Retrieve ``lst[0]``
-        - Update ``lst@0 := x``
-    - Appending ``lst << x``
+  - Indexing
+    - Retrieve ``lst[0]``
+    - Update ``lst@0 := x``
+  - Appending ``lst << x``
 - [x] If Statement ``if:: elif:: else::``
 - [x] Delete Statement ``del::``
 - [x] Loop Statements ``for:: while:: give::``
@@ -29,22 +30,23 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Functions
 - [x] Function Calls ``func:x::``
 - [x] Branching Statements ``return:: break:: continue::``
-- [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal ``
+- [x] Reserved Functions ``display, len, type, min, max, rand, floor, ceil, sqrt, log, sin, cos, tan, getStr, getReal``
 - [x] Classes ``class::``
-    - Inheritance ``Child : Parent``
-        - Super Keyword ``super::``
+  - Inheritance ``Child : Parent``
+    - Super Keyword ``super::``
 
 ---
 
-#### Running Interpreter
+### Running Interpreter
 
-```
+```text
 > python rukky -f path/to/rukky/test/files/factorial.rk
 result: 120.0
 ```
 
-##### Usage
-```
+### Usage
+
+```text
 > python rukky --help                                                  
 usage: rukky [-h] (-s | -f FILE) [-t | -a | -g | -d]
 
@@ -60,13 +62,15 @@ options:
   -d, --duration  outputs time it takes to interpret inputted program, along with the result
 ```
 
-##### Requirements
-```
+### Requirements
+
+```text
 python_version >= '3.10'
 ```
 
-##### factorial.rk
-```
+### factorial.rk
+
+```text
 :: real factorial := (real n) {
     real i
     real factorial
@@ -91,6 +95,7 @@ Can find more example files [here](https://github.com/shtem/rukky/tree/main/rukk
 ---
 
 #### Acknowledgements
+
 Sources and tutorials I used to help with the development of this project:
 
 [Make Your Own Programming Language in Python](https://github.com/davidcallanan/py-myopl-code) - David Callanan
