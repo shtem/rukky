@@ -124,7 +124,7 @@ def runner():
 
     if args.shell:
         version = "rukky v1.0.0 REPL"
-        helpOne = '\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL \nType "tokens" for token output, "ast" for AST output,'
+        helpOne = '\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL \nType "tokens" for token output, "ast" for AST output, '
         helpTwo = '"global" for global symbol table output, "duration" for duration time output\nType output option name again to disable the output and "help" to display this message again.'
         shellHelp = version + helpOne + helpTwo
 
