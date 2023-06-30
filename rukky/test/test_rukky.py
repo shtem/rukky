@@ -31,7 +31,7 @@ def get_test_result(filePath: str):
     return match.strip()
 
 
-def test_sucess():
+def test_success():
     testDir = os.path.join(os.getcwd(), "rukky", "test", "files")
     testNamesandFiles = [
         (os.path.splitext(f)[0], os.path.join(testDir, f))
@@ -76,4 +76,4 @@ def test_sucess():
 
 
 if __name__ == "__main__":
-    test_sucess()
+    test_success()
