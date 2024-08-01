@@ -262,9 +262,9 @@ class ReservedKeyWordASTNode(IdentifierASTNode):
             symbol=symbol,
             returnType=returnType,
             argSymbols=argSymbols,
-            funcBody=context._type_builtin
-            if symbol == TokenType.TYPE.value
-            else self.value,
+            funcBody=(
+                context._type_builtin if symbol == TokenType.TYPE.value else self.value
+            ),
             context=funcContext,
             isReturnArr=isReturnArr,
         )
@@ -454,12 +454,15 @@ class BinaryExprASTNode(ExprASTNode):
             case TokenType.NE:
                 return bool(lVal != rVal)
             case TokenType.IN:
-                if isinstance(rVal, (list, dict)):
-                    return bool(lVal in rVal)
+                if isinstance(rVal, (str, list, dict)):
+                    try:
+                        return bool(lVal in rVal)
+                    except Exception as e:
+                        raise TypeError(context.get_error_message(str(e)))
                 else:
                     raise TypeError(
                         context.get_error_message(
-                            "Can only perform this operation on arrays or maps"
+                            "Can only perform this operation on strings, arrays or maps"
                         )
                     )
             case TokenType.APPEND:
@@ -1512,12 +1515,12 @@ class ClassASTNode(ASTNode):
             out += f"\n{' ' * (self.level)}:-¬"
             out += f"\n{' ' * (self.level + 3)}-{repr(self.parentName)}"
         if self.localDecls:
-            out += f"\n{' ' * (self.level)}\-¬"
+            out += f"\n{' ' * (self.level)}/-¬"
             for decl in self.localDecls:
                 decl.level = self.level + 3
                 out += f"\n{' ' * (self.level + 3)}-{repr(decl)}"
         if self.localFuncs:
-            out += f"\n{' ' * (self.level)}\-¬"
+            out += f"\n{' ' * (self.level)}/-¬"
             for func in self.localFuncs:
                 func.level = self.level + 3
                 out += f"\n{' ' * (self.level + 3)}-{repr(func)}"

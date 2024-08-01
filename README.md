@@ -13,7 +13,8 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 - [x] Comments ``$ ... $``
 - [x] Real, Boolean and String Literals
 - [x] Arithmetic Operations ``+, -, *, /, //, %, ^``
-- [x] Comparison Operations ``?, <>, <!, >, >=, <, <=``
+- [x] Comparison Operations ``==, <>, >, >=, <, <=``
+  - Membership Condition ``"r" ? "rukky"``
 - [x] Logical Operations ``~, &&, ||``
 - [x] Types ``real, bool, str, void, obj``
 - [x] Variables ``x := 10``
@@ -90,7 +91,7 @@ real fac := factorial:5::
 display:"result: " + getStr:fac::::
 ```
 
-Can find more example files [here](https://github.com/shtem/rukky/tree/main/rukky/test/files).
+Can find more example files [here](https://github.com/shtem/rukky/tree/main/rukky/tests/files).
 
 ---
 

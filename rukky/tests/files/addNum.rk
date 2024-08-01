@@ -8,7 +8,7 @@ $
     real result
     result := 0
 
-    if:: n <! 0 {
+    if:: n <> 0 {
         result := n + addNum:n-1::
     }
     else:: {

@@ -1443,8 +1443,8 @@ class Parser:
                 )
 
     """
-    equiv -> equiv "<>" ineq
-        | equiv "<!" ineq
+    equiv -> equiv "==" ineq
+        | equiv "<>" ineq
         | equiv "?" ineq
         | ineq
     """
@@ -1475,7 +1475,7 @@ class Parser:
         while True:
             if self.currTok.type in [TokenType.NE, TokenType.EQ, TokenType.IN]:
                 op = self.currTok
-                self.eat()  # eat <> <! ?
+                self.eat()  # eat <> == ?
                 rhs = self.ineq()
                 if rhs:
                     lhs = BinaryExprASTNode(op=op, lhs=lhs, rhs=rhs)

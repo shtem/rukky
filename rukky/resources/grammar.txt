@@ -80,8 +80,8 @@ disjunc -> disjunc "||" conjunc
         | conjunc
 conjunc -> conjunc "&&" equiv
         | equiv
-equiv -> equiv "<>" ineq
-        | equiv "<!" ineq
+equiv -> equiv "==" ineq
+        | equiv "<>" ineq
         | equiv "?" ineq
         | ineq
 ineq -> ineq "<=" term

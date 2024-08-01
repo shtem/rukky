@@ -17,8 +17,8 @@ class TokenType(Enum):
     GE = ">="
     LT = "<"
     LE = "<="
-    EQ = "<>"
-    NE = "<!"
+    EQ = "=="
+    NE = "<>"
     APPEND = "<<"
 
     LBRACE = "{"

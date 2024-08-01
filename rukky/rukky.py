@@ -3,6 +3,8 @@ from src.parser import Parser
 from src.lexer import Lexer
 import os, sys, time, argparse
 
+VERSION = "1.0.1"
+
 rukkyArgParser = argparse.ArgumentParser(
     description='Interpreter for the "rukky" programming language. Interprets code and outputs result.'
 )
@@ -123,10 +125,14 @@ def runner():
         return
 
     if args.shell:
-        version = "rukky v1.0.0 REPL"
-        helpOne = '\nType "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL \nType "tokens" for token output, "ast" for AST output, '
-        helpTwo = '"global" for global symbol table output, "duration" for duration time output\nType output option name again to disable the output and "help" to display this message again.'
-        shellHelp = version + helpOne + helpTwo
+        shellHelp = f"""
+        -------------------------------------------------------------------------------------------------------------------------------------------------
+        |       rukky v{VERSION} REPL                                                                                                                       |
+        |       Type "begin" for multiline input, "end" to evaluate multiline input, "bye" to exit REPL                                                 |
+        |       Type "tokens" for token output, "ast" for AST output, "global" for global symbol table output, "duration" for duration time output      |
+        |       Type output option name again to disable the output and "help" to display this message again.                                           |
+        -------------------------------------------------------------------------------------------------------------------------------------------------
+        """
 
         print(shellHelp)
         try:

@@ -195,9 +195,6 @@ class Lexer:
             tokType = TokenType.LE
         if self.currChar == ">":  # <>
             self.advance()
-            tokType = TokenType.EQ
-        if self.currChar == "!":  # <!
-            self.advance()
             tokType = TokenType.NE
         if self.currChar == "<":  # <<
             self.advance()
@@ -302,6 +299,15 @@ class Lexer:
                 return Token(
                     type=TokenType.AND,
                     lexVal=TokenType.AND.value,
+                    lineNo=self.lineNo,
+                    columnNo=self.columnNo,
+                )
+            elif self.currChar == "=" and self.next_char() == "=":
+                self.advance()
+                self.advance()
+                return Token(
+                    type=TokenType.EQ,
+                    lexVal=TokenType.EQ.value,
                     lineNo=self.lineNo,
                     columnNo=self.columnNo,
                 )

@@ -31,7 +31,7 @@ class:: BinaryTree : Tree {
     }
 
     :: obj insertRecursive := (obj node, real key) {
-        if:: node <> null {
+        if:: node == null {
             return:: Node:key::
         }
 
@@ -52,7 +52,7 @@ class:: BinaryTree : Tree {
     :: obj minValueNode := (obj node) {
         obj node := node
 
-        while:: node.left <! null {
+        while:: node.left <> null {
             node := node.left
         }
 
@@ -60,7 +60,7 @@ class:: BinaryTree : Tree {
     }
 
     :: obj deleteRecursive := (obj node, real key) {
-        if:: node <> null {
+        if:: node == null {
             return:: node
         }
 
@@ -71,13 +71,13 @@ class:: BinaryTree : Tree {
             node.right := deleteRecursive:node.right, key::
         }
         else:: {
-            if:: node.left <> null {
+            if:: node.left == null {
                 obj temp := node.right
                 node := null
                 return:: temp
             }
 
-            if:: node.right <> null {
+            if:: node.right == null {
                 obj temp := node.left
                 node := null
                 return:: temp
@@ -96,11 +96,11 @@ class:: BinaryTree : Tree {
     }
 
     :: bool nodeExists := (obj node, real key) {
-        if:: node <> null {
+        if:: node == null {
             return:: false
         }
 
-        if:: node.key <> key {
+        if:: node.key == key {
             return:: true
         }
 
@@ -112,7 +112,7 @@ class:: BinaryTree : Tree {
     }
 
     :: void inOrderTraversal := (obj node) {
-        if:: node <! null {
+        if:: node <> null {
             inOrderTraversal:node.left::
             display:node.key::
             inOrderTraversal:node.right::
@@ -120,7 +120,7 @@ class:: BinaryTree : Tree {
     }
 
     :: void preOrderTraversal := (obj node) {
-        if:: node <! null {
+        if:: node <> null {
             display:node.key::
             preOrderTraversal:node.left::
             preOrderTraversal:node.right::
@@ -128,7 +128,7 @@ class:: BinaryTree : Tree {
     }
 
     :: void postOrderTraversal := (obj node) {
-         if:: node <! null {
+         if:: node <> null {
             postOrderTraversal:node.left::
             postOrderTraversal:node.right::
             display:node.key::

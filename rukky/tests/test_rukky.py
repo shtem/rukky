@@ -25,14 +25,14 @@ def get_test_result(filePath: str):
     result = subprocess.run(command, stdout=subprocess.PIPE)
     testOut = result.stdout.decode("utf-8").replace("\r\n", "").replace("\n", "")
     search = re.search(
-        "result:\s+(.+)", testOut
+        r"result:\s+(.+)", testOut
     )  # get part of printed output where "result: <x>"
     _, match = search.group().split(":")  # match = <x>
     return match.strip()
 
 
 def test_success():
-    testDir = os.path.join(os.getcwd(), "rukky", "test", "files")
+    testDir = os.path.join(os.getcwd(), "rukky", "tests", "files")
     testNamesandFiles = [
         (os.path.splitext(f)[0], os.path.join(testDir, f))
         for f in os.listdir(testDir)

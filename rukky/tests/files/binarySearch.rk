@@ -10,7 +10,7 @@ $
         obj mid := (high + low) // 2
         obj h
 
-        if:: arr[mid] <> x {
+        if:: arr[mid] == x {
             return:: mid
         }
         elif:: arr[mid] > x {

@@ -13,7 +13,7 @@ $
             primeFlag := true
 
             for:: i := 2 ; num ; 1 {
-                if:: num % i <> 0 {
+                if:: num % i == 0 {
                     primeFlag := false
                     break::
                 }

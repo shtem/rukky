@@ -16,7 +16,7 @@ $
     }
 
     while:: true {
-        if:: (greater % x <> 0) && (greater % y <> 0) {
+        if:: (greater % x == 0) && (greater % y == 0) {
             lcm := greater
             break::
         }
