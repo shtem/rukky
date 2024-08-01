@@ -41,7 +41,7 @@ The interpreter utilises a predictive top-down parsing technique called a recurs
 ### Running Interpreter
 
 ```text
-> python rukky -f path/to/rukky/test/files/factorial.rk
+> python rukky -f path/to/rukky/tests/files/factorial.rk
 result: 120.0
 ```
 
